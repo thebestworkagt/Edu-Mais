@@ -1369,13 +1369,20 @@ async function handleLogin(e) {
 async function handleGoogleLogin() {
     if (isGoogleLoading) return
     isGoogleLoading = true
-    if (googleBtn) googleBtn.disabled = true
+    
+    if (googleBtn) {
+        googleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecionando...'
+        googleBtn.disabled = true
+    }
     
     try {
-        const { error } = await supabase.auth.signInWithOAuth({
+        // URL do seu site - onde o usuário vai voltar
+        const redirectUrl = 'https://thebestworkagt.github.io/Edu-Mais'
+        
+        const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin,
+                redirectTo: redirectUrl,
                 queryParams: {
                     access_type: 'offline',
                     prompt: 'consent'
@@ -1386,17 +1393,18 @@ async function handleGoogleLogin() {
         if (error) throw error
         
         // O usuário será redirecionado para o Google
-        // Após o login, ele volta para a página
-        Toast.info('Redirecionando...', 'Aguardando autenticação no Google.')
+        // Depois ele volta para redirectUrl com os tokens na URL
         
     } catch (error) {
         console.error('Erro no login Google:', error)
         Toast.error('Erro no login', 'Não foi possível autenticar com o Google.')
         isGoogleLoading = false
-        if (googleBtn) googleBtn.disabled = false
+        if (googleBtn) {
+            googleBtn.innerHTML = '<i class="fab fa-google"></i> Entrar com Google'
+            googleBtn.disabled = false
+        }
     }
 }
-
 // ============================================
 // HANDLERS - REGISTRO COM EMAIL
 // ============================================
@@ -2183,10 +2191,10 @@ document.addEventListener('DOMContentLoaded', function() {
     initElements()
     initEvents()
     
-    // Verificar se veio de redirecionamento OAuth
-    handleOAuthRedirect()
+    // PROCESSAR RETORNO DO GOOGLE
+    handleGoogleCallback()  // ← ADICIONE ESTA LINHA
     
-    // Verificar sessão e carregar dados
+    // Verificar sessão
     checkSession()
     
     console.log('✅ Edu Mais - Pronto para uso!')
@@ -2203,6 +2211,41 @@ window.toggleApproval = toggleApproval
 window.openLesson = openLesson
 window.openAuthModal = openAuthModal
 window.isAdmin = () => isAdmin
+// ============================================
+// PROCESSAR RETORNO DO GOOGLE
+// ============================================
+async function handleGoogleCallback() {
+    // Verificar se há token na URL
+    const hash = window.location.hash
+    if (hash && hash.includes('access_token')) {
+        console.log('🔑 Token encontrado na URL, processando...')
+        
+        try {
+            // O Supabase já processa automaticamente
+            // Mas vamos forçar a verificação da sessão
+            const { data: { session }, error } = await supabase.auth.getSession()
+            
+            if (error) throw error
+            
+            if (session) {
+                currentUser = session.user
+                Toast.success('Login com Google!', `Bem-vindo(a), ${session.user.user_metadata?.full_name || session.user.email}`)
+                
+                // Limpar a URL (remover o token)
+                window.history.replaceState({}, document.title, window.location.pathname)
+                
+                await checkSession()
+                if (isAdmin) loadAdminPanel()
+                loadLevels()
+            }
+            
+        } catch (error) {
+            console.error('Erro ao processar callback:', error)
+            Toast.error('Erro', 'Não foi possível completar o login.')
+        }
+    }
+}
+
 </script>
 </body>
 </html>

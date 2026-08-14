@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edu Mais - Domine o Excel</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <!-- ========== HEADER ========== -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="nav-brand">
+                    <img src="assets/images/edu.png" alt="Edu Mais" class="logo">
+                    <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+                </div>
+                
+                <div class="nav-links" id="navLinks">
+                    <a href="#home" class="nav-link active">Início</a>
+                    <a href="#niveis" class="nav-link">Níveis</a>
+                    <a href="#sobre" class="nav-link">Sobre</a>
+                    <a href="#contato" class="nav-link">Contato</a>
+                </div>
+
+                <div class="nav-actions">
+                    <button class="btn-theme" id="themeToggle" title="Alternar tema">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="authBtn">Entrar</button>
+                    <button class="btn btn-outline btn-sm" id="adminBtn" style="display:none;">Admin</button>
+                    <button class="btn btn-outline-danger btn-sm" id="logoutBtn" style="display:none;">Sair</button>
+                    <button class="hamburger" id="hamburger">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" id="home">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <i class="fas fa-graduation-cap"></i>
+                        Aprenda com os melhores
+                    </div>
+                    <h1 class="hero-title">
+                        Domine o <span class="highlight">Excel</span><br>
+                        Você <span class="highlight">aprofunde</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Do zero ao avançado com aulas práticas, exercícios e projetos reais.
+                        Aprenda no seu ritmo com a melhor plataforma de Excel.
+                    </p>
+                    <div class="hero-buttons">
+                        <button class="btn btn-primary btn-lg" id="ctaBtn">
+                            <i class="fas fa-play-circle"></i> Começar Agora
+                        </button>
+                        <a href="#niveis" class="btn btn-outline btn-lg">
+                            <i class="fas fa-layer-group"></i> Ver Níveis
+                        </a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <span class="stat-number" id="statLevels">3</span>
+                            <span class="stat-label">Níveis</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="statLessons">15</span>
+                            <span class="stat-label">Aulas</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number" id="statStudents">0</span>
+                            <span class="stat-label">Alunos</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="hero-illustration">
+                        <i class="fas fa-file-excel"></i>
+                        <div class="floating-icons">
+                            <span class="float-icon"><i class="fas fa-chart-bar"></i></span>
+                            <span class="float-icon"><i class="fas fa-calculator"></i></span>
+                            <span class="float-icon"><i class="fas fa-table"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Níveis Section -->
+        <section class="levels-section" id="niveis">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-badge">Níveis</span>
+                    <h2 class="section-title">Explore os <span class="highlight">Níveis</span></h2>
+                    <p class="section-subtitle">
+                        Uma jornada completa do iniciante ao mestre do Excel
+                    </p>
+                </div>
+
+                <div class="levels-grid" id="levelsContainer">
+                    <!-- Renderizado via JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Sobre Section -->
+        <section class="about-section" id="sobre">
+            <div class="container">
+                <div class="about-content">
+                    <div class="about-text">
+                        <span class="section-badge">Sobre</span>
+                        <h2 class="section-title">Por que <span class="highlight">Edu Mais</span>?</h2>
+                        <p>
+                            A Edu Mais é uma plataforma de ensino criada para ajudar você a dominar 
+                            o Excel de forma prática e eficiente. Nossas aulas são desenvolvidas por 
+                            especialistas com anos de experiência no mercado.
+                        </p>
+                        <ul class="about-features">
+                            <li><i class="fas fa-check-circle"></i> Aulas práticas com exemplos reais</li>
+                            <li><i class="fas fa-check-circle"></i> Progresso personalizado</li>
+                            <li><i class="fas fa-check-circle"></i> Acesso vitalício</li>
+                            <li><i class="fas fa-check-circle"></i> Suporte via WhatsApp</li>
+                        </ul>
+                        <div class="about-contact">
+                            <a href="https://wa.me/244926261011" target="_blank" class="btn btn-success">
+                                <i class="fab fa-whatsapp"></i> Fale Conosco
+                            </a>
+                            <a href="mailto:suport.excelao@gmail.com" class="btn btn-outline">
+                                <i class="fas fa-envelope"></i> Email
+                            </a>
+                        </div>
+                    </div>
+                    <div class="about-image">
+                        <div class="about-card">
+                            <i class="fas fa-quote-left"></i>
+                            <p>"O conhecimento transforma vidas. Na Edu Mais, acreditamos que 
+                            todos podem aprender Excel e alcançar seus objetivos."</p>
+                            <div class="about-author">
+                                <strong>Agostinho Vasco Dias</strong>
+                                <span>Fundador</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contato Section -->
+        <section class="contact-section" id="contato">
+            <div class="container">
+                <div class="contact-wrapper">
+                    <div class="contact-info">
+                        <span class="section-badge">Contato</span>
+                        <h2 class="section-title">Entre em <span class="highlight">Contato</span></h2>
+                        <p>
+                            Tem dúvidas? Quer saber mais sobre nossos cursos?
+                            Estamos aqui para ajudar!
+                        </p>
+                        <div class="contact-details">
+                            <div class="contact-item">
+                                <i class="fab fa-whatsapp"></i>
+                                <div>
+                                    <strong>WhatsApp</strong>
+                                    <a href="https://wa.me/244926261011" target="_blank">+244 926 261 011</a>
+                                </div>
+                            </div>
+                            <div class="contact-item">
+                                <i class="fas fa-envelope"></i>
+                                <div>
+                                    <strong>Email</strong>
+                                    <a href="mailto:suport.excelao@gmail.com">suport.excelao@gmail.com</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-form-wrapper">
+                        <form class="contact-form" id="contactForm">
+                            <input type="text" placeholder="Seu nome" required>
+                            <input type="email" placeholder="Seu email" required>
+                            <textarea rows="4" placeholder="Sua mensagem" required></textarea>
+                            <button type="submit" class="btn btn-primary">Enviar Mensagem</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <img src="assets/images/edu.png" alt="Edu Mais" class="logo footer-logo">
+                    <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+                    <p>Domine o Excel. Você aprofunde.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Links Rápidos</h4>
+                    <a href="#home">Início</a>
+                    <a href="#niveis">Níveis</a>
+                    <a href="#sobre">Sobre</a>
+                    <a href="#contato">Contato</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Suporte</h4>
+                    <a href="https://wa.me/244926261011" target="_blank">WhatsApp</a>
+                    <a href="mailto:suport.excelao@gmail.com">Email</a>
+                </div>
+                <div class="footer-social">
+                    <h4>Redes Sociais</h4>
+                    <div class="social-icons">
+                        <a href="#" target="_blank"><i class="fab fa-facebook"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-youtube"></i></a>
+                        <a href="#" target="_blank"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Edu Mais. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========== MODAL ========== -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <img src="assets/images/edu.png" alt="Edu Mais" class="modal-logo">
+                    <h3>Bem-vindo à <span class="highlight">Edu Mais</span></h3>
+                    <p id="modalSubtitle">Entre na sua conta para continuar</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="auth-form active">
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Senha</label>
+                        <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+                    <p class="modal-switch">
+                        Não tem conta? <a href="#" id="switchToRegister">Criar conta</a>
+                    </p>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="auth-form">
+                    <div class="form-group">
+                        <label><i class="fas fa-user"></i> Nome completo</label>
+                        <input type="text" id="registerName" placeholder="Seu nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="registerEmail" placeholder="seu@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-phone"></i> Telefone (opcional)</label>
+                        <input type="tel" id="registerPhone" placeholder="+244 900 000 000">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-lock"></i> Senha</label>
+                        <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Criar conta</button>
+                    <p class="modal-switch">
+                        Já tem conta? <a href="#" id="switchToLogin">Fazer login</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== VIDEO MODAL ========== -->
+    <div class="modal-overlay" id="videoModal">
+        <div class="modal modal-video">
+            <button class="modal-close" id="videoClose">&times;</button>
+            <div class="video-container" id="videoContainer">
+                <!-- Video embed will be inserted here -->
+            </div>
+            <div class="video-info" id="videoInfo">
+                <h3 id="videoTitle">Título da Aula</h3>
+                <p id="videoDescription">Descrição da aula</p>
+                <button class="btn btn-primary btn-sm" id="markWatched">
+                    <i class="fas fa-check"></i> Marcar como assistida
+                </button>
+                <button class="btn btn-outline btn-sm" id="markCompleted">
+                    <i class="fas fa-check-double"></i> Concluir aula
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

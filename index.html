@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* ===== TODOS OS ESTILOS AQUI ===== */
+        /* ===== ESTILOS (mantidos os mesmos) ===== */
         :root {
             --primary: #217346;
             --primary-light: #2E8B57;
@@ -26,7 +26,6 @@
             --radius-sm: 8px;
             --transition: all 0.3s ease;
             
-            /* Cores para notificações */
             --toast-success: #2E8B57;
             --toast-error: #e74c3c;
             --toast-warning: #f39c12;
@@ -62,7 +61,6 @@
             background-clip: text;
         }
         
-        /* Botões */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -97,12 +95,13 @@
         .btn-outline-danger:hover { background: #ff6b6b; color: #fff; }
         .btn-success { background: #25D366; color: #fff; }
         .btn-success:hover { background: #128C7E; transform: translateY(-2px); }
+        .btn-warning { background: #f39c12; color: #fff; }
+        .btn-warning:hover { background: #d68910; transform: translateY(-2px); }
         .btn-sm { padding: 6px 16px; font-size: 13px; }
         .btn-lg { padding: 14px 36px; font-size: 16px; }
         .btn-full { width: 100%; justify-content: center; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* Header */
         .header {
             position: fixed;
             top: 0;
@@ -205,7 +204,6 @@
         .hamburger.active span:nth-child(2) { opacity: 0; }
         .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
-        /* Hero */
         .hero {
             padding: 140px 0 80px;
             position: relative;
@@ -271,7 +269,6 @@
             color: rgba(255,255,255,0.9);
         }
 
-        /* Níveis */
         .levels-section {
             padding: 80px 0;
         }
@@ -310,6 +307,12 @@
         }
         .level-card.locked { opacity: 0.6; cursor: not-allowed; }
         .level-card.locked:hover { transform: none; box-shadow: none; }
+        .level-card.no-access {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(0.8);
+        }
+        .level-card.no-access:hover { transform: none; box-shadow: none; }
         .level-icon { font-size: 40px; margin-bottom: 12px; }
         .level-header {
             display: flex;
@@ -328,6 +331,7 @@
         .level-badge.locked { background: #ff6b6b20; color: #ff6b6b; }
         .level-badge.unlocked { background: rgba(46,139,87,0.15); color: var(--primary-light); }
         .level-badge.completed { background: rgba(46,139,87,0.25); color: var(--primary-light); }
+        .level-badge.no-access { background: #95a5a620; color: #95a5a6; }
         .level-description {
             color: var(--text-secondary);
             font-size: 14px;
@@ -394,7 +398,28 @@
         .lesson-title { flex: 1; font-size: 14px; }
         .lesson-duration { font-size: 12px; color: var(--text-muted); }
 
-        /* Footer */
+        /* Access Denied Message */
+        .access-denied {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1/-1;
+        }
+        .access-denied i {
+            font-size: 64px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .access-denied h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .access-denied p {
+            color: var(--text-secondary);
+            max-width: 400px;
+            margin: 0 auto 24px;
+        }
+
         .footer {
             background: var(--bg-secondary);
             border-top: 1px solid var(--border-color);
@@ -452,7 +477,6 @@
             color: var(--text-muted);
         }
 
-        /* Modal */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -510,7 +534,7 @@
             margin-bottom: 4px;
             color: var(--text-secondary);
         }
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 10px 14px;
             border-radius: var(--radius-sm);
@@ -520,9 +544,12 @@
             font-size: 14px;
             transition: var(--transition);
         }
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: var(--primary);
+        }
+        .form-group select option {
+            background: var(--bg-card);
         }
         .modal-switch {
             text-align: center;
@@ -556,7 +583,6 @@
         .video-info p { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
         .video-info .btn { margin-right: 8px; }
 
-        /* ===== TOAST / NOTIFICATIONS ===== */
         .toast-container {
             position: fixed;
             top: 90px;
@@ -637,33 +663,91 @@
             color: var(--text-primary);
             transform: rotate(90deg);
         }
-
         .toast-container .toast.hiding {
             animation: slideOutRight 0.4s ease forwards;
         }
 
         @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         @keyframes slideOutRight {
-            from {
-                opacity: 1;
-                transform: translateX(0);
-            }
-            to {
-                opacity: 0;
-                transform: translateX(100px);
-            }
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100px); }
         }
 
-        /* Responsive */
+        /* Admin Panel Styles */
+        .admin-panel {
+            display: none;
+            padding: 40px 0;
+        }
+        .admin-panel.active {
+            display: block;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .admin-header h2 {
+            font-size: 28px;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .admin-table th {
+            text-align: left;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .admin-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .admin-table tr:hover td {
+            background: var(--bg-card-hover);
+        }
+        .admin-table .status-badge {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .admin-table .status-badge.approved {
+            background: rgba(46,139,87,0.2);
+            color: var(--primary-light);
+        }
+        .admin-table .status-badge.pending {
+            background: rgba(243,156,18,0.2);
+            color: #f39c12;
+        }
+        .admin-table .status-badge.blocked {
+            background: rgba(231,76,60,0.2);
+            color: #e74c3c;
+        }
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .admin-actions .btn {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+
         @media (max-width: 992px) {
             .hero .container { grid-template-columns: 1fr; text-align: center; }
             .hero-title { font-size: 40px; }
@@ -673,6 +757,8 @@
             .hero-illustration > i { font-size: 80px; }
             .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
             .toast-container { right: 16px; left: 16px; max-width: none; }
+            .admin-table { font-size: 14px; }
+            .admin-table th, .admin-table td { padding: 8px 12px; }
         }
         @media (max-width: 768px) {
             .nav-links {
@@ -695,6 +781,8 @@
             .footer-grid { grid-template-columns: 1fr; text-align: center; }
             .social-icons { justify-content: center; }
             .toast-container { top: 80px; }
+            .admin-header { flex-direction: column; align-items: flex-start; }
+            .admin-table { display: block; overflow-x: auto; }
         }
         @media (max-width: 480px) {
             .hero-title { font-size: 28px; }
@@ -718,7 +806,8 @@
             </div>
             <div class="nav-links" id="navLinks">
                 <a href="#home" class="nav-link active">Início</a>
-                <a href="#niveis" class="nav-link">Níveis</a>
+                <a href="#niveis" class="nav-link" id="navNiveis">Níveis</a>
+                <a href="#admin" class="nav-link" id="navAdmin" style="display:none;">Admin</a>
                 <a href="#contato" class="nav-link">Contato</a>
             </div>
             <div class="nav-actions">
@@ -789,6 +878,26 @@
             <div style="text-align:center;padding:40px;grid-column:1/-1;">
                 <i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i>
                 <p style="color:var(--text-secondary);margin-top:12px;">Carregando níveis...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== ADMIN PANEL ========== -->
+<section class="admin-panel" id="admin">
+    <div class="container">
+        <div class="admin-header">
+            <h2><i class="fas fa-users-cog"></i> Painel Administrativo</h2>
+            <div>
+                <button class="btn btn-primary btn-sm" onclick="refreshAdmin()">
+                    <i class="fas fa-sync"></i> Atualizar
+                </button>
+            </div>
+        </div>
+        <div id="adminContent">
+            <div style="text-align:center;padding:40px;">
+                <i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i>
+                <p style="color:var(--text-secondary);margin-top:12px;">Carregando alunos...</p>
             </div>
         </div>
     </div>
@@ -933,9 +1042,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-console.log('🚀 Edu Mais - Inicializado com sucesso!')
-console.log('📚 Versão 1.0.0')
-
 // ============================================
 // SISTEMA DE NOTIFICAÇÕES (TOAST)
 // ============================================
@@ -973,25 +1079,20 @@ const Toast = {
             <button class="toast-close"><i class="fas fa-times"></i></button>
         `
         
-        // Fechar ao clicar no X
         toast.querySelector('.toast-close').addEventListener('click', () => {
             this.remove(toast)
         })
         
-        // Fechar automaticamente
         const timeout = setTimeout(() => {
             this.remove(toast)
         }, duration)
         
-        // Pausar timer ao passar o mouse
         toast.addEventListener('mouseenter', () => clearTimeout(timeout))
         toast.addEventListener('mouseleave', () => {
             setTimeout(() => this.remove(toast), duration)
         })
         
         this.container.appendChild(toast)
-        
-        // Remover após animação
         return toast
     },
     
@@ -1005,24 +1106,12 @@ const Toast = {
         }, 400)
     },
     
-    success(title, message, duration) {
-        return this.show(title, message, 'success', duration || 4000)
-    },
-    
-    error(title, message, duration) {
-        return this.show(title, message, 'error', duration || 5000)
-    },
-    
-    warning(title, message, duration) {
-        return this.show(title, message, 'warning', duration || 4000)
-    },
-    
-    info(title, message, duration) {
-        return this.show(title, message, 'info', duration || 3000)
-    }
+    success(title, message, duration) { return this.show(title, message, 'success', duration || 4000) },
+    error(title, message, duration) { return this.show(title, message, 'error', duration || 5000) },
+    warning(title, message, duration) { return this.show(title, message, 'warning', duration || 4000) },
+    info(title, message, duration) { return this.show(title, message, 'info', duration || 3000) }
 }
 
-// Inicializar Toast
 Toast.init()
 
 // ============================================
@@ -1031,6 +1120,8 @@ Toast.init()
 let currentUser = null
 let currentLevels = []
 let currentLessonId = null
+let isAdmin = false
+let studentData = null
 
 // ============================================
 // DOM ELEMENTS
@@ -1038,6 +1129,7 @@ let currentLessonId = null
 let authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
 let switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
 let videoModal, videoClose, markWatchedBtn, markCompletedBtn
+let navAdmin, adminPanel, adminContent, navNiveis
 
 // ============================================
 // INICIALIZAR REFERÊNCIAS
@@ -1058,6 +1150,60 @@ function initElements() {
     videoClose = document.getElementById('videoClose')
     markWatchedBtn = document.getElementById('markWatched')
     markCompletedBtn = document.getElementById('markCompleted')
+    navAdmin = document.getElementById('navAdmin')
+    adminPanel = document.getElementById('admin')
+    adminContent = document.getElementById('adminContent')
+    navNiveis = document.getElementById('navNiveis')
+}
+
+// ============================================
+// VERIFICAR SE É ADMIN
+// ============================================
+async function checkAdminStatus() {
+    if (!currentUser) {
+        isAdmin = false
+        if (navAdmin) navAdmin.style.display = 'none'
+        if (adminPanel) adminPanel.classList.remove('active')
+        return
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('admins')
+            .select('id')
+            .eq('id', currentUser.id)
+            .single()
+        
+        isAdmin = !!data && !error
+    } catch {
+        isAdmin = false
+    }
+    
+    if (navAdmin) {
+        navAdmin.style.display = isAdmin ? 'inline-block' : 'none'
+    }
+}
+
+// ============================================
+// BUSCAR DADOS DO ALUNO
+// ============================================
+async function fetchStudentData() {
+    if (!currentUser) return null
+    
+    try {
+        const { data, error } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', currentUser.id)
+            .single()
+        
+        if (error) throw error
+        studentData = data
+        return data
+    } catch (error) {
+        console.error('Erro ao buscar dados do aluno:', error)
+        return null
+    }
 }
 
 // ============================================
@@ -1069,11 +1215,21 @@ async function checkSession() {
         currentUser = session.user
         if (authBtn) authBtn.style.display = 'none'
         if (logoutBtn) logoutBtn.style.display = 'inline-flex'
-        Toast.success('Bem-vindo de volta!', `Olá ${currentUser.user_metadata?.full_name || currentUser.email}`)
+        
+        await checkAdminStatus()
+        await fetchStudentData()
+        
+        if (!isAdmin && studentData && !studentData.is_approved) {
+            Toast.info('Conta pendente', 'Sua conta aguarda aprovação do administrador.')
+        }
     } else {
         currentUser = null
+        studentData = null
+        isAdmin = false
         if (authBtn) authBtn.style.display = 'inline-flex'
         if (logoutBtn) logoutBtn.style.display = 'none'
+        if (navAdmin) navAdmin.style.display = 'none'
+        if (adminPanel) adminPanel.classList.remove('active')
     }
     loadLevels()
 }
@@ -1109,6 +1265,9 @@ async function handleLogin(e) {
         await checkSession()
         Toast.success('Login realizado!', 'Seja bem-vindo(a) à Edu Mais.')
         loadLevels()
+        if (isAdmin) {
+            loadAdminPanel()
+        }
     } catch (error) {
         Toast.error('Falha no login', 'Email ou senha incorretos. Por favor, tente novamente.')
     }
@@ -1135,27 +1294,55 @@ async function handleRegister(e) {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: { full_name: fullName } }
+            options: { 
+                data: { 
+                    full_name: fullName 
+                } 
+            }
         })
         if (error) throw error
         
-        // Criar na tabela students
-        const { error: studentError } = await supabase.from('students').insert({
-            id: data.user.id,
-            email: email,
-            full_name: fullName,
-            phone: phone || null
-        })
-        
-        if (studentError) {
-            console.error('Erro ao criar aluno:', studentError)
+        if (!data.user) {
+            throw new Error('Usuário não foi criado')
         }
         
-        Toast.success('Conta criada!', 'Sua conta foi criada com sucesso. Faça login para começar.')
+        // Criar aluno na tabela students (aguardando aprovação)
+        const { error: studentError } = await supabase
+            .from('students')
+            .insert({
+                id: data.user.id,
+                email: email,
+                full_name: fullName,
+                phone: phone || null,
+                is_active: true,
+                is_approved: false,  // AGUARDANDO APROVAÇÃO
+                level_id: null       // SEM ACESSO A NENHUM NÍVEL
+            })
+        
+        if (studentError) {
+            if (studentError.code === '23505') {
+                await supabase
+                    .from('students')
+                    .update({
+                        email: email,
+                        full_name: fullName,
+                        phone: phone || null,
+                        is_active: true,
+                        is_approved: false,
+                        level_id: null
+                    })
+                    .eq('id', data.user.id)
+            } else {
+                throw studentError
+            }
+        }
+        
+        Toast.success('Conta criada!', 'Sua conta foi criada. Aguarde a aprovação do administrador para acessar os conteúdos.')
         registerForm.reset()
         if (switchToLogin) switchToLogin.click()
         
     } catch (error) {
+        console.error('❌ Erro completo:', error)
         Toast.error('Erro ao criar conta', 'Não foi possível criar sua conta. Tente novamente.')
     }
 }
@@ -1164,8 +1351,12 @@ async function handleLogout() {
     try {
         await supabase.auth.signOut()
         currentUser = null
+        studentData = null
+        isAdmin = false
         if (authBtn) authBtn.style.display = 'inline-flex'
         if (logoutBtn) logoutBtn.style.display = 'none'
+        if (navAdmin) navAdmin.style.display = 'none'
+        if (adminPanel) adminPanel.classList.remove('active')
         loadLevels()
         Toast.info('Até logo!', 'Você saiu da sua conta com sucesso.')
     } catch (error) {
@@ -1174,7 +1365,7 @@ async function handleLogout() {
 }
 
 // ============================================
-// CARREGAR NÍVEIS
+// CARREGAR NÍVEIS (COM CONTROLE DE ACESSO)
 // ============================================
 async function loadLevels() {
     if (!levelsContainer) return
@@ -1203,7 +1394,10 @@ async function loadLevels() {
         
         // Buscar progresso se usuário logado
         let progressMap = new Map()
+        let userLevelAccess = null
+        
         if (currentUser) {
+            // Buscar progresso
             const { data: progress } = await supabase
                 .from('progress')
                 .select('lesson_id, watched, completed')
@@ -1217,6 +1411,11 @@ async function loadLevels() {
                     })
                 })
             }
+            
+            // Buscar nível de acesso do aluno
+            if (studentData) {
+                userLevelAccess = studentData.level_id
+            }
         }
         
         // Atualizar estatísticas
@@ -1224,16 +1423,15 @@ async function loadLevels() {
             const { count: totalStudents } = await supabase
                 .from('students')
                 .select('*', { count: 'exact', head: true })
+                .eq('is_approved', true)
             
             document.getElementById('statLevels').textContent = levels?.length || 0
             document.getElementById('statLessons').textContent = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
             document.getElementById('statStudents').textContent = totalStudents || 0
-        } catch (e) {
-            // Silencia erros de estatísticas
-        }
+        } catch (e) {}
         
         // Renderizar
-        renderLevels(levels || [], progressMap)
+        renderLevels(levels || [], progressMap, userLevelAccess)
         
     } catch (error) {
         console.error('❌ Erro ao carregar níveis:', error)
@@ -1250,9 +1448,9 @@ async function loadLevels() {
 }
 
 // ============================================
-// RENDERIZAR NÍVEIS
+// RENDERIZAR NÍVEIS COM CONTROLE DE ACESSO
 // ============================================
-function renderLevels(levels, progressMap) {
+function renderLevels(levels, progressMap, userLevelAccess) {
     if (!levelsContainer) return
     
     if (!levels || levels.length === 0) {
@@ -1265,40 +1463,76 @@ function renderLevels(levels, progressMap) {
         return
     }
     
-    // Calcular qual nível está desbloqueado
-    let firstLockedIndex = levels.length
-    for (let i = 0; i < levels.length; i++) {
-        const level = levels[i]
-        const totalLessons = level.lessons?.length || 0
-        const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
-        
-        if (!currentUser) {
-            firstLockedIndex = 1
-            break
-        }
-        
-        if (totalLessons > 0 && watchedLessons < totalLessons) {
-            firstLockedIndex = i
-            break
-        }
+    // Verificar se o aluno tem acesso
+    const hasAccess = currentUser && studentData && studentData.is_approved && userLevelAccess
+    const isAdminUser = isAdmin
+    
+    // Se não for admin e não tiver acesso, mostrar mensagem
+    if (!isAdminUser && currentUser && !hasAccess) {
+        levelsContainer.innerHTML = `
+            <div class="access-denied">
+                <i class="fas fa-lock"></i>
+                <h3>Aguardando Aprovação</h3>
+                <p>Sua conta está aguardando aprovação do administrador. 
+                Você será notificado quando tiver acesso aos conteúdos.</p>
+                <button class="btn btn-outline" onclick="loadLevels()">
+                    <i class="fas fa-sync"></i> Verificar novamente
+                </button>
+            </div>
+        `
+        return
     }
     
-    levelsContainer.innerHTML = levels.map((level, index) => {
+    // Se não estiver logado, mostrar apenas uma prévia
+    if (!currentUser) {
+        levelsContainer.innerHTML = `
+            <div class="access-denied">
+                <i class="fas fa-graduation-cap"></i>
+                <h3>Faça login para ver os níveis</h3>
+                <p>Crie sua conta ou faça login para ter acesso a todos os níveis e aulas.</p>
+                <button class="btn btn-primary" onclick="openAuthModal()">
+                    <i class="fas fa-sign-in-alt"></i> Entrar agora
+                </button>
+            </div>
+        `
+        return
+    }
+    
+    // Admin vê todos os níveis
+    // Aluno vê apenas o nível que foi atribuído a ele
+    const visibleLevels = isAdminUser 
+        ? levels 
+        : levels.filter(level => level.id === userLevelAccess)
+    
+    if (visibleLevels.length === 0 && !isAdminUser) {
+        levelsContainer.innerHTML = `
+            <div class="access-denied">
+                <i class="fas fa-info-circle"></i>
+                <h3>Nenhum nível atribuído</h3>
+                <p>O administrador ainda não atribuiu nenhum nível à sua conta.</p>
+                <button class="btn btn-outline" onclick="loadLevels()">
+                    <i class="fas fa-sync"></i> Verificar novamente
+                </button>
+            </div>
+        `
+        return
+    }
+    
+    levelsContainer.innerHTML = visibleLevels.map((level, index) => {
         const totalLessons = level.lessons?.length || 0
         const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
         const isCompleted = currentUser && totalLessons > 0 && watchedLessons === totalLessons
-        const isLocked = !currentUser ? index > 0 : index > firstLockedIndex
         
         // Ordenar aulas
         const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
         
         return `
-            <div class="level-card ${isLocked ? 'locked' : ''}">
+            <div class="level-card">
                 <div class="level-icon">${level.icon || '📚'}</div>
                 <div class="level-header">
                     <h3 class="level-name">${level.name}</h3>
-                    <span class="level-badge ${isLocked ? 'locked' : isCompleted ? 'completed' : 'unlocked'}">
-                        ${isLocked ? '🔒 Bloqueado' : isCompleted ? '✅ Concluído' : '🎯 Em andamento'}
+                    <span class="level-badge ${isCompleted ? 'completed' : 'unlocked'}">
+                        ${isCompleted ? '✅ Concluído' : '🎯 Em andamento'}
                     </span>
                 </div>
                 <p class="level-description">${level.description || 'Aprenda e domine este nível.'}</p>
@@ -1314,13 +1548,11 @@ function renderLevels(levels, progressMap) {
                     ${lessons.map(lesson => {
                         const progress = progressMap.get(lesson.id) || {}
                         const isWatched = progress.watched || false
-                        const canAccess = !isLocked || isWatched
                         
                         return `
-                            <div class="lesson-item ${!canAccess ? 'locked' : ''}" 
-                                 onclick="${canAccess ? `openLesson(${lesson.id})` : ''}">
+                            <div class="lesson-item" onclick="openLesson(${lesson.id})">
                                 <span class="lesson-status ${isWatched ? 'watched' : ''}">
-                                    ${isWatched ? '✅' : (!canAccess ? '🔒' : '▶️')}
+                                    ${isWatched ? '✅' : '▶️'}
                                 </span>
                                 <span class="lesson-title">${lesson.title}</span>
                                 <span class="lesson-duration">${lesson.video_duration || 0} min</span>
@@ -1334,12 +1566,191 @@ function renderLevels(levels, progressMap) {
 }
 
 // ============================================
+// PAINEL ADMIN - GERENCIAR ALUNOS
+// ============================================
+async function loadAdminPanel() {
+    if (!isAdmin) {
+        Toast.warning('Acesso negado', 'Você não tem permissão para acessar esta área.')
+        return
+    }
+    
+    if (!adminContent) return
+    
+    adminPanel.classList.add('active')
+    document.getElementById('admin').scrollIntoView({ behavior: 'smooth' })
+    
+    try {
+        // Buscar todos os alunos com seus dados
+        const { data: students, error } = await supabase
+            .from('students')
+            .select(`
+                *,
+                level:levels (id, name)
+            `)
+            .order('created_at', { ascending: false })
+        
+        if (error) throw error
+        
+        if (!students || students.length === 0) {
+            adminContent.innerHTML = `
+                <div style="text-align:center;padding:40px;">
+                    <i class="fas fa-users" style="font-size:48px;color:var(--text-muted);"></i>
+                    <p style="color:var(--text-secondary);margin-top:12px;">Nenhum aluno cadastrado ainda.</p>
+                </div>
+            `
+            return
+        }
+        
+        // Buscar níveis para o dropdown
+        const { data: levels } = await supabase
+            .from('levels')
+            .select('id, name')
+            .eq('is_active', true)
+            .order('order')
+        
+        adminContent.innerHTML = `
+            <div style="overflow-x:auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Aluno</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Nível</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${students.map(student => `
+                            <tr>
+                                <td><strong>${student.full_name || '—'}</strong></td>
+                                <td>${student.email}</td>
+                                <td>
+                                    <span class="status-badge ${student.is_approved ? 'approved' : 'pending'}">
+                                        ${student.is_approved ? '✅ Aprovado' : '⏳ Pendente'}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${student.level_id ? 
+                                        `<span style="color:var(--primary-light);">${student.level?.name || 'Nível ' + student.level_id}</span>` : 
+                                        '<span style="color:var(--text-muted);">Nenhum</span>'
+                                    }
+                                </td>
+                                <td>
+                                    <div class="admin-actions">
+                                        <select class="btn btn-sm btn-outline" 
+                                                onchange="updateStudentLevel('${student.id}', this.value)"
+                                                style="padding:4px 8px;font-size:12px;">
+                                            <option value="">— Selecionar —</option>
+                                            ${levels?.map(level => `
+                                                <option value="${level.id}" ${student.level_id === level.id ? 'selected' : ''}>
+                                                    ${level.name}
+                                                </option>
+                                            `).join('')}
+                                        </select>
+                                        <button class="btn btn-sm ${student.is_approved ? 'btn-warning' : 'btn-success'}" 
+                                                onclick="toggleApproval('${student.id}', ${!student.is_approved})">
+                                            ${student.is_approved ? '⛔ Bloquear' : '✅ Aprovar'}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `
+        
+    } catch (error) {
+        console.error('Erro ao carregar admin:', error)
+        adminContent.innerHTML = `
+            <div style="text-align:center;padding:40px;">
+                <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i>
+                <p style="color:var(--text-secondary);margin-top:12px;">Erro ao carregar dados.</p>
+                <button onclick="loadAdminPanel()" class="btn btn-primary btn-sm" style="margin-top:12px;">
+                    <i class="fas fa-sync"></i> Tentar novamente
+                </button>
+            </div>
+        `
+    }
+}
+
+// ============================================
+// ADMIN - ATUALIZAR NÍVEL DO ALUNO
+// ============================================
+async function updateStudentLevel(studentId, levelId) {
+    if (!isAdmin) return
+    
+    try {
+        const { error } = await supabase
+            .from('students')
+            .update({ 
+                level_id: levelId || null,
+                is_approved: true // Ao atribuir nível, automaticamente aprova
+            })
+            .eq('id', studentId)
+        
+        if (error) throw error
+        
+        Toast.success('Nível atualizado!', 'O aluno foi atualizado com sucesso.')
+        loadAdminPanel()
+        loadLevels()
+        
+    } catch (error) {
+        Toast.error('Erro', 'Não foi possível atualizar o nível do aluno.')
+    }
+}
+
+// ============================================
+// ADMIN - APROVAR/BLOQUEAR ALUNO
+// ============================================
+async function toggleApproval(studentId, approve) {
+    if (!isAdmin) return
+    
+    try {
+        const { error } = await supabase
+            .from('students')
+            .update({ 
+                is_approved: approve,
+                approved_at: approve ? new Date().toISOString() : null
+            })
+            .eq('id', studentId)
+        
+        if (error) throw error
+        
+        Toast.success(approve ? 'Aluno aprovado!' : 'Aluno bloqueado!', 
+                     approve ? 'O aluno agora tem acesso aos conteúdos.' : 'O aluno foi bloqueado.')
+        loadAdminPanel()
+        loadLevels()
+        
+    } catch (error) {
+        Toast.error('Erro', 'Não foi possível atualizar o status do aluno.')
+    }
+}
+
+// ============================================
+// REFRESH ADMIN
+// ============================================
+function refreshAdmin() {
+    if (isAdmin) {
+        loadAdminPanel()
+        Toast.info('Atualizado!', 'O painel foi atualizado com sucesso.')
+    }
+}
+
+// ============================================
 // ABRIR AULA
 // ============================================
 async function openLesson(lessonId) {
     if (!currentUser) {
         Toast.warning('Acesso restrito', 'Faça login para assistir às aulas.')
         openAuthModal()
+        return
+    }
+    
+    // Verificar se o aluno tem acesso
+    if (!isAdmin && (!studentData || !studentData.is_approved || !studentData.level_id)) {
+        Toast.warning('Sem acesso', 'Sua conta não tem permissão para acessar este conteúdo.')
         return
     }
     
@@ -1351,6 +1762,12 @@ async function openLesson(lessonId) {
             .single()
         
         if (error) throw error
+        
+        // Verificar se o aluno tem acesso a este nível (se não for admin)
+        if (!isAdmin && studentData && studentData.level_id !== lesson.level_id) {
+            Toast.warning('Nível bloqueado', 'Você não tem acesso a este nível.')
+            return
+        }
         
         currentLessonId = lessonId
         showVideoModal(lesson)
@@ -1370,7 +1787,6 @@ function showVideoModal(lesson) {
     document.getElementById('videoTitle').textContent = lesson.title
     document.getElementById('videoDescription').textContent = lesson.description || 'Sem descrição disponível.'
     
-    // Vídeo
     let videoHtml = ''
     if (lesson.video_url) {
         const url = lesson.video_url
@@ -1394,16 +1810,13 @@ function showVideoModal(lesson) {
                 <div style="text-align:center;">
                     <i class="fas fa-video" style="font-size:48px;color:var(--text-muted);"></i>
                     <p style="color:var(--text-secondary);margin-top:12px;">Vídeo não disponível</p>
-                    <p style="color:var(--text-muted);font-size:13px;">Adicione o link no painel administrativo</p>
                 </div>
             </div>
         `
     }
     container.innerHTML = videoHtml
     
-    // Verificar progresso atual
     checkProgress(lesson.id)
-    
     videoModal.classList.add('active')
 }
 
@@ -1472,7 +1885,6 @@ function setupTheme() {
     const toggle = document.getElementById('themeToggle')
     if (!toggle) return
     
-    // Carregar tema salvo
     if (localStorage.getItem('theme') === 'light') {
         document.documentElement.setAttribute('data-theme', 'light')
         toggle.querySelector('i').className = 'fas fa-sun'
@@ -1512,12 +1924,8 @@ function setupMobileMenu() {
 // INICIALIZAR EVENTOS
 // ============================================
 function initEvents() {
-    // Botão Entrar
-    if (authBtn) {
-        authBtn.addEventListener('click', openAuthModal)
-    }
+    if (authBtn) authBtn.addEventListener('click', openAuthModal)
     
-    // Botão Começar Agora
     if (ctaBtn) {
         ctaBtn.addEventListener('click', function() {
             if (currentUser) {
@@ -1528,7 +1936,6 @@ function initEvents() {
         })
     }
     
-    // Fechar modal
     if (modalClose) {
         modalClose.addEventListener('click', () => {
             authModal.classList.remove('active')
@@ -1543,7 +1950,6 @@ function initEvents() {
         })
     }
     
-    // Switch entre login e registro
     if (switchToRegister) {
         switchToRegister.addEventListener('click', (e) => {
             e.preventDefault()
@@ -1562,21 +1968,10 @@ function initEvents() {
         })
     }
     
-    // Forms
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin)
-    }
+    if (loginForm) loginForm.addEventListener('submit', handleLogin)
+    if (registerForm) registerForm.addEventListener('submit', handleRegister)
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout)
     
-    if (registerForm) {
-        registerForm.addEventListener('submit', handleRegister)
-    }
-    
-    // Logout
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout)
-    }
-    
-    // Vídeo modal
     if (videoClose) {
         videoClose.addEventListener('click', () => {
             videoModal.classList.remove('active')
@@ -1601,10 +1996,17 @@ function initEvents() {
         markCompletedBtn.addEventListener('click', () => markProgress('completed'))
     }
     
-    // Menu mobile
-    setupMobileMenu()
+    // Admin nav link
+    if (navAdmin) {
+        navAdmin.addEventListener('click', (e) => {
+            e.preventDefault()
+            if (isAdmin) {
+                loadAdminPanel()
+            }
+        })
+    }
     
-    // Tema
+    setupMobileMenu()
     setupTheme()
 }
 
@@ -1612,15 +2014,20 @@ function initEvents() {
 // INICIALIZAR
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar referências DOM
     initElements()
-    
-    // Configurar eventos
     initEvents()
-    
-    // Verificar sessão e carregar dados
     checkSession()
 })
+
+// Expor funções globalmente
+window.loadAdminPanel = loadAdminPanel
+window.loadLevels = loadLevels
+window.refreshAdmin = refreshAdmin
+window.updateStudentLevel = updateStudentLevel
+window.toggleApproval = toggleApproval
+window.openLesson = openLesson
+window.openAuthModal = openAuthModal
+window.isAdmin = () => isAdmin
 </script>
 </body>
 </html>

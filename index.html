@@ -4,316 +4,1284 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edu Mais - Domine o Excel</title>
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* ===== TODOS OS ESTILOS AQUI ===== */
+        :root {
+            --primary: #217346;
+            --primary-light: #2E8B57;
+            --primary-dark: #1E5F3E;
+            --primary-gradient: linear-gradient(135deg, #217346 0%, #2E8B57 50%, #3BA370 100%);
+            --bg-primary: #0a0e0d;
+            --bg-secondary: #111815;
+            --bg-card: #1a241f;
+            --bg-card-hover: #22332b;
+            --text-primary: #e8f5ed;
+            --text-secondary: #a8c8b8;
+            --text-muted: #6a8a7a;
+            --border-color: #2a3f35;
+            --shadow: 0 8px 32px rgba(0,0,0,0.6);
+            --radius: 16px;
+            --radius-sm: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f0f7f3;
+            --bg-secondary: #e4efe9;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f5faf7;
+            --text-primary: #1a2e24;
+            --text-secondary: #2a4a3a;
+            --text-muted: #5a7a6a;
+            --border-color: #c0d8d0;
+            --shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: var(--transition);
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .highlight {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Botões */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(33,115,70,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(33,115,70,0.5); }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary-light); }
+        .btn-outline-danger {
+            background: transparent;
+            color: #ff6b6b;
+            border: 2px solid #ff6b6b;
+        }
+        .btn-outline-danger:hover { background: #ff6b6b; color: #fff; }
+        .btn-success { background: #25D366; color: #fff; }
+        .btn-success:hover { background: #128C7E; transform: translateY(-2px); }
+        .btn-sm { padding: 6px 16px; font-size: 13px; }
+        .btn-lg { padding: 14px 36px; font-size: 16px; }
+        .btn-full { width: 100%; justify-content: center; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(10, 14, 13, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(46, 139, 87, 0.2);
+            transition: var(--transition);
+        }
+        [data-theme="light"] .header {
+            background: rgba(240, 247, 243, 0.9);
+        }
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .logo {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+        .brand-text {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            list-style: none;
+        }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: var(--bg-card);
+        }
+        .nav-link.active {
+            color: var(--primary-light);
+            background: rgba(46, 139, 87, 0.1);
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-theme {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .btn-theme:hover {
+            border-color: var(--primary);
+            color: var(--primary-light);
+        }
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background: var(--text-primary);
+            transition: var(--transition);
+            border-radius: 2px;
+        }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        /* Hero */
+        .hero {
+            padding: 140px 0 80px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        .hero-title {
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+        }
+        .hero-stats {
+            display: flex;
+            gap: 40px;
+        }
+        .stat-number {
+            display: block;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary-light);
+        }
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .hero-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .hero-illustration {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(33,115,70,0.3);
+        }
+        .hero-illustration > i {
+            font-size: 120px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* Níveis */
+        .levels-section {
+            padding: 80px 0;
+        }
+        .section-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 48px;
+        }
+        .section-title {
+            font-size: 40px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+        .section-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+        }
+        .level-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 32px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .level-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 0 30px rgba(33,115,70,0.15);
+        }
+        .level-card.locked { opacity: 0.6; cursor: not-allowed; }
+        .level-card.locked:hover { transform: none; box-shadow: none; }
+        .level-icon { font-size: 40px; margin-bottom: 12px; }
+        .level-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .level-name { font-size: 22px; font-weight: 700; }
+        .level-badge {
+            padding: 2px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .level-badge.locked { background: #ff6b6b20; color: #ff6b6b; }
+        .level-badge.unlocked { background: rgba(46,139,87,0.15); color: var(--primary-light); }
+        .level-badge.completed { background: rgba(46,139,87,0.25); color: var(--primary-light); }
+        .level-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .level-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-primary);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            transition: width 0.8s ease;
+            width: 0%;
+        }
+        .progress-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .level-lessons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+        .lesson-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-primary);
+            transition: var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-secondary);
+        }
+        .lesson-item:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+        .lesson-item.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .lesson-item.locked:hover {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+        }
+        .lesson-status.watched { color: var(--primary-light); }
+        .lesson-title { flex: 1; font-size: 14px; }
+        .lesson-duration { font-size: 12px; color: var(--text-muted); }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 48px 0 24px;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .footer-brand p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+        .footer-links h4, .footer-social h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        .footer-links a {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 4px 0;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .footer-links a:hover { color: var(--primary-light); }
+        .social-icons {
+            display: flex;
+            gap: 12px;
+        }
+        .social-icons a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        .social-icons a:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .footer-bottom {
+            text-align: center;
+            padding-top: 24px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            max-width: 480px;
+            width: 90%;
+            padding: 40px;
+            position: relative;
+            border: 1px solid rgba(46,139,87,0.2);
+            box-shadow: var(--shadow);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-video { max-width: 800px; padding: 0; overflow: hidden; }
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: transparent;
+            border: none;
+            font-size: 28px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .modal-close:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+        .modal-header { text-align: center; margin-bottom: 28px; }
+        .modal-logo { height: 50px; width: auto; margin-bottom: 12px; }
+        .modal-header h3 { font-size: 24px; font-weight: 700; }
+        .modal-header p { color: var(--text-secondary); font-size: 14px; }
+        .auth-form { display: none; flex-direction: column; gap: 16px; }
+        .auth-form.active { display: flex; }
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .modal-switch {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        .modal-switch a {
+            color: var(--primary-light);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .modal-switch a:hover { text-decoration: underline; }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .video-info { padding: 24px 32px 32px; }
+        .video-info h3 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .video-info p { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
+        .video-info .btn { margin-right: 8px; }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .hero .container { grid-template-columns: 1fr; text-align: center; }
+            .hero-title { font-size: 40px; }
+            .hero-buttons { justify-content: center; }
+            .hero-stats { justify-content: center; }
+            .hero-illustration { max-width: 280px; }
+            .hero-illustration > i { font-size: 80px; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+        }
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: var(--bg-card);
+                flex-direction: column;
+                padding: 16px 24px;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .nav-links.open { display: flex; }
+            .hamburger { display: flex; }
+            .hero-title { font-size: 32px; }
+            .section-title { font-size: 28px; }
+            .levels-grid { grid-template-columns: 1fr; }
+            .modal { padding: 24px; }
+            .footer-grid { grid-template-columns: 1fr; text-align: center; }
+            .social-icons { justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .hero-title { font-size: 28px; }
+            .hero-illustration { max-width: 200px; }
+            .hero-illustration > i { font-size: 60px; }
+        }
+    </style>
 </head>
 <body>
-    <!-- ========== HEADER ========== -->
-    <header class="header">
-        <div class="container">
-            <nav class="nav">
-                <div class="nav-brand">
-                    <img src="assets/images/edu.png" alt="Edu Mais" class="logo">
-                    <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+
+<!-- ========== HEADER ========== -->
+<header class="header">
+    <div class="container">
+        <nav class="nav">
+            <div class="nav-brand">
+                <img src="assets/images/edu.png" alt="Edu Mais" class="logo" onerror="this.style.display='none'">
+                <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="#home" class="nav-link active">Início</a>
+                <a href="#niveis" class="nav-link">Níveis</a>
+                <a href="#contato" class="nav-link">Contato</a>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-theme" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn btn-primary btn-sm" id="authBtn">Entrar</button>
+                <button class="btn btn-outline-danger btn-sm" id="logoutBtn" style="display:none;">Sair</button>
+                <button class="hamburger" id="hamburger">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- ========== HERO ========== -->
+<section class="hero" id="home">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                Domine o <span class="highlight">Excel</span><br>
+                Você <span class="highlight">aprofunde</span>
+            </h1>
+            <p class="hero-subtitle">
+                Do zero ao avançado com aulas práticas e projetos reais.
+                Aprenda no seu ritmo com a melhor plataforma de Excel.
+            </p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary btn-lg" id="ctaBtn">
+                    <i class="fas fa-play-circle"></i> Começar Agora
+                </button>
+                <a href="#niveis" class="btn btn-outline btn-lg">
+                    <i class="fas fa-layer-group"></i> Ver Níveis
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="statLevels">0</span>
+                    <span class="stat-label">Níveis</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="statLessons">0</span>
+                    <span class="stat-label">Aulas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="statStudents">0</span>
+                    <span class="stat-label">Alunos</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-illustration">
+                <i class="fas fa-file-excel"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== NÍVEIS ========== -->
+<section class="levels-section" id="niveis">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Explore os <span class="highlight">Níveis</span></h2>
+            <p class="section-subtitle">Uma jornada completa do iniciante ao mestre do Excel</p>
+        </div>
+        <div class="levels-grid" id="levelsContainer">
+            <div style="text-align:center;padding:40px;grid-column:1/-1;">
+                <i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i>
+                <p style="color:var(--text-secondary);margin-top:12px;">Carregando níveis...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== CONTATO ========== -->
+<section class="levels-section" id="contato" style="padding-top:0;">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Entre em <span class="highlight">Contato</span></h2>
+            <p class="section-subtitle">Tem dúvidas? Estamos aqui para ajudar!</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;max-width:800px;margin:0 auto;">
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:32px;border:1px solid var(--border-color);text-align:center;">
+                <i class="fab fa-whatsapp" style="font-size:48px;color:#25D366;"></i>
+                <h3 style="margin:12px 0 8px;">WhatsApp</h3>
+                <a href="https://wa.me/244926261011" target="_blank" style="color:var(--text-secondary);text-decoration:none;">+244 926 261 011</a>
+            </div>
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:32px;border:1px solid var(--border-color);text-align:center;">
+                <i class="fas fa-envelope" style="font-size:48px;color:var(--primary-light);"></i>
+                <h3 style="margin:12px 0 8px;">Email</h3>
+                <a href="mailto:suport.excelao@gmail.com" style="color:var(--text-secondary);text-decoration:none;">suport.excelao@gmail.com</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+                <p>Domine o Excel. Você aprofunde.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Links</h4>
+                <a href="#home">Início</a>
+                <a href="#niveis">Níveis</a>
+                <a href="#contato">Contato</a>
+            </div>
+            <div class="footer-links">
+                <h4>Suporte</h4>
+                <a href="https://wa.me/244926261011" target="_blank">WhatsApp</a>
+                <a href="mailto:suport.excelao@gmail.com">Email</a>
+            </div>
+            <div class="footer-social">
+                <h4>Redes</h4>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Edu Mais. Todos os direitos reservados.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- ========== MODAL LOGIN ========== -->
+<div class="modal-overlay" id="authModal">
+    <div class="modal">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <div class="modal-header">
+            <h3>Edu <span class="highlight">Mais</span></h3>
+            <p id="modalSubtitle">Entre na sua conta para continuar</p>
+        </div>
+        <form id="loginForm" class="auth-form active">
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Senha</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+            <p class="modal-switch">
+                Não tem conta? <a href="#" id="switchToRegister">Criar conta</a>
+            </p>
+        </form>
+        <form id="registerForm" class="auth-form">
+            <div class="form-group">
+                <label><i class="fas fa-user"></i> Nome</label>
+                <input type="text" id="registerName" placeholder="Seu nome" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" id="registerEmail" placeholder="seu@email.com" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-phone"></i> Telefone</label>
+                <input type="tel" id="registerPhone" placeholder="+244 900 000 000">
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lock"></i> Senha</label>
+                <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Criar conta</button>
+            <p class="modal-switch">
+                Já tem conta? <a href="#" id="switchToLogin">Fazer login</a>
+            </p>
+        </form>
+    </div>
+</div>
+
+<!-- ========== MODAL VÍDEO ========== -->
+<div class="modal-overlay" id="videoModal">
+    <div class="modal modal-video">
+        <button class="modal-close" id="videoClose">&times;</button>
+        <div class="video-container" id="videoContainer">
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg-primary);padding:40px;">
+                <div style="text-align:center;">
+                    <i class="fas fa-video" style="font-size:48px;color:var(--text-muted);"></i>
+                    <p style="color:var(--text-secondary);margin-top:12px;">Vídeo não disponível</p>
+                </div>
+            </div>
+        </div>
+        <div class="video-info">
+            <h3 id="videoTitle">Título da Aula</h3>
+            <p id="videoDescription">Descrição da aula</p>
+            <button class="btn btn-primary btn-sm" id="markWatched">
+                <i class="fas fa-check"></i> Marcar como assistida
+            </button>
+            <button class="btn btn-outline btn-sm" id="markCompleted">
+                <i class="fas fa-check-double"></i> Concluir aula
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== SUPABASE + SCRIPTS ========== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+<script>
+// ============================================
+// CONFIGURAÇÃO SUPABASE
+// ============================================
+const SUPABASE_URL = 'https://gslhfgaoqkcrhyfnmmxt.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// ============================================
+// ESTADO
+// ============================================
+let currentUser = null
+let currentLevels = []
+let currentLessonId = null
+
+// ============================================
+// DOM ELEMENTS
+// ============================================
+const authBtn = document.getElementById('authBtn')
+const logoutBtn = document.getElementById('logoutBtn')
+const authModal = document.getElementById('authModal')
+const modalClose = document.getElementById('modalClose')
+const loginForm = document.getElementById('loginForm')
+const registerForm = document.getElementById('registerForm')
+const switchToRegister = document.getElementById('switchToRegister')
+const switchToLogin = document.getElementById('switchToLogin')
+const modalSubtitle = document.getElementById('modalSubtitle')
+const ctaBtn = document.getElementById('ctaBtn')
+const levelsContainer = document.getElementById('levelsContainer')
+const videoModal = document.getElementById('videoModal')
+const videoClose = document.getElementById('videoClose')
+
+// ============================================
+// AUTENTICAÇÃO
+// ============================================
+async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+        currentUser = session.user
+        authBtn.style.display = 'none'
+        logoutBtn.style.display = 'inline-flex'
+    } else {
+        currentUser = null
+        authBtn.style.display = 'inline-flex'
+        logoutBtn.style.display = 'none'
+    }
+    loadLevels()
+}
+
+async function handleLogin(e) {
+    e.preventDefault()
+    const email = document.getElementById('loginEmail').value
+    const password = document.getElementById('loginPassword').value
+    
+    try {
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
+        authModal.classList.remove('active')
+        await checkSession()
+        alert('Login realizado com sucesso!')
+    } catch (error) {
+        alert('Erro: ' + error.message)
+    }
+}
+
+async function handleRegister(e) {
+    e.preventDefault()
+    const fullName = document.getElementById('registerName').value
+    const email = document.getElementById('registerEmail').value
+    const phone = document.getElementById('registerPhone').value
+    const password = document.getElementById('registerPassword').value
+    
+    if (password.length < 6) {
+        alert('A senha deve ter pelo menos 6 caracteres.')
+        return
+    }
+    
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { full_name: fullName } }
+        })
+        if (error) throw error
+        
+        // Criar na tabela students
+        await supabase.from('students').insert({
+            id: data.user.id,
+            email: email,
+            full_name: fullName,
+            phone: phone || null
+        })
+        
+        alert('Conta criada com sucesso! Faça login.')
+        registerForm.reset()
+        switchToLogin.click()
+    } catch (error) {
+        alert('Erro: ' + error.message)
+    }
+}
+
+async function handleLogout() {
+    await supabase.auth.signOut()
+    currentUser = null
+    authBtn.style.display = 'inline-flex'
+    logoutBtn.style.display = 'none'
+    loadLevels()
+    alert('Logout realizado!')
+}
+
+// ============================================
+// CARREGAR NÍVEIS
+// ============================================
+async function loadLevels() {
+    try {
+        // Buscar níveis com aulas
+        const { data: levels, error } = await supabase
+            .from('levels')
+            .select(`
+                *,
+                lessons:lessons (
+                    id,
+                    title,
+                    description,
+                    video_url,
+                    video_duration,
+                    "order"
+                )
+            `)
+            .eq('is_active', true)
+            .order('order')
+        
+        if (error) throw error
+        
+        currentLevels = levels || []
+        
+        // Buscar progresso se usuário logado
+        let progressMap = new Map()
+        if (currentUser) {
+            const { data: progress } = await supabase
+                .from('progress')
+                .select('lesson_id, watched, completed')
+                .eq('student_id', currentUser.id)
+            
+            if (progress) {
+                progress.forEach(p => {
+                    progressMap.set(p.lesson_id, { 
+                        watched: p.watched, 
+                        completed: p.completed 
+                    })
+                })
+            }
+        }
+        
+        // Atualizar estatísticas
+        const { count: totalStudents } = await supabase
+            .from('students')
+            .select('*', { count: 'exact', head: true })
+        
+        document.getElementById('statLevels').textContent = levels?.length || 0
+        document.getElementById('statLessons').textContent = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
+        document.getElementById('statStudents').textContent = totalStudents || 0
+        
+        // Renderizar
+        renderLevels(levels || [], progressMap)
+        
+    } catch (error) {
+        console.error('Erro:', error)
+        levelsContainer.innerHTML = `
+            <div style="text-align:center;padding:40px;grid-column:1/-1;">
+                <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i>
+                <p style="color:var(--text-secondary);margin-top:12px;">Erro ao carregar níveis</p>
+                <button onclick="loadLevels()" class="btn btn-primary btn-sm" style="margin-top:12px;">
+                    <i class="fas fa-sync"></i> Tentar novamente
+                </button>
+            </div>
+        `
+    }
+}
+
+// ============================================
+// RENDERIZAR NÍVEIS
+// ============================================
+function renderLevels(levels, progressMap) {
+    if (!levels || levels.length === 0) {
+        levelsContainer.innerHTML = `
+            <div style="text-align:center;padding:40px;grid-column:1/-1;">
+                <i class="fas fa-folder-open" style="font-size:48px;color:var(--text-muted);"></i>
+                <p style="color:var(--text-secondary);margin-top:12px;">Nenhum nível disponível.</p>
+            </div>
+        `
+        return
+    }
+    
+    // Calcular qual nível está desbloqueado
+    let firstLockedIndex = levels.length
+    for (let i = 0; i < levels.length; i++) {
+        const level = levels[i]
+        const totalLessons = level.lessons?.length || 0
+        const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
+        
+        if (!currentUser) {
+            firstLockedIndex = 1
+            break
+        }
+        
+        if (totalLessons > 0 && watchedLessons < totalLessons) {
+            firstLockedIndex = i
+            break
+        }
+    }
+    
+    levelsContainer.innerHTML = levels.map((level, index) => {
+        const totalLessons = level.lessons?.length || 0
+        const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
+        const isCompleted = currentUser && totalLessons > 0 && watchedLessons === totalLessons
+        const isLocked = !currentUser ? index > 0 : index > firstLockedIndex
+        
+        // Ordenar aulas
+        const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+        
+        return `
+            <div class="level-card ${isLocked ? 'locked' : ''}">
+                <div class="level-icon">${level.icon || '📚'}</div>
+                <div class="level-header">
+                    <h3 class="level-name">${level.name}</h3>
+                    <span class="level-badge ${isLocked ? 'locked' : isCompleted ? 'completed' : 'unlocked'}">
+                        ${isLocked ? '🔒 Bloqueado' : isCompleted ? '✅ Concluído' : '🎯 Em andamento'}
+                    </span>
+                </div>
+                <p class="level-description">${level.description || 'Aprenda e domine este nível.'}</p>
+                
+                <div class="level-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${totalLessons > 0 ? (watchedLessons / totalLessons) * 100 : 0}%"></div>
+                    </div>
+                    <span class="progress-text">${totalLessons > 0 ? Math.round((watchedLessons / totalLessons) * 100) : 0}%</span>
                 </div>
                 
-                <div class="nav-links" id="navLinks">
-                    <a href="#home" class="nav-link active">Início</a>
-                    <a href="#niveis" class="nav-link">Níveis</a>
-                    <a href="#sobre" class="nav-link">Sobre</a>
-                    <a href="#contato" class="nav-link">Contato</a>
-                </div>
-
-                <div class="nav-actions">
-                    <button class="btn-theme" id="themeToggle" title="Alternar tema">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <button class="btn btn-primary btn-sm" id="authBtn">Entrar</button>
-                    <button class="btn btn-outline btn-sm" id="adminBtn" style="display:none;">Admin</button>
-                    <button class="btn btn-outline-danger btn-sm" id="logoutBtn" style="display:none;">Sair</button>
-                    <button class="hamburger" id="hamburger">
-                        <span></span><span></span><span></span>
-                    </button>
-                </div>
-            </nav>
-        </div>
-    </header>
-
-    <!-- ========== MAIN CONTENT ========== -->
-    <main>
-        <!-- Hero Section -->
-        <section class="hero" id="home">
-            <div class="container">
-                <div class="hero-content">
-                    <div class="hero-badge">
-                        <i class="fas fa-graduation-cap"></i>
-                        Aprenda com os melhores
-                    </div>
-                    <h1 class="hero-title">
-                        Domine o <span class="highlight">Excel</span><br>
-                        Você <span class="highlight">aprofunde</span>
-                    </h1>
-                    <p class="hero-subtitle">
-                        Do zero ao avançado com aulas práticas, exercícios e projetos reais.
-                        Aprenda no seu ritmo com a melhor plataforma de Excel.
-                    </p>
-                    <div class="hero-buttons">
-                        <button class="btn btn-primary btn-lg" id="ctaBtn">
-                            <i class="fas fa-play-circle"></i> Começar Agora
-                        </button>
-                        <a href="#niveis" class="btn btn-outline btn-lg">
-                            <i class="fas fa-layer-group"></i> Ver Níveis
-                        </a>
-                    </div>
-                    <div class="hero-stats">
-                        <div class="stat-item">
-                            <span class="stat-number" id="statLevels">3</span>
-                            <span class="stat-label">Níveis</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="statLessons">15</span>
-                            <span class="stat-label">Aulas</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-number" id="statStudents">0</span>
-                            <span class="stat-label">Alunos</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="hero-image">
-                    <div class="hero-illustration">
-                        <i class="fas fa-file-excel"></i>
-                        <div class="floating-icons">
-                            <span class="float-icon"><i class="fas fa-chart-bar"></i></span>
-                            <span class="float-icon"><i class="fas fa-calculator"></i></span>
-                            <span class="float-icon"><i class="fas fa-table"></i></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Níveis Section -->
-        <section class="levels-section" id="niveis">
-            <div class="container">
-                <div class="section-header">
-                    <span class="section-badge">Níveis</span>
-                    <h2 class="section-title">Explore os <span class="highlight">Níveis</span></h2>
-                    <p class="section-subtitle">
-                        Uma jornada completa do iniciante ao mestre do Excel
-                    </p>
-                </div>
-
-                <div class="levels-grid" id="levelsContainer">
-                    <!-- Renderizado via JavaScript -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Sobre Section -->
-        <section class="about-section" id="sobre">
-            <div class="container">
-                <div class="about-content">
-                    <div class="about-text">
-                        <span class="section-badge">Sobre</span>
-                        <h2 class="section-title">Por que <span class="highlight">Edu Mais</span>?</h2>
-                        <p>
-                            A Edu Mais é uma plataforma de ensino criada para ajudar você a dominar 
-                            o Excel de forma prática e eficiente. Nossas aulas são desenvolvidas por 
-                            especialistas com anos de experiência no mercado.
-                        </p>
-                        <ul class="about-features">
-                            <li><i class="fas fa-check-circle"></i> Aulas práticas com exemplos reais</li>
-                            <li><i class="fas fa-check-circle"></i> Progresso personalizado</li>
-                            <li><i class="fas fa-check-circle"></i> Acesso vitalício</li>
-                            <li><i class="fas fa-check-circle"></i> Suporte via WhatsApp</li>
-                        </ul>
-                        <div class="about-contact">
-                            <a href="https://wa.me/244926261011" target="_blank" class="btn btn-success">
-                                <i class="fab fa-whatsapp"></i> Fale Conosco
-                            </a>
-                            <a href="mailto:suport.excelao@gmail.com" class="btn btn-outline">
-                                <i class="fas fa-envelope"></i> Email
-                            </a>
-                        </div>
-                    </div>
-                    <div class="about-image">
-                        <div class="about-card">
-                            <i class="fas fa-quote-left"></i>
-                            <p>"O conhecimento transforma vidas. Na Edu Mais, acreditamos que 
-                            todos podem aprender Excel e alcançar seus objetivos."</p>
-                            <div class="about-author">
-                                <strong>Agostinho Vasco Dias</strong>
-                                <span>Fundador</span>
+                <div class="level-lessons">
+                    ${lessons.map(lesson => {
+                        const progress = progressMap.get(lesson.id) || {}
+                        const isWatched = progress.watched || false
+                        const canAccess = !isLocked || isWatched
+                        
+                        return `
+                            <div class="lesson-item ${!canAccess ? 'locked' : ''}" 
+                                 onclick="${canAccess ? `openLesson(${lesson.id})` : ''}">
+                                <span class="lesson-status ${isWatched ? 'watched' : ''}">
+                                    ${isWatched ? '✅' : (!canAccess ? '🔒' : '▶️')}
+                                </span>
+                                <span class="lesson-title">${lesson.title}</span>
+                                <span class="lesson-duration">${lesson.video_duration || 0} min</span>
                             </div>
-                        </div>
-                    </div>
+                        `
+                    }).join('')}
                 </div>
             </div>
-        </section>
+        `
+    }).join('')
+}
 
-        <!-- Contato Section -->
-        <section class="contact-section" id="contato">
-            <div class="container">
-                <div class="contact-wrapper">
-                    <div class="contact-info">
-                        <span class="section-badge">Contato</span>
-                        <h2 class="section-title">Entre em <span class="highlight">Contato</span></h2>
-                        <p>
-                            Tem dúvidas? Quer saber mais sobre nossos cursos?
-                            Estamos aqui para ajudar!
-                        </p>
-                        <div class="contact-details">
-                            <div class="contact-item">
-                                <i class="fab fa-whatsapp"></i>
-                                <div>
-                                    <strong>WhatsApp</strong>
-                                    <a href="https://wa.me/244926261011" target="_blank">+244 926 261 011</a>
-                                </div>
-                            </div>
-                            <div class="contact-item">
-                                <i class="fas fa-envelope"></i>
-                                <div>
-                                    <strong>Email</strong>
-                                    <a href="mailto:suport.excelao@gmail.com">suport.excelao@gmail.com</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="contact-form-wrapper">
-                        <form class="contact-form" id="contactForm">
-                            <input type="text" placeholder="Seu nome" required>
-                            <input type="email" placeholder="Seu email" required>
-                            <textarea rows="4" placeholder="Sua mensagem" required></textarea>
-                            <button type="submit" class="btn btn-primary">Enviar Mensagem</button>
-                        </form>
-                    </div>
+// ============================================
+// ABRIR AULA
+// ============================================
+async function openLesson(lessonId) {
+    if (!currentUser) {
+        alert('Você precisa estar logado para assistir às aulas.')
+        authBtn.click()
+        return
+    }
+    
+    try {
+        const { data: lesson, error } = await supabase
+            .from('lessons')
+            .select('*')
+            .eq('id', lessonId)
+            .single()
+        
+        if (error) throw error
+        
+        currentLessonId = lessonId
+        showVideoModal(lesson)
+        
+    } catch (error) {
+        alert('Erro ao carregar aula: ' + error.message)
+    }
+}
+
+// ============================================
+// MOSTRAR MODAL DE VÍDEO
+// ============================================
+function showVideoModal(lesson) {
+    const container = document.getElementById('videoContainer')
+    document.getElementById('videoTitle').textContent = lesson.title
+    document.getElementById('videoDescription').textContent = lesson.description || 'Sem descrição.'
+    
+    // Vídeo
+    let videoHtml = ''
+    if (lesson.video_url) {
+        const url = lesson.video_url
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            let videoId = ''
+            if (url.includes('youtu.be')) {
+                videoId = url.split('youtu.be/')[1]?.split('?')[0]
+            } else {
+                videoId = url.split('v=')[1]?.split('&')[0]
+            }
+            videoHtml = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`
+        } else if (url.includes('vimeo.com')) {
+            const videoId = url.split('vimeo.com/')[1]?.split('/')[0]
+            videoHtml = `<iframe src="https://player.vimeo.com/video/${videoId}" allowfullscreen></iframe>`
+        } else {
+            videoHtml = `<p style="color:var(--text-secondary);padding:20px;text-align:center;">Link: <a href="${url}" target="_blank">${url}</a></p>`
+        }
+    } else {
+        videoHtml = `
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg-primary);padding:40px;">
+                <div style="text-align:center;">
+                    <i class="fas fa-video" style="font-size:48px;color:var(--text-muted);"></i>
+                    <p style="color:var(--text-secondary);margin-top:12px;">Vídeo não disponível</p>
+                    <p style="color:var(--text-muted);font-size:13px;">Adicione o link no painel admin</p>
                 </div>
             </div>
-        </section>
-    </main>
+        `
+    }
+    container.innerHTML = videoHtml
+    
+    // Verificar progresso atual
+    checkProgress(lesson.id)
+    
+    videoModal.classList.add('active')
+}
 
-    <!-- ========== FOOTER ========== -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <img src="assets/images/edu.png" alt="Edu Mais" class="logo footer-logo">
-                    <span class="brand-text">Edu <span class="highlight">Mais</span></span>
-                    <p>Domine o Excel. Você aprofunde.</p>
-                </div>
-                <div class="footer-links">
-                    <h4>Links Rápidos</h4>
-                    <a href="#home">Início</a>
-                    <a href="#niveis">Níveis</a>
-                    <a href="#sobre">Sobre</a>
-                    <a href="#contato">Contato</a>
-                </div>
-                <div class="footer-links">
-                    <h4>Suporte</h4>
-                    <a href="https://wa.me/244926261011" target="_blank">WhatsApp</a>
-                    <a href="mailto:suport.excelao@gmail.com">Email</a>
-                </div>
-                <div class="footer-social">
-                    <h4>Redes Sociais</h4>
-                    <div class="social-icons">
-                        <a href="#" target="_blank"><i class="fab fa-facebook"></i></a>
-                        <a href="#" target="_blank"><i class="fab fa-instagram"></i></a>
-                        <a href="#" target="_blank"><i class="fab fa-youtube"></i></a>
-                        <a href="#" target="_blank"><i class="fab fa-linkedin"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 Edu Mais. Todos os direitos reservados.</p>
-            </div>
-        </div>
-    </footer>
+// ============================================
+VERIFICAR PROGRESSO
+// ============================================
+async function checkProgress(lessonId) {
+    if (!currentUser) return
+    
+    const { data } = await supabase
+        .from('progress')
+        .select('watched, completed')
+        .eq('student_id', currentUser.id)
+        .eq('lesson_id', lessonId)
+        .single()
+    
+    const isWatched = data?.watched || false
+    const isCompleted = data?.completed || false
+    
+    document.getElementById('markWatched').textContent = isWatched ? '✅ Assistido' : '📺 Marcar como assistida'
+    document.getElementById('markWatched').disabled = isWatched
+    
+    document.getElementById('markCompleted').textContent = isCompleted ? '✅ Concluída' : '🏁 Concluir aula'
+    document.getElementById('markCompleted').disabled = isCompleted || !isWatched
+}
 
-    <!-- ========== MODAL ========== -->
-    <div class="modal-overlay" id="authModal">
-        <div class="modal">
-            <button class="modal-close" id="modalClose">&times;</button>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <img src="assets/images/edu.png" alt="Edu Mais" class="modal-logo">
-                    <h3>Bem-vindo à <span class="highlight">Edu Mais</span></h3>
-                    <p id="modalSubtitle">Entre na sua conta para continuar</p>
-                </div>
+// ============================================
+// MARCAR PROGRESSO
+// ============================================
+async function markProgress(action) {
+    if (!currentUser || !currentLessonId) return
+    
+    const watched = action === 'watched' || action === 'completed'
+    const completed = action === 'completed'
+    
+    try {
+        const { error } = await supabase
+            .from('progress')
+            .upsert({
+                student_id: currentUser.id,
+                lesson_id: currentLessonId,
+                watched: watched,
+                completed: completed,
+                watched_at: watched ? new Date().toISOString() : null
+            }, { onConflict: 'student_id, lesson_id' })
+        
+        if (error) throw error
+        
+        alert('Progresso atualizado! 🎉')
+        videoModal.classList.remove('active')
+        loadLevels()
+        
+    } catch (error) {
+        alert('Erro: ' + error.message)
+    }
+}
 
-                <!-- Login Form -->
-                <form id="loginForm" class="auth-form active">
-                    <div class="form-group">
-                        <label><i class="fas fa-envelope"></i> Email</label>
-                        <input type="email" id="loginEmail" placeholder="seu@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-lock"></i> Senha</label>
-                        <input type="password" id="loginPassword" placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Entrar</button>
-                    <p class="modal-switch">
-                        Não tem conta? <a href="#" id="switchToRegister">Criar conta</a>
-                    </p>
-                </form>
+// ============================================
+// THEME
+// ============================================
+document.getElementById('themeToggle').addEventListener('click', function() {
+    const current = document.documentElement.getAttribute('data-theme')
+    if (current === 'light') {
+        document.documentElement.removeAttribute('data-theme')
+        this.querySelector('i').className = 'fas fa-moon'
+        localStorage.setItem('theme', 'dark')
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light')
+        this.querySelector('i').className = 'fas fa-sun'
+        localStorage.setItem('theme', 'light')
+    }
+})
 
-                <!-- Register Form -->
-                <form id="registerForm" class="auth-form">
-                    <div class="form-group">
-                        <label><i class="fas fa-user"></i> Nome completo</label>
-                        <input type="text" id="registerName" placeholder="Seu nome" required>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-envelope"></i> Email</label>
-                        <input type="email" id="registerEmail" placeholder="seu@email.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-phone"></i> Telefone (opcional)</label>
-                        <input type="tel" id="registerPhone" placeholder="+244 900 000 000">
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-lock"></i> Senha</label>
-                        <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-full">Criar conta</button>
-                    <p class="modal-switch">
-                        Já tem conta? <a href="#" id="switchToLogin">Fazer login</a>
-                    </p>
-                </form>
-            </div>
-        </div>
-    </div>
+// Carregar tema salvo
+if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light')
+    document.querySelector('#themeToggle i').className = 'fas fa-sun'
+}
 
-    <!-- ========== VIDEO MODAL ========== -->
-    <div class="modal-overlay" id="videoModal">
-        <div class="modal modal-video">
-            <button class="modal-close" id="videoClose">&times;</button>
-            <div class="video-container" id="videoContainer">
-                <!-- Video embed will be inserted here -->
-            </div>
-            <div class="video-info" id="videoInfo">
-                <h3 id="videoTitle">Título da Aula</h3>
-                <p id="videoDescription">Descrição da aula</p>
-                <button class="btn btn-primary btn-sm" id="markWatched">
-                    <i class="fas fa-check"></i> Marcar como assistida
-                </button>
-                <button class="btn btn-outline btn-sm" id="markCompleted">
-                    <i class="fas fa-check-double"></i> Concluir aula
-                </button>
-            </div>
-        </div>
-    </div>
+// ============================================
+// EVENT LISTENERS
+// ============================================
+authBtn.addEventListener('click', () => {
+    authModal.classList.add('active')
+    loginForm.classList.add('active')
+    registerForm.classList.remove('active')
+    modalSubtitle.textContent = 'Entre na sua conta para continuar'
+})
 
-    <!-- ========== SCRIPTS ========== -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/app.js"></script>
+ctaBtn.addEventListener('click', () => {
+    if (currentUser) {
+        document.getElementById('niveis').scrollIntoView({ behavior: 'smooth' })
+    } else {
+        authBtn.click()
+    }
+})
+
+modalClose.addEventListener('click', () => authModal.classList.remove('active'))
+authModal.addEventListener('click', (e) => {
+    if (e.target === authModal) authModal.classList.remove('active')
+})
+
+switchToRegister.addEventListener('click', (e) => {
+    e.preventDefault()
+    loginForm.classList.remove('active')
+    registerForm.classList.add('active')
+    modalSubtitle.textContent = 'Crie sua conta na Edu Mais'
+})
+
+switchToLogin.addEventListener('click', (e) => {
+    e.preventDefault()
+    registerForm.classList.remove('active')
+    loginForm.classList.add('active')
+    modalSubtitle.textContent = 'Entre na sua conta para continuar'
+})
+
+loginForm.addEventListener('submit', handleLogin)
+registerForm.addEventListener('submit', handleRegister)
+logoutBtn.addEventListener('click', handleLogout)
+
+// Vídeo modal
+document.getElementById('markWatched').addEventListener('click', () => markProgress('watched'))
+document.getElementById('markCompleted').addEventListener('click', () => markProgress('completed'))
+
+videoClose.addEventListener('click', () => {
+    videoModal.classList.remove('active')
+    loadLevels()
+})
+videoModal.addEventListener('click', (e) => {
+    if (e.target === videoModal) {
+        videoModal.classList.remove('active')
+        loadLevels()
+    }
+})
+
+// Mobile menu
+document.getElementById('hamburger').addEventListener('click', function() {
+    this.classList.toggle('active')
+    document.getElementById('navLinks').classList.toggle('open')
+})
+
+// ============================================
+// INICIALIZAR
+// ============================================
+checkSession()
+</script>
 </body>
 </html>

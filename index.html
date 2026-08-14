@@ -1166,6 +1166,8 @@ function initElements() {
     adminPanel = document.getElementById('admin')
     adminContent = document.getElementById('adminContent')
     navNiveis = document.getElementById('navNiveis')
+    
+    console.log('✅ Elementos inicializados')
 }
 
 // ============================================
@@ -1190,7 +1192,6 @@ async function checkAdminStatus() {
         
         if (isAdmin) {
             console.log('👑 Admin logado:', data.email)
-            Toast.success('👑 Bem-vindo, Admin!', 'Você tem acesso total ao painel administrativo.')
         }
     } catch {
         isAdmin = false
@@ -1204,12 +1205,11 @@ async function checkAdminStatus() {
 }
 
 // ============================================
-// BUSCAR DADOS DO ALUNO (ADMIN IGNORA STUDENTS)
+// BUSCAR DADOS DO ALUNO
 // ============================================
 async function fetchStudentData() {
     if (!currentUser) return null
     
-    // ⭐ SE FOR ADMIN, NÃO PRECISA DE DADOS DE ALUNO
     if (isAdmin) {
         console.log('👑 Admin - ignorando tabela students')
         studentData = null
@@ -1225,7 +1225,6 @@ async function fetchStudentData() {
         
         if (error) throw error
         
-        // Se não encontrar, criar aluno
         if (!data) {
             console.log('📝 Criando aluno para:', currentUser.email)
             const newStudent = {
@@ -1266,10 +1265,8 @@ async function checkSession() {
         if (authBtn) authBtn.style.display = 'none'
         if (logoutBtn) logoutBtn.style.display = 'inline-flex'
         
-        // Primeiro verifica se é admin
         await checkAdminStatus()
         
-        // Depois busca dados do aluno (se não for admin)
         if (!isAdmin) {
             await fetchStudentData()
             if (studentData && !studentData.is_approved) {
@@ -1292,7 +1289,11 @@ async function checkSession() {
 // ABRIR MODAL DE LOGIN
 // ============================================
 function openAuthModal() {
-    if (!authModal) return
+    console.log('🔓 Abrindo modal de login...')
+    if (!authModal) {
+        console.error('❌ Modal não encontrado!')
+        return
+    }
     authModal.classList.add('active')
     if (loginForm) loginForm.classList.add('active')
     if (registerForm) registerForm.classList.remove('active')
@@ -1304,6 +1305,8 @@ function openAuthModal() {
 // ============================================
 async function handleLogin(e) {
     e.preventDefault()
+    console.log('📝 Tentando login...')
+    
     const email = document.getElementById('loginEmail').value
     const password = document.getElementById('loginPassword').value
     
@@ -1321,6 +1324,7 @@ async function handleLogin(e) {
         loadLevels()
         if (isAdmin) loadAdminPanel()
     } catch (error) {
+        console.error('❌ Erro no login:', error)
         Toast.error('Falha no login', 'Email ou senha incorretos. Tente novamente.')
     }
 }
@@ -1385,7 +1389,6 @@ async function handleRegister(e) {
         console.log('✅ Usuário criado:', data.user.id)
         await new Promise(resolve => setTimeout(resolve, 1500))
         
-        // Criar na tabela students
         const studentData = {
             id: data.user.id,
             email: email,
@@ -1622,7 +1625,7 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // Aluno aprovado - mostra apenas o nível atribuído
+    // Aluno aprovado
     const visibleLevels = levels.filter(level => level.id === userLevelAccess)
     
     if (visibleLevels.length === 0) {
@@ -1686,13 +1689,7 @@ function renderLevels(levels, progressMap, userLevelAccess) {
 }
 
 // ============================================
-// PAINEL ADMIN - ACESSO TOTAL
-// ============================================
-// ============================================
-// PAINEL ADMIN - ACESSO TOTAL (VERSÃO CORRIGIDA)
-// ============================================
-// ============================================
-// PAINEL ADMIN - ACESSO TOTAL (VERSÃO CORRIGIDA)
+// PAINEL ADMIN - VERSÃO CORRIGIDA
 // ============================================
 async function loadAdminPanel() {
     if (!isAdmin) {
@@ -1705,7 +1702,6 @@ async function loadAdminPanel() {
     adminPanel.classList.add('active')
     document.getElementById('admin').scrollIntoView({ behavior: 'smooth' })
     
-    // Mostrar loading
     adminContent.innerHTML = `
         <div style="text-align:center;padding:40px;">
             <i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i>
@@ -1716,7 +1712,7 @@ async function loadAdminPanel() {
     try {
         console.log('📊 Carregando painel admin...')
         
-        // ⭐ BUSCAR ALUNOS SEM O created_at (usa order por enrolled_at)
+        // Buscar alunos
         const { data: students, error: studentsError } = await supabase
             .from('students')
             .select(`
@@ -1732,7 +1728,7 @@ async function loadAdminPanel() {
         
         console.log('✅ Alunos encontrados:', students?.length || 0)
         
-        // 2. Buscar níveis
+        // Buscar níveis
         const { data: levels, error: levelsError } = await supabase
             .from('levels')
             .select('id, name')
@@ -1746,7 +1742,7 @@ async function loadAdminPanel() {
         
         console.log('✅ Níveis encontrados:', levels?.length || 0)
         
-        // 3. Buscar estatísticas
+        // Estatísticas
         const { count: totalStudents } = await supabase
             .from('students')
             .select('*', { count: 'exact', head: true })
@@ -1761,9 +1757,7 @@ async function loadAdminPanel() {
             .select('*', { count: 'exact', head: true })
             .eq('is_approved', false)
         
-        // 4. Construir o HTML
         let html = `
-            <!-- Estatísticas -->
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
                 <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
                     <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${totalStudents || 0}</div>
@@ -1784,13 +1778,11 @@ async function loadAdminPanel() {
             </div>
         `
         
-        // 5. Lista de alunos
         if (!students || students.length === 0) {
             html += `
                 <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
                     <i class="fas fa-users" style="font-size:48px;color:var(--text-muted);"></i>
                     <p style="color:var(--text-secondary);margin-top:12px;">Nenhum aluno cadastrado ainda.</p>
-                    <p style="color:var(--text-muted);font-size:13px;">Os alunos aparecerão aqui após se registrarem.</p>
                 </div>
             `
         } else {
@@ -1799,11 +1791,11 @@ async function loadAdminPanel() {
                     <table style="width:100%;border-collapse:collapse;">
                         <thead>
                             <tr style="background:var(--bg-secondary);">
-                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;text-transform:uppercase;">Aluno</th>
-                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;text-transform:uppercase;">Email</th>
-                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;text-transform:uppercase;">Status</th>
-                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;text-transform:uppercase;">Nível</th>
-                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;text-transform:uppercase;">Ações</th>
+                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Aluno</th>
+                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Email</th>
+                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Status</th>
+                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Nível</th>
+                                <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1864,37 +1856,56 @@ async function loadAdminPanel() {
         `
     }
 }
+
+// ============================================
+// ADMIN - ATUALIZAR NÍVEL
+// ============================================
+async function updateStudentLevel(studentId, levelId) {
+    if (!isAdmin) return
+    
+    try {
+        const { error } = await supabase
+            .from('students')
+            .update({ 
+                level_id: levelId || null,
+                is_approved: true
+            })
+            .eq('id', studentId)
+        
+        if (error) throw error
+        
+        Toast.success('Nível atualizado!', 'O aluno foi atualizado com sucesso.')
+        loadAdminPanel()
+        loadLevels()
+        
+    } catch (error) {
+        Toast.error('Erro', 'Não foi possível atualizar o nível do aluno.')
+    }
 }
 
 // ============================================
-// FUNÇÃO DE DEPURAÇÃO DO ADMIN
+// ADMIN - APROVAR/BLOQUEAR
 // ============================================
-async function debugAdmin() {
-    console.log('🔍 === INICIANDO DEPURAÇÃO ===')
-    console.log('isAdmin:', isAdmin)
-    console.log('currentUser:', currentUser)
+async function toggleApproval(studentId, approve) {
+    if (!isAdmin) return
     
     try {
-        console.log('📊 Testando consulta direta...')
-        const { data, error, status } = await supabase
+        const { error } = await supabase
             .from('students')
-            .select('*')
-            .limit(1)
+            .update({ 
+                is_approved: approve,
+                approved_at: approve ? new Date().toISOString() : null
+            })
+            .eq('id', studentId)
         
-        console.log('Status:', status)
-        console.log('Dados:', data)
-        console.log('Erro:', error)
+        if (error) throw error        
+        Toast.success(approve ? 'Aluno aprovado!' : 'Aluno bloqueado!', 
+                     approve ? 'O aluno agora tem acesso aos conteúdos.' : 'O aluno foi bloqueado.')
+        loadAdminPanel()
+        loadLevels()
         
-        if (error) {
-            console.error('❌ Erro na consulta:', error.message)
-            alert('Erro na consulta: ' + error.message)
-        } else {
-            console.log('✅ Consulta funcionou!')
-            alert('Consulta funcionou! Dados encontrados: ' + (data?.length || 0))
-        }
-    } catch (e) {
-        console.error('❌ Erro na depuração:', e)
-        alert('Erro: ' + e.message)
+    } catch (error) {
+        Toast.error('Erro', 'Não foi possível atualizar o status do aluno.')
     }
 }
 
@@ -1918,7 +1929,6 @@ async function openLesson(lessonId) {
         return
     }
     
-    // Admin pode abrir qualquer aula
     if (!isAdmin && (!studentData || !studentData.is_approved || !studentData.level_id)) {
         Toast.warning('Sem acesso', 'Sua conta não tem permissão para acessar este conteúdo.')
         return
@@ -1933,7 +1943,6 @@ async function openLesson(lessonId) {
         
         if (error) throw error
         
-        // Verificar se o aluno tem acesso a este nível
         if (!isAdmin && studentData && studentData.level_id !== lesson.level_id) {
             Toast.warning('Nível bloqueado', 'Você não tem acesso a este nível.')
             return
@@ -2094,8 +2103,18 @@ function setupMobileMenu() {
 // INICIALIZAR EVENTOS
 // ============================================
 function initEvents() {
+    console.log('🔧 Inicializando eventos...')
+    
     // Botão Entrar
-    if (authBtn) authBtn.addEventListener('click', openAuthModal)
+    if (authBtn) {
+        authBtn.addEventListener('click', function(e) {
+            console.log('🖱️ Clique no botão Entrar')
+            openAuthModal()
+        })
+        console.log('✅ Botão Entrar configurado')
+    } else {
+        console.error('❌ Botão Entrar não encontrado!')
+    }
     
     // Botão Começar Agora
     if (ctaBtn) {
@@ -2106,6 +2125,7 @@ function initEvents() {
                 openAuthModal()
             }
         })
+        console.log('✅ Botão Começar Agora configurado')
     }
     
     // Fechar modal
@@ -2113,6 +2133,7 @@ function initEvents() {
         modalClose.addEventListener('click', () => {
             authModal.classList.remove('active')
         })
+        console.log('✅ Fechar modal configurado')
     }
     
     if (authModal) {
@@ -2131,6 +2152,7 @@ function initEvents() {
             if (registerForm) registerForm.classList.add('active')
             if (modalSubtitle) modalSubtitle.textContent = 'Crie sua conta na Edu Mais'
         })
+        console.log('✅ Switch registro configurado')
     }
     
     if (switchToLogin) {
@@ -2140,12 +2162,24 @@ function initEvents() {
             if (loginForm) loginForm.classList.add('active')
             if (modalSubtitle) modalSubtitle.textContent = 'Entre na sua conta para continuar'
         })
+        console.log('✅ Switch login configurado')
     }
     
     // Forms
-    if (loginForm) loginForm.addEventListener('submit', handleLogin)
-    if (registerForm) registerForm.addEventListener('submit', handleRegister)
-    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout)
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin)
+        console.log('✅ Form login configurado')
+    }
+    
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister)
+        console.log('✅ Form registro configurado')
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout)
+        console.log('✅ Logout configurado')
+    }
     
     // Vídeo modal
     if (videoClose) {
@@ -2182,6 +2216,8 @@ function initEvents() {
     
     setupMobileMenu()
     setupTheme()
+    
+    console.log('✅ Todos os eventos configurados!')
 }
 
 // ============================================

@@ -1169,7 +1169,7 @@ function initElements() {
 }
 
 // ============================================
-// VERIFICAR SE É ADMIN (VERSÃO CORRIGIDA)
+// VERIFICAR SE É ADMIN
 // ============================================
 async function checkAdminStatus() {
     if (!currentUser) {
@@ -1182,11 +1182,16 @@ async function checkAdminStatus() {
     try {
         const { data, error } = await supabase
             .from('admins')
-            .select('id')
+            .select('id, email, full_name, role')
             .eq('id', currentUser.id)
-            .single()
+            .maybeSingle()
         
         isAdmin = !!data && !error
+        
+        if (isAdmin) {
+            console.log('👑 Admin logado:', data.email)
+            Toast.success('👑 Bem-vindo, Admin!', 'Você tem acesso total ao painel administrativo.')
+        }
     } catch {
         isAdmin = false
     }
@@ -1199,17 +1204,14 @@ async function checkAdminStatus() {
 }
 
 // ============================================
-// BUSCAR DADOS DO ALUNO (VERSÃO CORRIGIDA)
+// BUSCAR DADOS DO ALUNO (ADMIN IGNORA STUDENTS)
 // ============================================
 async function fetchStudentData() {
     if (!currentUser) return null
     
-    // ⭐ PRIMEIRO: VERIFICAR SE É ADMIN
-    const isAdminUser = await checkAdminStatus()
-    
     // ⭐ SE FOR ADMIN, NÃO PRECISA DE DADOS DE ALUNO
-    if (isAdminUser) {
-        console.log('👑 Usuário é admin - ignorando tabela students')
+    if (isAdmin) {
+        console.log('👑 Admin - ignorando tabela students')
         studentData = null
         return null
     }
@@ -1219,31 +1221,31 @@ async function fetchStudentData() {
             .from('students')
             .select('*')
             .eq('id', currentUser.id)
-            .single()
+            .maybeSingle()
         
-        if (error) {
-            if (error.code === 'PGRST116') {
-                console.log('📝 Criando aluno para:', currentUser.email)
-                const newStudent = {
-                    id: currentUser.id,
-                    email: currentUser.email,
-                    full_name: currentUser.user_metadata?.full_name || currentUser.email,
-                    is_active: true,
-                    is_approved: false,
-                    level_id: null
-                }
-                const { error: insertError } = await supabase
-                    .from('students')
-                    .insert(newStudent)
-                
-                if (insertError) {
-                    console.error('❌ Erro ao criar aluno:', insertError)
-                    return null
-                }
-                studentData = newStudent
-                return newStudent
+        if (error) throw error
+        
+        // Se não encontrar, criar aluno
+        if (!data) {
+            console.log('📝 Criando aluno para:', currentUser.email)
+            const newStudent = {
+                id: currentUser.id,
+                email: currentUser.email,
+                full_name: currentUser.user_metadata?.full_name || currentUser.email,
+                is_active: true,
+                is_approved: false,
+                level_id: null
             }
-            throw error
+            const { error: insertError } = await supabase
+                .from('students')
+                .insert(newStudent)
+            
+            if (insertError) {
+                console.error('❌ Erro ao criar aluno:', insertError)
+                return null
+            }
+            studentData = newStudent
+            return newStudent
         }
         
         studentData = data
@@ -1264,15 +1266,15 @@ async function checkSession() {
         if (authBtn) authBtn.style.display = 'none'
         if (logoutBtn) logoutBtn.style.display = 'inline-flex'
         
+        // Primeiro verifica se é admin
         await checkAdminStatus()
-        await fetchStudentData()
         
-        if (!isAdmin && studentData && !studentData.is_approved) {
-            Toast.info('Conta pendente', 'Sua conta aguarda aprovação do administrador.')
-        }
-        
-        if (isAdmin) {
-            Toast.success('Bem-vindo, Admin!', 'Você tem acesso total ao painel administrativo.')
+        // Depois busca dados do aluno (se não for admin)
+        if (!isAdmin) {
+            await fetchStudentData()
+            if (studentData && !studentData.is_approved) {
+                Toast.info('Conta pendente', 'Sua conta aguarda aprovação do administrador.')
+            }
         }
     } else {
         currentUser = null
@@ -1477,7 +1479,7 @@ async function loadLevels() {
         let progressMap = new Map()
         let userLevelAccess = null
         
-        if (currentUser) {
+        if (currentUser && !isAdmin) {
             const { data: progress } = await supabase
                 .from('progress')
                 .select('lesson_id, watched, completed')
@@ -1540,31 +1542,8 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // ⭐ ADMIN NÃO PRECISA DE APROVAÇÃO!
-    const isAdminUser = isAdmin
-    
-    // ⭐ Só verifica aprovação se NÃO for admin
-    const hasAccess = !isAdminUser && currentUser && studentData && studentData.is_approved && userLevelAccess
-    const isPending = !isAdminUser && currentUser && studentData && !studentData.is_approved
-    
-    // Usuário não logado
-    if (!currentUser) {
-        levelsContainer.innerHTML = `
-            <div class="access-denied">
-                <i class="fas fa-graduation-cap"></i>
-                <h3>Faça login para ver os níveis</h3>
-                <p>Crie sua conta ou faça login para ter acesso a todos os níveis e aulas.</p>
-                <button class="btn btn-primary" onclick="openAuthModal()">
-                    <i class="fas fa-sign-in-alt"></i> Entrar agora
-                </button>
-            </div>
-        `
-        return
-    }
-    
-    // ⭐ ADMIN VÊ TUDO - IGNORA is_approved
-    if (isAdminUser) {
-        // Admin vê todos os níveis
+    // ADMIN - VÊ TODOS OS NÍVEIS
+    if (isAdmin) {
         levelsContainer.innerHTML = levels.map((level) => {
             const totalLessons = level.lessons?.length || 0
             const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
@@ -1612,8 +1591,23 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // ⭐ ALUNO PENDENTE (NÃO ADMIN)
-    if (isPending) {
+    // Usuário não logado
+    if (!currentUser) {
+        levelsContainer.innerHTML = `
+            <div class="access-denied">
+                <i class="fas fa-graduation-cap"></i>
+                <h3>Faça login para ver os níveis</h3>
+                <p>Crie sua conta ou faça login para ter acesso a todos os níveis e aulas.</p>
+                <button class="btn btn-primary" onclick="openAuthModal()">
+                    <i class="fas fa-sign-in-alt"></i> Entrar agora
+                </button>
+            </div>
+        `
+        return
+    }
+    
+    // Aluno pendente
+    if (studentData && !studentData.is_approved) {
         levelsContainer.innerHTML = `
             <div class="access-denied">
                 <i class="fas fa-clock"></i>
@@ -1628,7 +1622,7 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // ⭐ ALUNO APROVADO (NÃO ADMIN)
+    // Aluno aprovado - mostra apenas o nível atribuído
     const visibleLevels = levels.filter(level => level.id === userLevelAccess)
     
     if (visibleLevels.length === 0) {
@@ -1870,6 +1864,7 @@ async function openLesson(lessonId) {
         return
     }
     
+    // Admin pode abrir qualquer aula
     if (!isAdmin && (!studentData || !studentData.is_approved || !studentData.level_id)) {
         Toast.warning('Sem acesso', 'Sua conta não tem permissão para acessar este conteúdo.')
         return
@@ -1884,6 +1879,7 @@ async function openLesson(lessonId) {
         
         if (error) throw error
         
+        // Verificar se o aluno tem acesso a este nível
         if (!isAdmin && studentData && studentData.level_id !== lesson.level_id) {
             Toast.warning('Nível bloqueado', 'Você não tem acesso a este nível.')
             return
@@ -1951,7 +1947,7 @@ async function checkProgress(lessonId) {
         .select('watched, completed')
         .eq('student_id', currentUser.id)
         .eq('lesson_id', lessonId)
-        .single()
+        .maybeSingle()
     
     const isWatched = data?.watched || false
     const isCompleted = data?.completed || false

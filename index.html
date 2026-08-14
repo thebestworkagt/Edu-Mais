@@ -528,6 +528,7 @@
             color: var(--primary-light);
             text-decoration: none;
             font-weight: 600;
+            cursor: pointer;
         }
         .modal-switch a:hover { text-decoration: underline; }
         .video-container {
@@ -750,7 +751,7 @@
             </div>
             <button type="submit" class="btn btn-primary btn-full">Entrar</button>
             <p class="modal-switch">
-                Não tem conta? <a href="#" id="switchToRegister">Criar conta</a>
+                Não tem conta? <a id="switchToRegister">Criar conta</a>
             </p>
         </form>
         <form id="registerForm" class="auth-form">
@@ -772,7 +773,7 @@
             </div>
             <button type="submit" class="btn btn-primary btn-full">Criar conta</button>
             <p class="modal-switch">
-                Já tem conta? <a href="#" id="switchToLogin">Fazer login</a>
+                Já tem conta? <a id="switchToLogin">Fazer login</a>
             </p>
         </form>
     </div>
@@ -814,6 +815,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+console.log('🚀 Edu Mais - Inicializado com sucesso!')
+console.log('📚 Versão 1.0.0')
+
 // ============================================
 // ESTADO
 // ============================================
@@ -822,21 +826,32 @@ let currentLevels = []
 let currentLessonId = null
 
 // ============================================
-// DOM ELEMENTS
+// DOM ELEMENTS (carregados após o DOM)
 // ============================================
-const authBtn = document.getElementById('authBtn')
-const logoutBtn = document.getElementById('logoutBtn')
-const authModal = document.getElementById('authModal')
-const modalClose = document.getElementById('modalClose')
-const loginForm = document.getElementById('loginForm')
-const registerForm = document.getElementById('registerForm')
-const switchToRegister = document.getElementById('switchToRegister')
-const switchToLogin = document.getElementById('switchToLogin')
-const modalSubtitle = document.getElementById('modalSubtitle')
-const ctaBtn = document.getElementById('ctaBtn')
-const levelsContainer = document.getElementById('levelsContainer')
-const videoModal = document.getElementById('videoModal')
-const videoClose = document.getElementById('videoClose')
+let authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
+let switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
+let videoModal, videoClose, markWatchedBtn, markCompletedBtn
+
+// ============================================
+// INICIALIZAR REFERÊNCIAS
+// ============================================
+function initElements() {
+    authBtn = document.getElementById('authBtn')
+    logoutBtn = document.getElementById('logoutBtn')
+    authModal = document.getElementById('authModal')
+    modalClose = document.getElementById('modalClose')
+    loginForm = document.getElementById('loginForm')
+    registerForm = document.getElementById('registerForm')
+    switchToRegister = document.getElementById('switchToRegister')
+    switchToLogin = document.getElementById('switchToLogin')
+    modalSubtitle = document.getElementById('modalSubtitle')
+    ctaBtn = document.getElementById('ctaBtn')
+    levelsContainer = document.getElementById('levelsContainer')
+    videoModal = document.getElementById('videoModal')
+    videoClose = document.getElementById('videoClose')
+    markWatchedBtn = document.getElementById('markWatched')
+    markCompletedBtn = document.getElementById('markCompleted')
+}
 
 // ============================================
 // AUTENTICAÇÃO
@@ -845,29 +860,52 @@ async function checkSession() {
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
         currentUser = session.user
-        authBtn.style.display = 'none'
-        logoutBtn.style.display = 'inline-flex'
+        if (authBtn) authBtn.style.display = 'none'
+        if (logoutBtn) logoutBtn.style.display = 'inline-flex'
+        console.log('👤 Usuário logado:', currentUser.email)
     } else {
         currentUser = null
-        authBtn.style.display = 'inline-flex'
-        logoutBtn.style.display = 'none'
+        if (authBtn) authBtn.style.display = 'inline-flex'
+        if (logoutBtn) logoutBtn.style.display = 'none'
+        console.log('👤 Nenhum usuário logado')
     }
     loadLevels()
 }
 
+// ============================================
+// ABRIR MODAL DE LOGIN
+// ============================================
+function openAuthModal() {
+    if (!authModal) return
+    authModal.classList.add('active')
+    if (loginForm) loginForm.classList.add('active')
+    if (registerForm) registerForm.classList.remove('active')
+    if (modalSubtitle) modalSubtitle.textContent = 'Entre na sua conta para continuar'
+}
+
+// ============================================
+// HANDLERS
+// ============================================
 async function handleLogin(e) {
     e.preventDefault()
     const email = document.getElementById('loginEmail').value
     const password = document.getElementById('loginPassword').value
+    
+    if (!email || !password) {
+        alert('Por favor, preencha todos os campos.')
+        return
+    }
     
     try {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
         authModal.classList.remove('active')
         await checkSession()
-        alert('Login realizado com sucesso!')
+        alert('Login realizado com sucesso! 🎉')
+        // Recarregar níveis
+        loadLevels()
     } catch (error) {
-        alert('Erro: ' + error.message)
+        alert('Erro ao fazer login: ' + error.message)
     }
 }
 
@@ -877,6 +915,11 @@ async function handleRegister(e) {
     const email = document.getElementById('registerEmail').value
     const phone = document.getElementById('registerPhone').value
     const password = document.getElementById('registerPassword').value
+    
+    if (!fullName || !email || !password) {
+        alert('Por favor, preencha todos os campos obrigatórios.')
+        return
+    }
     
     if (password.length < 6) {
         alert('A senha deve ter pelo menos 6 caracteres.')
@@ -892,35 +935,49 @@ async function handleRegister(e) {
         if (error) throw error
         
         // Criar na tabela students
-        await supabase.from('students').insert({
+        const { error: studentError } = await supabase.from('students').insert({
             id: data.user.id,
             email: email,
             full_name: fullName,
             phone: phone || null
         })
         
-        alert('Conta criada com sucesso! Faça login.')
+        if (studentError) {
+            console.error('Erro ao criar aluno:', studentError)
+        }
+        
+        alert('Conta criada com sucesso! Faça login para continuar. 🎉')
         registerForm.reset()
-        switchToLogin.click()
+        // Mudar para login
+        if (switchToLogin) switchToLogin.click()
+        
     } catch (error) {
-        alert('Erro: ' + error.message)
+        alert('Erro ao criar conta: ' + error.message)
     }
 }
 
 async function handleLogout() {
-    await supabase.auth.signOut()
-    currentUser = null
-    authBtn.style.display = 'inline-flex'
-    logoutBtn.style.display = 'none'
-    loadLevels()
-    alert('Logout realizado!')
+    try {
+        await supabase.auth.signOut()
+        currentUser = null
+        if (authBtn) authBtn.style.display = 'inline-flex'
+        if (logoutBtn) logoutBtn.style.display = 'none'
+        loadLevels()
+        alert('Logout realizado com sucesso!')
+    } catch (error) {
+        alert('Erro ao fazer logout: ' + error.message)
+    }
 }
 
 // ============================================
 // CARREGAR NÍVEIS
 // ============================================
 async function loadLevels() {
+    if (!levelsContainer) return
+    
     try {
+        console.log('📚 Carregando níveis...')
+        
         // Buscar níveis com aulas
         const { data: levels, error } = await supabase
             .from('levels')
@@ -941,6 +998,7 @@ async function loadLevels() {
         if (error) throw error
         
         currentLevels = levels || []
+        console.log('✅ Níveis carregados:', currentLevels.length)
         
         // Buscar progresso se usuário logado
         let progressMap = new Map()
@@ -961,19 +1019,23 @@ async function loadLevels() {
         }
         
         // Atualizar estatísticas
-        const { count: totalStudents } = await supabase
-            .from('students')
-            .select('*', { count: 'exact', head: true })
-        
-        document.getElementById('statLevels').textContent = levels?.length || 0
-        document.getElementById('statLessons').textContent = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
-        document.getElementById('statStudents').textContent = totalStudents || 0
+        try {
+            const { count: totalStudents } = await supabase
+                .from('students')
+                .select('*', { count: 'exact', head: true })
+            
+            document.getElementById('statLevels').textContent = levels?.length || 0
+            document.getElementById('statLessons').textContent = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
+            document.getElementById('statStudents').textContent = totalStudents || 0
+        } catch (e) {
+            console.log('Erro ao carregar estatísticas:', e)
+        }
         
         // Renderizar
         renderLevels(levels || [], progressMap)
         
     } catch (error) {
-        console.error('Erro:', error)
+        console.error('❌ Erro ao carregar níveis:', error)
         levelsContainer.innerHTML = `
             <div style="text-align:center;padding:40px;grid-column:1/-1;">
                 <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i>
@@ -990,6 +1052,8 @@ async function loadLevels() {
 // RENDERIZAR NÍVEIS
 // ============================================
 function renderLevels(levels, progressMap) {
+    if (!levelsContainer) return
+    
     if (!levels || levels.length === 0) {
         levelsContainer.innerHTML = `
             <div style="text-align:center;padding:40px;grid-column:1/-1;">
@@ -1074,7 +1138,7 @@ function renderLevels(levels, progressMap) {
 async function openLesson(lessonId) {
     if (!currentUser) {
         alert('Você precisa estar logado para assistir às aulas.')
-        authBtn.click()
+        openAuthModal()
         return
     }
     
@@ -1099,6 +1163,8 @@ async function openLesson(lessonId) {
 // MOSTRAR MODAL DE VÍDEO
 // ============================================
 function showVideoModal(lesson) {
+    if (!videoModal) return
+    
     const container = document.getElementById('videoContainer')
     document.getElementById('videoTitle').textContent = lesson.title
     document.getElementById('videoDescription').textContent = lesson.description || 'Sem descrição.'
@@ -1141,10 +1207,10 @@ function showVideoModal(lesson) {
 }
 
 // ============================================
-VERIFICAR PROGRESSO
+// VERIFICAR PROGRESSO
 // ============================================
 async function checkProgress(lessonId) {
-    if (!currentUser) return
+    if (!currentUser || !markWatchedBtn || !markCompletedBtn) return
     
     const { data } = await supabase
         .from('progress')
@@ -1156,11 +1222,11 @@ async function checkProgress(lessonId) {
     const isWatched = data?.watched || false
     const isCompleted = data?.completed || false
     
-    document.getElementById('markWatched').textContent = isWatched ? '✅ Assistido' : '📺 Marcar como assistida'
-    document.getElementById('markWatched').disabled = isWatched
+    markWatchedBtn.textContent = isWatched ? '✅ Assistido' : '📺 Marcar como assistida'
+    markWatchedBtn.disabled = isWatched
     
-    document.getElementById('markCompleted').textContent = isCompleted ? '✅ Concluída' : '🏁 Concluir aula'
-    document.getElementById('markCompleted').disabled = isCompleted || !isWatched
+    markCompletedBtn.textContent = isCompleted ? '✅ Concluída' : '🏁 Concluir aula'
+    markCompletedBtn.disabled = isCompleted || !isWatched
 }
 
 // ============================================
@@ -1190,98 +1256,182 @@ async function markProgress(action) {
         loadLevels()
         
     } catch (error) {
-        alert('Erro: ' + error.message)
+        alert('Erro ao atualizar progresso: ' + error.message)
     }
 }
 
 // ============================================
 // THEME
 // ============================================
-document.getElementById('themeToggle').addEventListener('click', function() {
-    const current = document.documentElement.getAttribute('data-theme')
-    if (current === 'light') {
-        document.documentElement.removeAttribute('data-theme')
-        this.querySelector('i').className = 'fas fa-moon'
-        localStorage.setItem('theme', 'dark')
-    } else {
+function setupTheme() {
+    const toggle = document.getElementById('themeToggle')
+    if (!toggle) return
+    
+    // Carregar tema salvo
+    if (localStorage.getItem('theme') === 'light') {
         document.documentElement.setAttribute('data-theme', 'light')
-        this.querySelector('i').className = 'fas fa-sun'
-        localStorage.setItem('theme', 'light')
+        toggle.querySelector('i').className = 'fas fa-sun'
     }
-})
-
-// Carregar tema salvo
-if (localStorage.getItem('theme') === 'light') {
-    document.documentElement.setAttribute('data-theme', 'light')
-    document.querySelector('#themeToggle i').className = 'fas fa-sun'
+    
+    toggle.addEventListener('click', function() {
+        const current = document.documentElement.getAttribute('data-theme')
+        if (current === 'light') {
+            document.documentElement.removeAttribute('data-theme')
+            this.querySelector('i').className = 'fas fa-moon'
+            localStorage.setItem('theme', 'dark')
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light')
+            this.querySelector('i').className = 'fas fa-sun'
+            localStorage.setItem('theme', 'light')
+        }
+    })
 }
 
 // ============================================
-// EVENT LISTENERS
+// MOBILE MENU
 // ============================================
-authBtn.addEventListener('click', () => {
-    authModal.classList.add('active')
-    loginForm.classList.add('active')
-    registerForm.classList.remove('active')
-    modalSubtitle.textContent = 'Entre na sua conta para continuar'
-})
+function setupMobileMenu() {
+    const hamburger = document.getElementById('hamburger')
+    const navLinks = document.getElementById('navLinks')
+    if (!hamburger || !navLinks) return
+    
+    hamburger.addEventListener('click', function() {
+        this.classList.toggle('active')
+        navLinks.classList.toggle('open')
+    })
+}
 
-ctaBtn.addEventListener('click', () => {
-    if (currentUser) {
-        document.getElementById('niveis').scrollIntoView({ behavior: 'smooth' })
-    } else {
-        authBtn.click()
+// ============================================
+// INICIALIZAR EVENTOS
+// ============================================
+function initEvents() {
+    console.log('🔧 Inicializando eventos...')
+    
+    // Botão Entrar
+    if (authBtn) {
+        authBtn.addEventListener('click', openAuthModal)
+        console.log('✅ Botão Entrar configurado')
     }
-})
-
-modalClose.addEventListener('click', () => authModal.classList.remove('active'))
-authModal.addEventListener('click', (e) => {
-    if (e.target === authModal) authModal.classList.remove('active')
-})
-
-switchToRegister.addEventListener('click', (e) => {
-    e.preventDefault()
-    loginForm.classList.remove('active')
-    registerForm.classList.add('active')
-    modalSubtitle.textContent = 'Crie sua conta na Edu Mais'
-})
-
-switchToLogin.addEventListener('click', (e) => {
-    e.preventDefault()
-    registerForm.classList.remove('active')
-    loginForm.classList.add('active')
-    modalSubtitle.textContent = 'Entre na sua conta para continuar'
-})
-
-loginForm.addEventListener('submit', handleLogin)
-registerForm.addEventListener('submit', handleRegister)
-logoutBtn.addEventListener('click', handleLogout)
-
-// Vídeo modal
-document.getElementById('markWatched').addEventListener('click', () => markProgress('watched'))
-document.getElementById('markCompleted').addEventListener('click', () => markProgress('completed'))
-
-videoClose.addEventListener('click', () => {
-    videoModal.classList.remove('active')
-    loadLevels()
-})
-videoModal.addEventListener('click', (e) => {
-    if (e.target === videoModal) {
-        videoModal.classList.remove('active')
-        loadLevels()
+    
+    // Botão Começar Agora
+    if (ctaBtn) {
+        ctaBtn.addEventListener('click', function() {
+            if (currentUser) {
+                document.getElementById('niveis').scrollIntoView({ behavior: 'smooth' })
+            } else {
+                openAuthModal()
+            }
+        })
+        console.log('✅ Botão Começar Agora configurado')
     }
-})
-
-// Mobile menu
-document.getElementById('hamburger').addEventListener('click', function() {
-    this.classList.toggle('active')
-    document.getElementById('navLinks').classList.toggle('open')
-})
+    
+    // Fechar modal
+    if (modalClose) {
+        modalClose.addEventListener('click', () => {
+            authModal.classList.remove('active')
+        })
+        console.log('✅ Fechar modal configurado')
+    }
+    
+    if (authModal) {
+        authModal.addEventListener('click', (e) => {
+            if (e.target === authModal) {
+                authModal.classList.remove('active')
+            }
+        })
+    }
+    
+    // Switch entre login e registro
+    if (switchToRegister) {
+        switchToRegister.addEventListener('click', (e) => {
+            e.preventDefault()
+            if (loginForm) loginForm.classList.remove('active')
+            if (registerForm) registerForm.classList.add('active')
+            if (modalSubtitle) modalSubtitle.textContent = 'Crie sua conta na Edu Mais'
+        })
+        console.log('✅ Switch para registro configurado')
+    }
+    
+    if (switchToLogin) {
+        switchToLogin.addEventListener('click', (e) => {
+            e.preventDefault()
+            if (registerForm) registerForm.classList.remove('active')
+            if (loginForm) loginForm.classList.add('active')
+            if (modalSubtitle) modalSubtitle.textContent = 'Entre na sua conta para continuar'
+        })
+        console.log('✅ Switch para login configurado')
+    }
+    
+    // Forms
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin)
+        console.log('✅ Formulário de login configurado')
+    }
+    
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister)
+        console.log('✅ Formulário de registro configurado')
+    }
+    
+    // Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout)
+        console.log('✅ Botão Logout configurado')
+    }
+    
+    // Vídeo modal
+    if (videoClose) {
+        videoClose.addEventListener('click', () => {
+            videoModal.classList.remove('active')
+            loadLevels()
+        })
+    }
+    
+    if (videoModal) {
+        videoModal.addEventListener('click', (e) => {
+            if (e.target === videoModal) {
+                videoModal.classList.remove('active')
+                loadLevels()
+            }
+        })
+    }
+    
+    if (markWatchedBtn) {
+        markWatchedBtn.addEventListener('click', () => markProgress('watched'))
+        console.log('✅ Botão Marcar como assistida configurado')
+    }
+    
+    if (markCompletedBtn) {
+        markCompletedBtn.addEventListener('click', () => markProgress('completed'))
+        console.log('✅ Botão Concluir aula configurado')
+    }
+    
+    // Menu mobile
+    setupMobileMenu()
+    
+    // Tema
+    setupTheme()
+    
+    console.log('✅ Todos os eventos configurados!')
+}
 
 // ============================================
 // INICIALIZAR
 // ============================================
-checkSession()
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Edu Mais - Inicializando...')
+    
+    // Inicializar referências DOM
+    initElements()
+    
+    // Configurar eventos
+    initEvents()
+    
+    // Verificar sessão e carregar dados
+    checkSession()
+    
+    console.log('🎉 Edu Mais - Pronto para uso!')
+})
 </script>
 </body>
 </html>

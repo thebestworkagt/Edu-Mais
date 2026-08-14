@@ -1520,8 +1520,12 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    const hasAccess = currentUser && studentData && studentData.is_approved && userLevelAccess
+    // ⭐ ADMIN NÃO PRECISA DE APROVAÇÃO!
     const isAdminUser = isAdmin
+    
+    // ⭐ Só verifica aprovação se NÃO for admin
+    const hasAccess = !isAdminUser && currentUser && studentData && studentData.is_approved && userLevelAccess
+    const isPending = !isAdminUser && currentUser && studentData && !studentData.is_approved
     
     // Usuário não logado
     if (!currentUser) {
@@ -1538,8 +1542,58 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // Aluno pendente
-    if (!isAdminUser && !hasAccess) {
+    // ⭐ ADMIN VÊ TUDO - IGNORA is_approved
+    if (isAdminUser) {
+        // Admin vê todos os níveis
+        levelsContainer.innerHTML = levels.map((level) => {
+            const totalLessons = level.lessons?.length || 0
+            const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
+            const isCompleted = totalLessons > 0 && watchedLessons === totalLessons
+            
+            const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+            
+            return `
+                <div class="level-card">
+                    <div class="level-icon">${level.icon || '📚'}</div>
+                    <div class="level-header">
+                        <h3 class="level-name">${level.name}</h3>
+                        <span class="level-badge ${isCompleted ? 'completed' : 'unlocked'}">
+                            ${isCompleted ? '✅ Concluído' : '🎯 Em andamento'}
+                        </span>
+                    </div>
+                    <p class="level-description">${level.description || 'Aprenda e domine este nível.'}</p>
+                    
+                    <div class="level-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${totalLessons > 0 ? (watchedLessons / totalLessons) * 100 : 0}%"></div>
+                        </div>
+                        <span class="progress-text">${totalLessons > 0 ? Math.round((watchedLessons / totalLessons) * 100) : 0}%</span>
+                    </div>
+                    
+                    <div class="level-lessons">
+                        ${lessons.map(lesson => {
+                            const progress = progressMap.get(lesson.id) || {}
+                            const isWatched = progress.watched || false
+                            
+                            return `
+                                <div class="lesson-item" onclick="openLesson(${lesson.id})">
+                                    <span class="lesson-status ${isWatched ? 'watched' : ''}">
+                                        ${isWatched ? '✅' : '▶️'}
+                                    </span>
+                                    <span class="lesson-title">${lesson.title}</span>
+                                    <span class="lesson-duration">${lesson.video_duration || 0} min</span>
+                                </div>
+                            `
+                        }).join('')}
+                    </div>
+                </div>
+            `
+        }).join('')
+        return
+    }
+    
+    // ⭐ ALUNO PENDENTE (NÃO ADMIN)
+    if (isPending) {
         levelsContainer.innerHTML = `
             <div class="access-denied">
                 <i class="fas fa-clock"></i>
@@ -1554,11 +1608,10 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    const visibleLevels = isAdminUser 
-        ? levels 
-        : levels.filter(level => level.id === userLevelAccess)
+    // ⭐ ALUNO APROVADO (NÃO ADMIN)
+    const visibleLevels = levels.filter(level => level.id === userLevelAccess)
     
-    if (visibleLevels.length === 0 && !isAdminUser) {
+    if (visibleLevels.length === 0) {
         levelsContainer.innerHTML = `
             <div class="access-denied">
                 <i class="fas fa-info-circle"></i>
@@ -1575,7 +1628,7 @@ function renderLevels(levels, progressMap, userLevelAccess) {
     levelsContainer.innerHTML = visibleLevels.map((level) => {
         const totalLessons = level.lessons?.length || 0
         const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
-        const isCompleted = currentUser && totalLessons > 0 && watchedLessons === totalLessons
+        const isCompleted = totalLessons > 0 && watchedLessons === totalLessons
         
         const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
         

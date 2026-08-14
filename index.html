@@ -1399,22 +1399,6 @@ async function handleGoogleLogin() {
         }
     }
 }
-        
-        if (error) throw error
-        
-        // O usuário será redirecionado para o Google
-        // Depois ele volta para redirectUrl com os tokens na URL
-        
-    } catch (error) {
-        console.error('Erro no login Google:', error)
-        Toast.error('Erro no login', 'Não foi possível autenticar com o Google.')
-        isGoogleLoading = false
-        if (googleBtn) {
-            googleBtn.innerHTML = '<i class="fab fa-google"></i> Entrar com Google'
-            googleBtn.disabled = false
-        }
-    }
-}
 // ============================================
 // HANDLERS - REGISTRO COM EMAIL
 // ============================================

@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edu Mais - Domine o Excel</title>
+    <title>Edu Mais - Excelência em Excel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* ===== ESTILOS (mantidos os mesmos) ===== */
+        /* ===== ESTILOS COMPLETOS ===== */
         :root {
             --primary: #217346;
             --primary-light: #2E8B57;
@@ -30,6 +30,8 @@
             --toast-error: #e74c3c;
             --toast-warning: #f39c12;
             --toast-info: #3498db;
+            --google-color: #ea4335;
+            --google-hover: #d33426;
         }
 
         [data-theme="light"] {
@@ -64,6 +66,7 @@
         .btn {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             padding: 10px 24px;
             border: none;
@@ -97,10 +100,60 @@
         .btn-success:hover { background: #128C7E; transform: translateY(-2px); }
         .btn-warning { background: #f39c12; color: #fff; }
         .btn-warning:hover { background: #d68910; transform: translateY(-2px); }
+        
+        /* Botão Google */
+        .btn-google {
+            background: #fff;
+            color: #333;
+            border: 1px solid #ddd;
+            width: 100%;
+            justify-content: center;
+            padding: 12px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .btn-google:hover {
+            background: #f8f8f8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .btn-google i {
+            color: var(--google-color);
+            font-size: 18px;
+        }
+        [data-theme="dark"] .btn-google {
+            background: #2d2d2d;
+            color: #eee;
+            border-color: #444;
+        }
+        [data-theme="dark"] .btn-google:hover {
+            background: #3d3d3d;
+        }
+        .btn-google:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
         .btn-sm { padding: 6px 16px; font-size: 13px; }
         .btn-lg { padding: 14px 36px; font-size: 16px; }
         .btn-full { width: 100%; justify-content: center; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 16px 0;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
 
         .header {
             position: fixed;
@@ -398,7 +451,6 @@
         .lesson-title { flex: 1; font-size: 14px; }
         .lesson-duration { font-size: 12px; color: var(--text-muted); }
 
-        /* Access Denied Message */
         .access-denied {
             text-align: center;
             padding: 60px 20px;
@@ -416,7 +468,7 @@
         }
         .access-denied p {
             color: var(--text-secondary);
-            max-width: 400px;
+            max-width: 500px;
             margin: 0 auto 24px;
         }
 
@@ -520,7 +572,6 @@
             transform: rotate(90deg);
         }
         .modal-header { text-align: center; margin-bottom: 28px; }
-        .modal-logo { height: 50px; width: auto; margin-bottom: 12px; }
         .modal-header h3 { font-size: 24px; font-weight: 700; }
         .modal-header p { color: var(--text-secondary); font-size: 14px; }
         .auth-form { display: none; flex-direction: column; gap: 16px; }
@@ -534,7 +585,7 @@
             margin-bottom: 4px;
             color: var(--text-secondary);
         }
-        .form-group input, .form-group select {
+        .form-group input {
             width: 100%;
             padding: 10px 14px;
             border-radius: var(--radius-sm);
@@ -544,12 +595,14 @@
             font-size: 14px;
             transition: var(--transition);
         }
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus {
             outline: none;
             border-color: var(--primary);
         }
-        .form-group select option {
-            background: var(--bg-card);
+        .form-group .input-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
         .modal-switch {
             text-align: center;
@@ -676,7 +729,6 @@
             to { opacity: 0; transform: translateX(100px); }
         }
 
-        /* Admin Panel Styles */
         .admin-panel {
             display: none;
             padding: 40px 0;
@@ -743,8 +795,12 @@
             gap: 8px;
             flex-wrap: wrap;
         }
-        .admin-actions .btn {
-            padding: 4px 12px;
+        .admin-actions select {
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
             font-size: 12px;
         }
 
@@ -830,11 +886,11 @@
         <div class="hero-content">
             <h1 class="hero-title">
                 Domine o <span class="highlight">Excel</span><br>
-                Você <span class="highlight">aprofunde</span>
+                <span style="font-size:0.7em;color:var(--text-secondary);">Transforme sua carreira</span>
             </h1>
             <p class="hero-subtitle">
-                Do zero ao avançado com aulas práticas e projetos reais.
-                Aprenda no seu ritmo com a melhor plataforma de Excel.
+                Aprenda Excel do zero ao avançado com aulas práticas, projetos reais e certificação.
+                Mais de 15 aulas para você se tornar um especialista.
             </p>
             <div class="hero-buttons">
                 <button class="btn btn-primary btn-lg" id="ctaBtn">
@@ -931,7 +987,7 @@
         <div class="footer-grid">
             <div class="footer-brand">
                 <span class="brand-text">Edu <span class="highlight">Mais</span></span>
-                <p>Domine o Excel. Você aprofunde.</p>
+                <p>Excelência em Excel. Resultados reais.</p>
             </div>
             <div class="footer-links">
                 <h4>Links</h4>
@@ -967,6 +1023,15 @@
             <h3>Edu <span class="highlight">Mais</span></h3>
             <p id="modalSubtitle">Entre na sua conta para continuar</p>
         </div>
+
+        <!-- Botão Google -->
+        <button class="btn btn-google" id="googleBtn">
+            <i class="fab fa-google"></i> Entrar com Google
+        </button>
+
+        <div class="divider">ou</div>
+
+        <!-- Login com Email -->
         <form id="loginForm" class="auth-form active">
             <div class="form-group">
                 <label><i class="fas fa-envelope"></i> Email</label>
@@ -981,14 +1046,17 @@
                 Não tem conta? <a id="switchToRegister">Criar conta</a>
             </p>
         </form>
+
+        <!-- Registro com Email -->
         <form id="registerForm" class="auth-form">
             <div class="form-group">
-                <label><i class="fas fa-user"></i> Nome</label>
+                <label><i class="fas fa-user"></i> Nome completo</label>
                 <input type="text" id="registerName" placeholder="Seu nome" required>
             </div>
             <div class="form-group">
                 <label><i class="fas fa-envelope"></i> Email</label>
                 <input type="email" id="registerEmail" placeholder="seu@email.com" required>
+                <div class="input-hint">✅ Um email de confirmação será enviado. Use um email real.</div>
             </div>
             <div class="form-group">
                 <label><i class="fas fa-phone"></i> Telefone</label>
@@ -1030,7 +1098,6 @@
         </div>
     </div>
 </div>
-
 <!-- ========== SUPABASE + SCRIPTS ========== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -1041,6 +1108,8 @@ const SUPABASE_URL = 'https://gslhfgaoqkcrhyfnmmxt.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+console.log('🚀 Edu Mais - Inicializado com sucesso!')
 
 // ============================================
 // SISTEMA DE NOTIFICAÇÕES (TOAST)
@@ -1122,6 +1191,7 @@ let currentLevels = []
 let currentLessonId = null
 let isAdmin = false
 let studentData = null
+let isGoogleLoading = false
 
 // ============================================
 // DOM ELEMENTS
@@ -1130,6 +1200,7 @@ let authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
 let switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
 let videoModal, videoClose, markWatchedBtn, markCompletedBtn
 let navAdmin, adminPanel, adminContent, navNiveis
+let googleBtn
 
 // ============================================
 // INICIALIZAR REFERÊNCIAS
@@ -1154,6 +1225,7 @@ function initElements() {
     adminPanel = document.getElementById('admin')
     adminContent = document.getElementById('adminContent')
     navNiveis = document.getElementById('navNiveis')
+    googleBtn = document.getElementById('googleBtn')
 }
 
 // ============================================
@@ -1197,7 +1269,23 @@ async function fetchStudentData() {
             .eq('id', currentUser.id)
             .single()
         
-        if (error) throw error
+        if (error) {
+            if (error.code === 'PGRST116') {
+                console.log('Aluno não encontrado, criando...')
+                const newStudent = {
+                    id: currentUser.id,
+                    email: currentUser.email,
+                    full_name: currentUser.user_metadata?.full_name || currentUser.email,
+                    is_active: true,
+                    is_approved: false,
+                    level_id: null
+                }
+                await supabase.from('students').insert(newStudent)
+                return newStudent
+            }
+            throw error
+        }
+        
         studentData = data
         return data
     } catch (error) {
@@ -1207,7 +1295,7 @@ async function fetchStudentData() {
 }
 
 // ============================================
-// AUTENTICAÇÃO
+// AUTENTICAÇÃO - VERIFICAR SESSÃO
 // ============================================
 async function checkSession() {
     const { data: { session } } = await supabase.auth.getSession()
@@ -1221,6 +1309,10 @@ async function checkSession() {
         
         if (!isAdmin && studentData && !studentData.is_approved) {
             Toast.info('Conta pendente', 'Sua conta aguarda aprovação do administrador.')
+        }
+        
+        if (isAdmin) {
+            Toast.success('Bem-vindo, Admin!', 'Você tem acesso total ao painel administrativo.')
         }
     } else {
         currentUser = null
@@ -1246,7 +1338,7 @@ function openAuthModal() {
 }
 
 // ============================================
-// HANDLERS
+// HANDLERS - LOGIN COM EMAIL
 // ============================================
 async function handleLogin(e) {
     e.preventDefault()
@@ -1254,7 +1346,7 @@ async function handleLogin(e) {
     const password = document.getElementById('loginPassword').value
     
     if (!email || !password) {
-        Toast.warning('Campos incompletos', 'Por favor, preencha todos os campos para continuar.')
+        Toast.warning('Campos incompletos', 'Por favor, preencha todos os campos.')
         return
     }
     
@@ -1263,21 +1355,57 @@ async function handleLogin(e) {
         if (error) throw error
         authModal.classList.remove('active')
         await checkSession()
-        Toast.success('Login realizado!', 'Seja bem-vindo(a) à Edu Mais.')
+        Toast.success('Login realizado!', 'Bem-vindo(a) à Edu Mais.')
         loadLevels()
-        if (isAdmin) {
-            loadAdminPanel()
-        }
+        if (isAdmin) loadAdminPanel()
     } catch (error) {
-        Toast.error('Falha no login', 'Email ou senha incorretos. Por favor, tente novamente.')
+        Toast.error('Falha no login', 'Email ou senha incorretos. Tente novamente.')
     }
 }
 
+// ============================================
+// HANDLERS - LOGIN COM GOOGLE
+// ============================================
+async function handleGoogleLogin() {
+    if (isGoogleLoading) return
+    isGoogleLoading = true
+    if (googleBtn) googleBtn.disabled = true
+    
+    try {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin,
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent'
+                }
+            }
+        })
+        
+        if (error) throw error
+        
+        // O usuário será redirecionado para o Google
+        // Após o login, ele volta para a página
+        Toast.info('Redirecionando...', 'Aguardando autenticação no Google.')
+        
+    } catch (error) {
+        console.error('Erro no login Google:', error)
+        Toast.error('Erro no login', 'Não foi possível autenticar com o Google.')
+        isGoogleLoading = false
+        if (googleBtn) googleBtn.disabled = false
+    }
+}
+
+// ============================================
+// HANDLERS - REGISTRO COM EMAIL
+// ============================================
 async function handleRegister(e) {
     e.preventDefault()
-    const fullName = document.getElementById('registerName').value
-    const email = document.getElementById('registerEmail').value
-    const phone = document.getElementById('registerPhone').value
+    
+    const fullName = document.getElementById('registerName').value.trim()
+    const email = document.getElementById('registerEmail').value.trim()
+    const phone = document.getElementById('registerPhone').value.trim()
     const password = document.getElementById('registerPassword').value
     
     if (!fullName || !email || !password) {
@@ -1290,54 +1418,80 @@ async function handleRegister(e) {
         return
     }
     
+    if (!email.includes('@') || !email.includes('.')) {
+        Toast.warning('Email inválido', 'Por favor, insira um email válido.')
+        return
+    }
+    
     try {
+        console.log('📝 Criando usuário...', { email, fullName })
+        
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: { 
                 data: { 
-                    full_name: fullName 
-                } 
+                    full_name: fullName,
+                    phone: phone || null
+                }
             }
         })
-        if (error) throw error
+        
+        if (error) {
+            console.error('❌ Erro:', error)
+            if (error.message.includes('already registered')) {
+                Toast.error('Email já cadastrado', 'Este email já está em uso. Faça login.')
+                return
+            }
+            if (error.message.includes('rate limit')) {
+                Toast.warning('Muitas tentativas', 'Aguarde 15-30 minutos e tente novamente.')
+                return
+            }
+            throw error
+        }
         
         if (!data.user) {
             throw new Error('Usuário não foi criado')
         }
         
-        // Criar aluno na tabela students (aguardando aprovação)
+        console.log('✅ Usuário criado:', data.user.id)
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
+        // Criar na tabela students
+        const studentData = {
+            id: data.user.id,
+            email: email,
+            full_name: fullName,
+            phone: phone || null,
+            is_active: true,
+            is_approved: false,
+            level_id: null,
+            enrolled_at: new Date().toISOString()
+        }
+        
         const { error: studentError } = await supabase
             .from('students')
-            .insert({
-                id: data.user.id,
-                email: email,
-                full_name: fullName,
-                phone: phone || null,
-                is_active: true,
-                is_approved: false,  // AGUARDANDO APROVAÇÃO
-                level_id: null       // SEM ACESSO A NENHUM NÍVEL
-            })
+            .insert(studentData)
         
         if (studentError) {
+            console.error('❌ Erro ao criar student:', studentError)
             if (studentError.code === '23505') {
                 await supabase
                     .from('students')
-                    .update({
-                        email: email,
-                        full_name: fullName,
-                        phone: phone || null,
-                        is_active: true,
-                        is_approved: false,
-                        level_id: null
-                    })
+                    .update({ email, full_name, phone, is_active: true })
                     .eq('id', data.user.id)
             } else {
                 throw studentError
             }
         }
         
-        Toast.success('Conta criada!', 'Sua conta foi criada. Aguarde a aprovação do administrador para acessar os conteúdos.')
+        console.log('✅ Aluno criado com sucesso!')
+        
+        Toast.success(
+            'Conta criada! 📧', 
+            'Um email de confirmação foi enviado para você. Confirme seu email para ativar sua conta.'
+        )
+        
         registerForm.reset()
         if (switchToLogin) switchToLogin.click()
         
@@ -1347,6 +1501,9 @@ async function handleRegister(e) {
     }
 }
 
+// ============================================
+// HANDLERS - LOGOUT
+// ============================================
 async function handleLogout() {
     try {
         await supabase.auth.signOut()
@@ -1365,13 +1522,12 @@ async function handleLogout() {
 }
 
 // ============================================
-// CARREGAR NÍVEIS (COM CONTROLE DE ACESSO)
+// CARREGAR NÍVEIS
 // ============================================
 async function loadLevels() {
     if (!levelsContainer) return
     
     try {
-        // Buscar níveis com aulas
         const { data: levels, error } = await supabase
             .from('levels')
             .select(`
@@ -1392,12 +1548,10 @@ async function loadLevels() {
         
         currentLevels = levels || []
         
-        // Buscar progresso se usuário logado
         let progressMap = new Map()
         let userLevelAccess = null
         
         if (currentUser) {
-            // Buscar progresso
             const { data: progress } = await supabase
                 .from('progress')
                 .select('lesson_id, watched, completed')
@@ -1412,13 +1566,11 @@ async function loadLevels() {
                 })
             }
             
-            // Buscar nível de acesso do aluno
             if (studentData) {
                 userLevelAccess = studentData.level_id
             }
         }
         
-        // Atualizar estatísticas
         try {
             const { count: totalStudents } = await supabase
                 .from('students')
@@ -1430,7 +1582,6 @@ async function loadLevels() {
             document.getElementById('statStudents').textContent = totalStudents || 0
         } catch (e) {}
         
-        // Renderizar
         renderLevels(levels || [], progressMap, userLevelAccess)
         
     } catch (error) {
@@ -1448,7 +1599,7 @@ async function loadLevels() {
 }
 
 // ============================================
-// RENDERIZAR NÍVEIS COM CONTROLE DE ACESSO
+// RENDERIZAR NÍVEIS
 // ============================================
 function renderLevels(levels, progressMap, userLevelAccess) {
     if (!levelsContainer) return
@@ -1463,27 +1614,10 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // Verificar se o aluno tem acesso
     const hasAccess = currentUser && studentData && studentData.is_approved && userLevelAccess
     const isAdminUser = isAdmin
     
-    // Se não for admin e não tiver acesso, mostrar mensagem
-    if (!isAdminUser && currentUser && !hasAccess) {
-        levelsContainer.innerHTML = `
-            <div class="access-denied">
-                <i class="fas fa-lock"></i>
-                <h3>Aguardando Aprovação</h3>
-                <p>Sua conta está aguardando aprovação do administrador. 
-                Você será notificado quando tiver acesso aos conteúdos.</p>
-                <button class="btn btn-outline" onclick="loadLevels()">
-                    <i class="fas fa-sync"></i> Verificar novamente
-                </button>
-            </div>
-        `
-        return
-    }
-    
-    // Se não estiver logado, mostrar apenas uma prévia
+    // Usuário não logado
     if (!currentUser) {
         levelsContainer.innerHTML = `
             <div class="access-denied">
@@ -1498,8 +1632,22 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // Admin vê todos os níveis
-    // Aluno vê apenas o nível que foi atribuído a ele
+    // Aluno pendente
+    if (!isAdminUser && !hasAccess) {
+        levelsContainer.innerHTML = `
+            <div class="access-denied">
+                <i class="fas fa-clock"></i>
+                <h3>Aguardando Aprovação</h3>
+                <p>Sua conta está aguardando aprovação do administrador. 
+                Você receberá um email quando tiver acesso aos conteúdos.</p>
+                <button class="btn btn-outline" onclick="loadLevels()">
+                    <i class="fas fa-sync"></i> Verificar novamente
+                </button>
+            </div>
+        `
+        return
+    }
+    
     const visibleLevels = isAdminUser 
         ? levels 
         : levels.filter(level => level.id === userLevelAccess)
@@ -1518,12 +1666,11 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    levelsContainer.innerHTML = visibleLevels.map((level, index) => {
+    levelsContainer.innerHTML = visibleLevels.map((level) => {
         const totalLessons = level.lessons?.length || 0
         const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
         const isCompleted = currentUser && totalLessons > 0 && watchedLessons === totalLessons
         
-        // Ordenar aulas
         const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
         
         return `
@@ -1566,7 +1713,7 @@ function renderLevels(levels, progressMap, userLevelAccess) {
 }
 
 // ============================================
-// PAINEL ADMIN - GERENCIAR ALUNOS
+// PAINEL ADMIN - ACESSO TOTAL
 // ============================================
 async function loadAdminPanel() {
     if (!isAdmin) {
@@ -1580,7 +1727,6 @@ async function loadAdminPanel() {
     document.getElementById('admin').scrollIntoView({ behavior: 'smooth' })
     
     try {
-        // Buscar todos os alunos com seus dados
         const { data: students, error } = await supabase
             .from('students')
             .select(`
@@ -1601,7 +1747,6 @@ async function loadAdminPanel() {
             return
         }
         
-        // Buscar níveis para o dropdown
         const { data: levels } = await supabase
             .from('levels')
             .select('id, name')
@@ -1638,9 +1783,7 @@ async function loadAdminPanel() {
                                 </td>
                                 <td>
                                     <div class="admin-actions">
-                                        <select class="btn btn-sm btn-outline" 
-                                                onchange="updateStudentLevel('${student.id}', this.value)"
-                                                style="padding:4px 8px;font-size:12px;">
+                                        <select onchange="updateStudentLevel('${student.id}', this.value)">
                                             <option value="">— Selecionar —</option>
                                             ${levels?.map(level => `
                                                 <option value="${level.id}" ${student.level_id === level.id ? 'selected' : ''}>
@@ -1686,7 +1829,7 @@ async function updateStudentLevel(studentId, levelId) {
             .from('students')
             .update({ 
                 level_id: levelId || null,
-                is_approved: true // Ao atribuir nível, automaticamente aprova
+                is_approved: true
             })
             .eq('id', studentId)
         
@@ -1748,7 +1891,6 @@ async function openLesson(lessonId) {
         return
     }
     
-    // Verificar se o aluno tem acesso
     if (!isAdmin && (!studentData || !studentData.is_approved || !studentData.level_id)) {
         Toast.warning('Sem acesso', 'Sua conta não tem permissão para acessar este conteúdo.')
         return
@@ -1763,7 +1905,6 @@ async function openLesson(lessonId) {
         
         if (error) throw error
         
-        // Verificar se o aluno tem acesso a este nível (se não for admin)
         if (!isAdmin && studentData && studentData.level_id !== lesson.level_id) {
             Toast.warning('Nível bloqueado', 'Você não tem acesso a este nível.')
             return
@@ -1869,7 +2010,7 @@ async function markProgress(action) {
         
         if (error) throw error
         
-        Toast.success(`Aula ${label}!`, `Ótimo progresso! Continue assim.`)
+        Toast.success(`Aula ${label}!`, 'Ótimo progresso! Continue assim.')
         videoModal.classList.remove('active')
         loadLevels()
         
@@ -1924,8 +2065,10 @@ function setupMobileMenu() {
 // INICIALIZAR EVENTOS
 // ============================================
 function initEvents() {
+    // Botão Entrar
     if (authBtn) authBtn.addEventListener('click', openAuthModal)
     
+    // Botão Começar Agora
     if (ctaBtn) {
         ctaBtn.addEventListener('click', function() {
             if (currentUser) {
@@ -1936,6 +2079,7 @@ function initEvents() {
         })
     }
     
+    // Fechar modal
     if (modalClose) {
         modalClose.addEventListener('click', () => {
             authModal.classList.remove('active')
@@ -1950,6 +2094,7 @@ function initEvents() {
         })
     }
     
+    // Switch entre login e registro
     if (switchToRegister) {
         switchToRegister.addEventListener('click', (e) => {
             e.preventDefault()
@@ -1968,10 +2113,17 @@ function initEvents() {
         })
     }
     
+    // Forms
     if (loginForm) loginForm.addEventListener('submit', handleLogin)
     if (registerForm) registerForm.addEventListener('submit', handleRegister)
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout)
     
+    // Botão Google
+    if (googleBtn) {
+        googleBtn.addEventListener('click', handleGoogleLogin)
+    }
+    
+    // Vídeo modal
     if (videoClose) {
         videoClose.addEventListener('click', () => {
             videoModal.classList.remove('active')
@@ -2000,9 +2152,7 @@ function initEvents() {
     if (navAdmin) {
         navAdmin.addEventListener('click', (e) => {
             e.preventDefault()
-            if (isAdmin) {
-                loadAdminPanel()
-            }
+            if (isAdmin) loadAdminPanel()
         })
     }
     
@@ -2011,15 +2161,40 @@ function initEvents() {
 }
 
 // ============================================
+// PROCESSAR REDIRECIONAMENTO DO GOOGLE
+// ============================================
+async function handleOAuthRedirect() {
+    // Verificar se há uma sessão do OAuth
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session && session.user) {
+        currentUser = session.user
+        await checkSession()
+        if (isAdmin) loadAdminPanel()
+        Toast.success('Login com Google!', `Bem-vindo(a), ${session.user.user_metadata?.full_name || session.user.email}`)
+    }
+}
+
+// ============================================
 // INICIALIZAR
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Edu Mais - Inicializando...')
+    
     initElements()
     initEvents()
+    
+    // Verificar se veio de redirecionamento OAuth
+    handleOAuthRedirect()
+    
+    // Verificar sessão e carregar dados
     checkSession()
+    
+    console.log('✅ Edu Mais - Pronto para uso!')
 })
 
-// Expor funções globalmente
+// ============================================
+// EXPOR FUNÇÕES GLOBAIS
+// ============================================
 window.loadAdminPanel = loadAdminPanel
 window.loadLevels = loadLevels
 window.refreshAdmin = refreshAdmin

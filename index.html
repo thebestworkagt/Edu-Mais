@@ -1134,6 +1134,7 @@ let currentLevels = []
 let currentLessonId = null
 let isAdmin = false
 let studentData = null
+let adminCurrentTab = 'dashboard'
 
 // ============================================
 // DOM ELEMENTS
@@ -1689,11 +1690,8 @@ function renderLevels(levels, progressMap, userLevelAccess) {
 }
 
 // ============================================
-// PAINEL ADMIN - COMPLETO COM 3 ABAS
+// PAINEL ADMIN - COMPLETO COM 4 ABAS
 // ============================================
-
-// Estado do painel admin
-let adminCurrentTab = 'dashboard'
 
 // ============================================
 // CARREGAR PAINEL ADMIN
@@ -1709,7 +1707,6 @@ async function loadAdminPanel() {
     adminPanel.classList.add('active')
     document.getElementById('admin').scrollIntoView({ behavior: 'smooth' })
     
-    // Renderizar abas
     renderAdminTabs()
 }
 
@@ -1720,7 +1717,6 @@ function renderAdminTabs() {
     if (!adminContent) return
     
     adminContent.innerHTML = `
-        <!-- Abas -->
         <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--border-color);padding-bottom:12px;flex-wrap:wrap;">
             <button class="btn ${adminCurrentTab === 'dashboard' ? 'btn-primary' : 'btn-outline'}" 
                     onclick="switchAdminTab('dashboard')" style="font-size:13px;">
@@ -1740,7 +1736,6 @@ function renderAdminTabs() {
             </button>
         </div>
         
-        <!-- Conteúdo -->
         <div id="adminTabContent">
             <div style="text-align:center;padding:40px;">
                 <i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i>
@@ -1749,7 +1744,6 @@ function renderAdminTabs() {
         </div>
     `
     
-    // Carregar a aba atual
     loadAdminTab(adminCurrentTab)
 }
 
@@ -1803,7 +1797,6 @@ async function loadAdminTab(tab) {
 // DASHBOARD - ESTATÍSTICAS
 // ============================================
 async function loadDashboard(container) {
-    // Buscar estatísticas
     const { count: totalStudents } = await supabase
         .from('students')
         .select('*', { count: 'exact', head: true })
@@ -1822,7 +1815,6 @@ async function loadDashboard(container) {
         .from('lessons')
         .select('*', { count: 'exact', head: true })
     
-    // Buscar alunos por nível
     const { data: studentsByLevel } = await supabase
         .from('students')
         .select('level_id, level:levels(name)')
@@ -2140,7 +2132,6 @@ function showEditLevelForm(levelId) {
     const container = document.getElementById('adminTabContent')
     if (!container) return
     
-    // Buscar dados do nível
     supabase
         .from('levels')
         .select('*')
@@ -2290,7 +2281,6 @@ function showAddLessonForm() {
     const container = document.getElementById('adminTabContent')
     if (!container) return
     
-    // Buscar níveis para o select
     supabase
         .from('levels')
         .select('id, name')
@@ -2360,7 +2350,6 @@ function showEditLessonForm(lessonId) {
     const container = document.getElementById('adminTabContent')
     if (!container) return
     
-    // Buscar dados da aula e níveis
     Promise.all([
         supabase.from('lessons').select('*').eq('id', lessonId).single(),
         supabase.from('levels').select('id, name').eq('is_active', true).order('order')
@@ -2592,10 +2581,8 @@ async function adminDeleteStudent(studentId) {
     }
     
     try {
-        // Excluir progresso do aluno
         await supabase.from('progress').delete().eq('student_id', studentId)
         
-        // Excluir aluno
         const { error } = await supabase
             .from('students')
             .delete()
@@ -2618,68 +2605,6 @@ async function adminDeleteStudent(studentId) {
 function refreshAdmin() {
     if (isAdmin) {
         loadAdminTab(adminCurrentTab)
-        Toast.info('Atualizado!', 'O painel foi atualizado com sucesso.')
-    }
-}
-
-// ============================================
-// ADMIN - ATUALIZAR NÍVEL
-// ============================================
-async function updateStudentLevel(studentId, levelId) {
-    if (!isAdmin) return
-    
-    try {
-        const { error } = await supabase
-            .from('students')
-            .update({ 
-                level_id: levelId || null,
-                is_approved: true
-            })
-            .eq('id', studentId)
-        
-        if (error) throw error
-        
-        Toast.success('Nível atualizado!', 'O aluno foi atualizado com sucesso.')
-        loadAdminPanel()
-        loadLevels()
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível atualizar o nível do aluno.')
-    }
-}
-
-// ============================================
-// ADMIN - APROVAR/BLOQUEAR
-// ============================================
-async function toggleApproval(studentId, approve) {
-    if (!isAdmin) return
-    
-    try {
-        const { error } = await supabase
-            .from('students')
-            .update({ 
-                is_approved: approve,
-                approved_at: approve ? new Date().toISOString() : null
-            })
-            .eq('id', studentId)
-        
-        if (error) throw error        
-        Toast.success(approve ? 'Aluno aprovado!' : 'Aluno bloqueado!', 
-                     approve ? 'O aluno agora tem acesso aos conteúdos.' : 'O aluno foi bloqueado.')
-        loadAdminPanel()
-        loadLevels()
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível atualizar o status do aluno.')
-    }
-}
-
-// ============================================
-// REFRESH ADMIN
-// ============================================
-function refreshAdmin() {
-    if (isAdmin) {
-        loadAdminPanel()
         Toast.info('Atualizado!', 'O painel foi atualizado com sucesso.')
     }
 }
@@ -2870,18 +2795,14 @@ function setupMobileMenu() {
 function initEvents() {
     console.log('🔧 Inicializando eventos...')
     
-    // Botão Entrar
     if (authBtn) {
         authBtn.addEventListener('click', function(e) {
             console.log('🖱️ Clique no botão Entrar')
             openAuthModal()
         })
         console.log('✅ Botão Entrar configurado')
-    } else {
-        console.error('❌ Botão Entrar não encontrado!')
     }
     
-    // Botão Começar Agora
     if (ctaBtn) {
         ctaBtn.addEventListener('click', function() {
             if (currentUser) {
@@ -2893,7 +2814,6 @@ function initEvents() {
         console.log('✅ Botão Começar Agora configurado')
     }
     
-    // Fechar modal
     if (modalClose) {
         modalClose.addEventListener('click', () => {
             authModal.classList.remove('active')
@@ -2909,7 +2829,6 @@ function initEvents() {
         })
     }
     
-    // Switch entre login e registro
     if (switchToRegister) {
         switchToRegister.addEventListener('click', (e) => {
             e.preventDefault()
@@ -2930,7 +2849,6 @@ function initEvents() {
         console.log('✅ Switch login configurado')
     }
     
-    // Forms
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin)
         console.log('✅ Form login configurado')
@@ -2946,7 +2864,6 @@ function initEvents() {
         console.log('✅ Logout configurado')
     }
     
-    // Vídeo modal
     if (videoClose) {
         videoClose.addEventListener('click', () => {
             videoModal.classList.remove('active')
@@ -2971,7 +2888,6 @@ function initEvents() {
         markCompletedBtn.addEventListener('click', () => markProgress('completed'))
     }
     
-    // Admin nav link
     if (navAdmin) {
         navAdmin.addEventListener('click', (e) => {
             e.preventDefault()
@@ -3004,11 +2920,25 @@ document.addEventListener('DOMContentLoaded', function() {
 window.loadAdminPanel = loadAdminPanel
 window.loadLevels = loadLevels
 window.refreshAdmin = refreshAdmin
-window.updateStudentLevel = updateStudentLevel
-window.toggleApproval = toggleApproval
+window.adminUpdateStudentLevel = adminUpdateStudentLevel
+window.adminToggleApproval = adminToggleApproval
+window.adminDeleteStudent = adminDeleteStudent
+window.adminDeleteLevel = adminDeleteLevel
+window.adminDeleteLesson = adminDeleteLesson
 window.openLesson = openLesson
 window.openAuthModal = openAuthModal
 window.isAdmin = () => isAdmin
+window.switchAdminTab = switchAdminTab
+window.loadAdminTab = loadAdminTab
+window.showAddLevelForm = showAddLevelForm
+window.showEditLevelForm = showEditLevelForm
+window.showAddLessonForm = showAddLessonForm
+window.showEditLessonForm = showEditLessonForm
+window.adminCreateLevel = adminCreateLevel
+window.adminUpdateLevel = adminUpdateLevel
+window.adminCreateLesson = adminCreateLesson
+window.adminUpdateLesson = adminUpdateLesson
+window.filterLessons = filterLessons
 </script>
 </body>
 </html>

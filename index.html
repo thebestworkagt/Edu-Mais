@@ -1070,7 +1070,7 @@ const Toast = {
         }
     },
     
-    show(title, message, type = 'info', duration = 4000) {
+    show(title, message, type, duration) {
         if (!this.container) this.init()
         
         const icons = {
@@ -1081,7 +1081,7 @@ const Toast = {
         }
         
         const toast = document.createElement('div')
-        toast.className = `toast ${type}`
+        toast.className = 'toast ' + (type || 'info')
         toast.innerHTML = `
             <i class="fas ${icons[type] || icons.info} toast-icon"></i>
             <div class="toast-content">
@@ -1091,37 +1091,49 @@ const Toast = {
             <button class="toast-close"><i class="fas fa-times"></i></button>
         `
         
-        toast.querySelector('.toast-close').addEventListener('click', () => {
-            this.remove(toast)
+        toast.querySelector('.toast-close').addEventListener('click', function() {
+            Toast.remove(toast)
         })
         
-        const timeout = setTimeout(() => {
-            this.remove(toast)
-        }, duration)
+        var timeout = setTimeout(function() {
+            Toast.remove(toast)
+        }, duration || 4000)
         
-        toast.addEventListener('mouseenter', () => clearTimeout(timeout))
-        toast.addEventListener('mouseleave', () => {
-            setTimeout(() => this.remove(toast), duration)
+        toast.addEventListener('mouseenter', function() {
+            clearTimeout(timeout)
+        })
+        toast.addEventListener('mouseleave', function() {
+            setTimeout(function() {
+                Toast.remove(toast)
+            }, duration || 4000)
         })
         
         this.container.appendChild(toast)
         return toast
     },
     
-    remove(toast) {
+    remove: function(toast) {
         if (!toast) return
         toast.classList.add('hiding')
-        setTimeout(() => {
+        setTimeout(function() {
             if (toast.parentNode) {
                 toast.parentNode.removeChild(toast)
             }
         }, 400)
     },
     
-    success(title, message, duration) { return this.show(title, message, 'success', duration || 4000) },
-    error(title, message, duration) { return this.show(title, message, 'error', duration || 5000) },
-    warning(title, message, duration) { return this.show(title, message, 'warning', duration || 4000) },
-    info(title, message, duration) { return this.show(title, message, 'info', duration || 3000) }
+    success: function(title, message, duration) {
+        return this.show(title, message, 'success', duration || 4000)
+    },
+    error: function(title, message, duration) {
+        return this.show(title, message, 'error', duration || 5000)
+    },
+    warning: function(title, message, duration) {
+        return this.show(title, message, 'warning', duration || 4000)
+    },
+    info: function(title, message, duration) {
+        return this.show(title, message, 'info', duration || 3000)
+    }
 }
 
 Toast.init()
@@ -1129,20 +1141,20 @@ Toast.init()
 // ============================================
 // ESTADO
 // ============================================
-let currentUser = null
-let currentLevels = []
-let currentLessonId = null
-let isAdmin = false
-let studentData = null
-let adminCurrentTab = 'dashboard'
+var currentUser = null
+var currentLevels = []
+var currentLessonId = null
+var isAdmin = false
+var studentData = null
+var adminCurrentTab = 'dashboard'
 
 // ============================================
 // DOM ELEMENTS
 // ============================================
-let authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
-let switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
-let videoModal, videoClose, markWatchedBtn, markCompletedBtn
-let navAdmin, adminPanel, adminContent, navNiveis
+var authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
+var switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
+var videoModal, videoClose, markWatchedBtn, markCompletedBtn
+var navAdmin, adminPanel, adminContent, navNiveis
 
 // ============================================
 // INICIALIZAR REFERÊNCIAS
@@ -1183,18 +1195,18 @@ async function checkAdminStatus() {
     }
     
     try {
-        const { data, error } = await supabase
+        var result = await supabase
             .from('admins')
             .select('id, email, full_name, role')
             .eq('id', currentUser.id)
             .maybeSingle()
         
-        isAdmin = !!data && !error
+        isAdmin = !!result.data && !result.error
         
         if (isAdmin) {
-            console.log('👑 Admin logado:', data.email)
+            console.log('👑 Admin logado:', result.data.email)
         }
-    } catch {
+    } catch (e) {
         isAdmin = false
     }
     
@@ -1218,17 +1230,17 @@ async function fetchStudentData() {
     }
     
     try {
-        const { data, error } = await supabase
+        var result = await supabase
             .from('students')
             .select('*')
             .eq('id', currentUser.id)
             .maybeSingle()
         
-        if (error) throw error
+        if (result.error) throw result.error
         
-        if (!data) {
+        if (!result.data) {
             console.log('📝 Criando aluno para:', currentUser.email)
-            const newStudent = {
+            var newStudent = {
                 id: currentUser.id,
                 email: currentUser.email,
                 full_name: currentUser.user_metadata?.full_name || currentUser.email,
@@ -1236,20 +1248,20 @@ async function fetchStudentData() {
                 is_approved: false,
                 level_id: null
             }
-            const { error: insertError } = await supabase
+            var insertResult = await supabase
                 .from('students')
                 .insert(newStudent)
             
-            if (insertError) {
-                console.error('❌ Erro ao criar aluno:', insertError)
+            if (insertResult.error) {
+                console.error('❌ Erro ao criar aluno:', insertResult.error)
                 return null
             }
             studentData = newStudent
             return newStudent
         }
         
-        studentData = data
-        return data
+        studentData = result.data
+        return result.data
     } catch (error) {
         console.error('Erro ao buscar dados do aluno:', error)
         return null
@@ -1260,9 +1272,9 @@ async function fetchStudentData() {
 // AUTENTICAÇÃO - VERIFICAR SESSÃO
 // ============================================
 async function checkSession() {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-        currentUser = session.user
+    var sessionResult = await supabase.auth.getSession()
+    if (sessionResult.data.session) {
+        currentUser = sessionResult.data.session.user
         if (authBtn) authBtn.style.display = 'none'
         if (logoutBtn) logoutBtn.style.display = 'inline-flex'
         
@@ -1308,8 +1320,8 @@ async function handleLogin(e) {
     e.preventDefault()
     console.log('📝 Tentando login...')
     
-    const email = document.getElementById('loginEmail').value
-    const password = document.getElementById('loginPassword').value
+    var email = document.getElementById('loginEmail').value
+    var password = document.getElementById('loginPassword').value
     
     if (!email || !password) {
         Toast.warning('Campos incompletos', 'Por favor, preencha todos os campos.')
@@ -1317,8 +1329,8 @@ async function handleLogin(e) {
     }
     
     try {
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
+        var result = await supabase.auth.signInWithPassword({ email: email, password: password })
+        if (result.error) throw result.error
         authModal.classList.remove('active')
         await checkSession()
         Toast.success('Login realizado!', 'Bem-vindo(a) à Edu Mais.')
@@ -1336,10 +1348,10 @@ async function handleLogin(e) {
 async function handleRegister(e) {
     e.preventDefault()
     
-    const fullName = document.getElementById('registerName').value.trim()
-    const email = document.getElementById('registerEmail').value.trim()
-    const phone = document.getElementById('registerPhone').value.trim()
-    const password = document.getElementById('registerPassword').value
+    var fullName = document.getElementById('registerName').value.trim()
+    var email = document.getElementById('registerEmail').value.trim()
+    var phone = document.getElementById('registerPhone').value.trim()
+    var password = document.getElementById('registerPassword').value
     
     if (!fullName || !email || !password) {
         Toast.warning('Campos incompletos', 'Por favor, preencha todos os campos obrigatórios.')
@@ -1357,11 +1369,11 @@ async function handleRegister(e) {
     }
     
     try {
-        console.log('📝 Criando usuário...', { email, fullName })
+        console.log('📝 Criando usuário...', { email: email, fullName: fullName })
         
-        const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
+        var signUpResult = await supabase.auth.signUp({
+            email: email,
+            password: password,
             options: { 
                 data: { 
                     full_name: fullName,
@@ -1370,28 +1382,28 @@ async function handleRegister(e) {
             }
         })
         
-        if (error) {
-            console.error('❌ Erro:', error)
-            if (error.message.includes('already registered')) {
+        if (signUpResult.error) {
+            console.error('❌ Erro:', signUpResult.error)
+            if (signUpResult.error.message.includes('already registered')) {
                 Toast.error('Email já cadastrado', 'Este email já está em uso. Faça login.')
                 return
             }
-            if (error.message.includes('rate limit')) {
+            if (signUpResult.error.message.includes('rate limit')) {
                 Toast.warning('Muitas tentativas', 'Aguarde 15-30 minutos e tente novamente.')
                 return
             }
-            throw error
+            throw signUpResult.error
         }
         
-        if (!data.user) {
+        if (!signUpResult.data.user) {
             throw new Error('Usuário não foi criado')
         }
         
-        console.log('✅ Usuário criado:', data.user.id)
-        await new Promise(resolve => setTimeout(resolve, 1500))
+        console.log('✅ Usuário criado:', signUpResult.data.user.id)
+        await new Promise(function(resolve) { setTimeout(resolve, 1500) })
         
-        const studentData = {
-            id: data.user.id,
+        var studentDataObj = {
+            id: signUpResult.data.user.id,
             email: email,
             full_name: fullName,
             phone: phone || null,
@@ -1401,19 +1413,19 @@ async function handleRegister(e) {
             enrolled_at: new Date().toISOString()
         }
         
-        const { error: studentError } = await supabase
+        var insertStudentResult = await supabase
             .from('students')
-            .insert(studentData)
+            .insert(studentDataObj)
         
-        if (studentError) {
-            console.error('❌ Erro ao criar student:', studentError)
-            if (studentError.code === '23505') {
+        if (insertStudentResult.error) {
+            console.error('❌ Erro ao criar student:', insertStudentResult.error)
+            if (insertStudentResult.error.code === '23505') {
                 await supabase
                     .from('students')
-                    .update({ email, full_name, phone, is_active: true })
-                    .eq('id', data.user.id)
+                    .update({ email: email, full_name: fullName, phone: phone || null, is_active: true })
+                    .eq('id', signUpResult.data.user.id)
             } else {
-                throw studentError
+                throw insertStudentResult.error
             }
         }
         
@@ -1460,7 +1472,7 @@ async function loadLevels() {
     if (!levelsContainer) return
     
     try {
-        const { data: levels, error } = await supabase
+        var levelsResult = await supabase
             .from('levels')
             .select(`
                 *,
@@ -1476,21 +1488,21 @@ async function loadLevels() {
             .eq('is_active', true)
             .order('order')
         
-        if (error) throw error
+        if (levelsResult.error) throw levelsResult.error
         
-        currentLevels = levels || []
+        currentLevels = levelsResult.data || []
         
-        let progressMap = new Map()
-        let userLevelAccess = null
+        var progressMap = new Map()
+        var userLevelAccess = null
         
         if (currentUser && !isAdmin) {
-            const { data: progress } = await supabase
+            var progressResult = await supabase
                 .from('progress')
                 .select('lesson_id, watched, completed')
                 .eq('student_id', currentUser.id)
             
-            if (progress) {
-                progress.forEach(p => {
+            if (progressResult.data) {
+                progressResult.data.forEach(function(p) {
                     progressMap.set(p.lesson_id, { 
                         watched: p.watched, 
                         completed: p.completed 
@@ -1504,17 +1516,23 @@ async function loadLevels() {
         }
         
         try {
-            const { count: totalStudents } = await supabase
+            var countResult = await supabase
                 .from('students')
                 .select('*', { count: 'exact', head: true })
                 .eq('is_approved', true)
             
-            document.getElementById('statLevels').textContent = levels?.length || 0
-            document.getElementById('statLessons').textContent = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
-            document.getElementById('statStudents').textContent = totalStudents || 0
+            document.getElementById('statLevels').textContent = levelsResult.data?.length || 0
+            var totalLessons = 0
+            if (levelsResult.data) {
+                levelsResult.data.forEach(function(l) {
+                    totalLessons += (l.lessons?.length || 0)
+                })
+            }
+            document.getElementById('statLessons').textContent = totalLessons
+            document.getElementById('statStudents').textContent = countResult.count || 0
         } catch (e) {}
         
-        renderLevels(levels || [], progressMap, userLevelAccess)
+        renderLevels(levelsResult.data || [], progressMap, userLevelAccess)
         
     } catch (error) {
         console.error('❌ Erro ao carregar níveis:', error)
@@ -1546,16 +1564,38 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // ADMIN - VÊ TODOS OS NÍVEIS
     if (isAdmin) {
-        levelsContainer.innerHTML = levels.map((level) => {
-            const totalLessons = level.lessons?.length || 0
-            const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
-            const isCompleted = totalLessons > 0 && watchedLessons === totalLessons
+        var adminHtml = ''
+        levels.forEach(function(level) {
+            var totalLessons = level.lessons?.length || 0
+            var watchedLessons = 0
+            if (level.lessons) {
+                level.lessons.forEach(function(l) {
+                    if (progressMap.get(l.id)?.watched) watchedLessons++
+                })
+            }
+            var isCompleted = totalLessons > 0 && watchedLessons === totalLessons
             
-            const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+            var lessons = (level.lessons || []).slice().sort(function(a, b) {
+                return (a.order || 0) - (b.order || 0)
+            })
             
-            return `
+            var lessonsHtml = ''
+            lessons.forEach(function(lesson) {
+                var progress = progressMap.get(lesson.id) || {}
+                var isWatched = progress.watched || false
+                lessonsHtml += `
+                    <div class="lesson-item" onclick="openLesson(${lesson.id})">
+                        <span class="lesson-status ${isWatched ? 'watched' : ''}">
+                            ${isWatched ? '✅' : '▶️'}
+                        </span>
+                        <span class="lesson-title">${lesson.title}</span>
+                        <span class="lesson-duration">${lesson.video_duration || 0} min</span>
+                    </div>
+                `
+            })
+            
+            adminHtml += `
                 <div class="level-card">
                     <div class="level-icon">${level.icon || '📚'}</div>
                     <div class="level-header">
@@ -1574,28 +1614,15 @@ function renderLevels(levels, progressMap, userLevelAccess) {
                     </div>
                     
                     <div class="level-lessons">
-                        ${lessons.map(lesson => {
-                            const progress = progressMap.get(lesson.id) || {}
-                            const isWatched = progress.watched || false
-                            
-                            return `
-                                <div class="lesson-item" onclick="openLesson(${lesson.id})">
-                                    <span class="lesson-status ${isWatched ? 'watched' : ''}">
-                                        ${isWatched ? '✅' : '▶️'}
-                                    </span>
-                                    <span class="lesson-title">${lesson.title}</span>
-                                    <span class="lesson-duration">${lesson.video_duration || 0} min</span>
-                                </div>
-                            `
-                        }).join('')}
+                        ${lessonsHtml}
                     </div>
                 </div>
             `
-        }).join('')
+        })
+        levelsContainer.innerHTML = adminHtml
         return
     }
     
-    // Usuário não logado
     if (!currentUser) {
         levelsContainer.innerHTML = `
             <div class="access-denied">
@@ -1610,7 +1637,6 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // Aluno pendente
     if (studentData && !studentData.is_approved) {
         levelsContainer.innerHTML = `
             <div class="access-denied">
@@ -1626,8 +1652,9 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    // Aluno aprovado
-    const visibleLevels = levels.filter(level => level.id === userLevelAccess)
+    var visibleLevels = levels.filter(function(level) {
+        return level.id === userLevelAccess
+    })
     
     if (visibleLevels.length === 0) {
         levelsContainer.innerHTML = `
@@ -1643,14 +1670,37 @@ function renderLevels(levels, progressMap, userLevelAccess) {
         return
     }
     
-    levelsContainer.innerHTML = visibleLevels.map((level) => {
-        const totalLessons = level.lessons?.length || 0
-        const watchedLessons = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
-        const isCompleted = totalLessons > 0 && watchedLessons === totalLessons
+    var alunoHtml = ''
+    visibleLevels.forEach(function(level) {
+        var totalLessons = level.lessons?.length || 0
+        var watchedLessons = 0
+        if (level.lessons) {
+            level.lessons.forEach(function(l) {
+                if (progressMap.get(l.id)?.watched) watchedLessons++
+            })
+        }
+        var isCompleted = totalLessons > 0 && watchedLessons === totalLessons
         
-        const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+        var lessons = (level.lessons || []).slice().sort(function(a, b) {
+            return (a.order || 0) - (b.order || 0)
+        })
         
-        return `
+        var lessonsHtml = ''
+        lessons.forEach(function(lesson) {
+            var progress = progressMap.get(lesson.id) || {}
+            var isWatched = progress.watched || false
+            lessonsHtml += `
+                <div class="lesson-item" onclick="openLesson(${lesson.id})">
+                    <span class="lesson-status ${isWatched ? 'watched' : ''}">
+                        ${isWatched ? '✅' : '▶️'}
+                    </span>
+                    <span class="lesson-title">${lesson.title}</span>
+                    <span class="lesson-duration">${lesson.video_duration || 0} min</span>
+                </div>
+            `
+        })
+        
+        alunoHtml += `
             <div class="level-card">
                 <div class="level-icon">${level.icon || '📚'}</div>
                 <div class="level-header">
@@ -1669,32 +1719,16 @@ function renderLevels(levels, progressMap, userLevelAccess) {
                 </div>
                 
                 <div class="level-lessons">
-                    ${lessons.map(lesson => {
-                        const progress = progressMap.get(lesson.id) || {}
-                        const isWatched = progress.watched || false
-                        
-                        return `
-                            <div class="lesson-item" onclick="openLesson(${lesson.id})">
-                                <span class="lesson-status ${isWatched ? 'watched' : ''}">
-                                    ${isWatched ? '✅' : '▶️'}
-                                </span>
-                                <span class="lesson-title">${lesson.title}</span>
-                                <span class="lesson-duration">${lesson.video_duration || 0} min</span>
-                            </div>
-                        `
-                    }).join('')}
+                    ${lessonsHtml}
                 </div>
             </div>
         `
-    }).join('')
+    })
+    levelsContainer.innerHTML = alunoHtml
 }
 
 // ============================================
 // PAINEL ADMIN - COMPLETO COM 4 ABAS
-// ============================================
-
-// ============================================
-// CARREGAR PAINEL ADMIN
 // ============================================
 async function loadAdminPanel() {
     if (!isAdmin) {
@@ -1710,9 +1744,6 @@ async function loadAdminPanel() {
     renderAdminTabs()
 }
 
-// ============================================
-// RENDERIZAR ABAS DO ADMIN
-// ============================================
 function renderAdminTabs() {
     if (!adminContent) return
     
@@ -1747,37 +1778,26 @@ function renderAdminTabs() {
     loadAdminTab(adminCurrentTab)
 }
 
-// ============================================
-// SWITCH ENTRE ABAS
-// ============================================
 function switchAdminTab(tab) {
     adminCurrentTab = tab
     renderAdminTabs()
 }
 
-// ============================================
-// CARREGAR CONTEÚDO DA ABA
-// ============================================
 async function loadAdminTab(tab) {
-    const container = document.getElementById('adminTabContent')
+    var container = document.getElementById('adminTabContent')
     if (!container) return
     
     try {
-        switch(tab) {
-            case 'dashboard':
-                await loadDashboard(container)
-                break
-            case 'alunos':
-                await loadAlunos(container)
-                break
-            case 'niveis':
-                await loadNiveis(container)
-                break
-            case 'aulas':
-                await loadAulas(container)
-                break
-            default:
-                container.innerHTML = '<p>Conteúdo não encontrado</p>'
+        if (tab === 'dashboard') {
+            await loadDashboard(container)
+        } else if (tab === 'alunos') {
+            await loadAlunos(container)
+        } else if (tab === 'niveis') {
+            await loadNiveis(container)
+        } else if (tab === 'aulas') {
+            await loadAulas(container)
+        } else {
+            container.innerHTML = '<p>Conteúdo não encontrado</p>'
         }
     } catch (error) {
         console.error('Erro ao carregar aba:', error)
@@ -1794,82 +1814,78 @@ async function loadAdminTab(tab) {
 }
 
 // ============================================
-// DASHBOARD - ESTATÍSTICAS
+// DASHBOARD
 // ============================================
 async function loadDashboard(container) {
-    const { count: totalStudents } = await supabase
-        .from('students')
-        .select('*', { count: 'exact', head: true })
+    var totalResult = await supabase.from('students').select('*', { count: 'exact', head: true })
+    var approvedResult = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('is_approved', true)
+    var levelsResult = await supabase.from('levels').select('*', { count: 'exact', head: true }).eq('is_active', true)
+    var lessonsResult = await supabase.from('lessons').select('*', { count: 'exact', head: true })
     
-    const { count: approvedStudents } = await supabase
-        .from('students')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_approved', true)
-    
-    const { count: totalLevels } = await supabase
-        .from('levels')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true)
-    
-    const { count: totalLessons } = await supabase
-        .from('lessons')
-        .select('*', { count: 'exact', head: true })
-    
-    const { data: studentsByLevel } = await supabase
+    var studentsByLevelResult = await supabase
         .from('students')
         .select('level_id, level:levels(name)')
         .eq('is_approved', true)
     
-    const levelCounts = {}
-    studentsByLevel?.forEach(s => {
-        const name = s.level?.name || 'Sem nível'
-        levelCounts[name] = (levelCounts[name] || 0) + 1
-    })
+    var levelCounts = {}
+    if (studentsByLevelResult.data) {
+        studentsByLevelResult.data.forEach(function(s) {
+            var name = s.level?.name || 'Sem nível'
+            levelCounts[name] = (levelCounts[name] || 0) + 1
+        })
+    }
+    
+    var levelCountsHtml = ''
+    var keys = Object.keys(levelCounts)
+    if (keys.length === 0) {
+        levelCountsHtml = '<p style="color:var(--text-muted);">Nenhum aluno aprovado ainda.</p>'
+    } else {
+        keys.forEach(function(name) {
+            levelCountsHtml += `
+                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                    <span>${name}</span>
+                    <span style="font-weight:600;color:var(--primary-light);">${levelCounts[name]} alunos</span>
+                </div>
+            `
+        })
+    }
     
     container.innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
             <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${totalStudents || 0}</div>
+                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${totalResult.count || 0}</div>
                 <div style="color:var(--text-muted);font-size:13px;">Total de Alunos</div>
             </div>
             <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:#2E8B57;">${approvedStudents || 0}</div>
+                <div style="font-size:32px;font-weight:800;color:#2E8B57;">${approvedResult.count || 0}</div>
                 <div style="color:var(--text-muted);font-size:13px;">Aprovados</div>
             </div>
             <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:#f39c12;">${(totalStudents || 0) - (approvedStudents || 0)}</div>
+                <div style="font-size:32px;font-weight:800;color:#f39c12;">${(totalResult.count || 0) - (approvedResult.count || 0)}</div>
                 <div style="color:var(--text-muted);font-size:13px;">Pendentes</div>
             </div>
             <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${totalLevels || 0}</div>
+                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${levelsResult.count || 0}</div>
                 <div style="color:var(--text-muted);font-size:13px;">Níveis</div>
             </div>
             <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${totalLessons || 0}</div>
+                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${lessonsResult.count || 0}</div>
                 <div style="color:var(--text-muted);font-size:13px;">Aulas</div>
             </div>
         </div>
         
         <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);">
             <h4 style="margin-bottom:12px;">📊 Alunos por Nível</h4>
-            ${Object.keys(levelCounts).length === 0 ? 
-                '<p style="color:var(--text-muted);">Nenhum aluno aprovado ainda.</p>' :
-                Object.entries(levelCounts).map(([name, count]) => `
-                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                        <span>${name}</span>
-                        <span style="font-weight:600;color:var(--primary-light);">${count} alunos</span>
-                    </div>
-                `).join('')
-            }
+            ${levelCountsHtml}
         </div>
     `
 }
 
 // ============================================
-// ALUNOS - LISTA E GERENCIAMENTO
+// ALUNOS
 // ============================================
 async function loadAlunos(container) {
-    const { data: students, error } = await supabase
+    var studentsResult = await supabase
         .from('students')
         .select(`
             *,
@@ -1877,15 +1893,15 @@ async function loadAlunos(container) {
         `)
         .order('enrolled_at', { ascending: false })
     
-    if (error) throw error
+    if (studentsResult.error) throw studentsResult.error
     
-    const { data: levels } = await supabase
+    var levelsResult = await supabase
         .from('levels')
         .select('id, name')
         .eq('is_active', true)
         .order('order')
     
-    if (!students || students.length === 0) {
+    if (!studentsResult.data || studentsResult.data.length === 0) {
         container.innerHTML = `
             <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
                 <i class="fas fa-users" style="font-size:48px;color:var(--text-muted);"></i>
@@ -1894,6 +1910,53 @@ async function loadAlunos(container) {
         `
         return
     }
+    
+    var rowsHtml = ''
+    studentsResult.data.forEach(function(student) {
+        var levelOptions = ''
+        if (levelsResult.data) {
+            levelsResult.data.forEach(function(level) {
+                var selected = student.level_id === level.id ? 'selected' : ''
+                levelOptions += `<option value="${level.id}" ${selected}>${level.name}</option>`
+            })
+        }
+        
+        rowsHtml += `
+            <tr style="border-bottom:1px solid var(--border-color);">
+                <td style="padding:12px 16px;font-weight:600;">${student.full_name || '—'}</td>
+                <td style="padding:12px 16px;color:var(--text-secondary);">${student.email}</td>
+                <td style="padding:12px 16px;">
+                    <span style="padding:4px 12px;border-radius:50px;font-size:12px;font-weight:600;background:${student.is_approved ? 'rgba(46,139,87,0.2)' : 'rgba(243,156,18,0.2)'};color:${student.is_approved ? 'var(--primary-light)' : '#f39c12'};">
+                        ${student.is_approved ? '✅ Aprovado' : '⏳ Pendente'}
+                    </span>
+                </td>
+                <td style="padding:12px 16px;">
+                    ${student.level_id ? 
+                        `<span style="color:var(--primary-light);">${student.level?.name || 'Nível ' + student.level_id}</span>` : 
+                        '<span style="color:var(--text-muted);">Nenhum</span>'
+                    }
+                </td>
+                <td style="padding:12px 16px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <select onchange="adminUpdateStudentLevel('${student.id}', this.value)" style="padding:4px 8px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-size:12px;">
+                            <option value="">— Selecionar —</option>
+                            ${levelOptions}
+                        </select>
+                        <button class="btn btn-sm ${student.is_approved ? 'btn-warning' : 'btn-success'}" 
+                                onclick="adminToggleApproval('${student.id}', ${!student.is_approved})"
+                                style="padding:4px 12px;font-size:12px;">
+                            ${student.is_approved ? '⛔ Bloquear' : '✅ Aprovar'}
+                        </button>
+                        <button class="btn btn-sm btn-danger" 
+                                onclick="adminDeleteStudent('${student.id}')"
+                                style="padding:4px 12px;font-size:12px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `
+    })
     
     container.innerHTML = `
         <div style="overflow-x:auto;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
@@ -1908,45 +1971,7 @@ async function loadAlunos(container) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${students.map(student => `
-                        <tr style="border-bottom:1px solid var(--border-color);">
-                            <td style="padding:12px 16px;font-weight:600;">${student.full_name || '—'}</td>
-                            <td style="padding:12px 16px;color:var(--text-secondary);">${student.email}</td>
-                            <td style="padding:12px 16px;">
-                                <span style="padding:4px 12px;border-radius:50px;font-size:12px;font-weight:600;background:${student.is_approved ? 'rgba(46,139,87,0.2)' : 'rgba(243,156,18,0.2)'};color:${student.is_approved ? 'var(--primary-light)' : '#f39c12'};">
-                                    ${student.is_approved ? '✅ Aprovado' : '⏳ Pendente'}
-                                </span>
-                            </td>
-                            <td style="padding:12px 16px;">
-                                ${student.level_id ? 
-                                    `<span style="color:var(--primary-light);">${student.level?.name || 'Nível ' + student.level_id}</span>` : 
-                                    '<span style="color:var(--text-muted);">Nenhum</span>'
-                                }
-                            </td>
-                            <td style="padding:12px 16px;">
-                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                    <select onchange="adminUpdateStudentLevel('${student.id}', this.value)" style="padding:4px 8px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-size:12px;">
-                                        <option value="">— Selecionar —</option>
-                                        ${levels?.map(level => `
-                                            <option value="${level.id}" ${student.level_id === level.id ? 'selected' : ''}>
-                                                ${level.name}
-                                            </option>
-                                        `).join('')}
-                                    </select>
-                                    <button class="btn btn-sm ${student.is_approved ? 'btn-warning' : 'btn-success'}" 
-                                            onclick="adminToggleApproval('${student.id}', ${!student.is_approved})"
-                                            style="padding:4px 12px;font-size:12px;">
-                                        ${student.is_approved ? '⛔ Bloquear' : '✅ Aprovar'}
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" 
-                                            onclick="adminDeleteStudent('${student.id}')"
-                                            style="padding:4px 12px;font-size:12px;">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('')}
+                    ${rowsHtml}
                 </tbody>
             </table>
         </div>
@@ -1954,15 +1979,41 @@ async function loadAlunos(container) {
 }
 
 // ============================================
-// NÍVEIS - LISTA E GERENCIAMENTO
+// NÍVEIS
 // ============================================
 async function loadNiveis(container) {
-    const { data: levels, error } = await supabase
-        .from('levels')
-        .select('*')
-        .order('order')
+    var result = await supabase.from('levels').select('*').order('order')
+    if (result.error) throw result.error
     
-    if (error) throw error
+    var levelsHtml = ''
+    if (!result.data || result.data.length === 0) {
+        levelsHtml = `
+            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
+                <p style="color:var(--text-secondary);">Nenhum nível criado ainda.</p>
+            </div>
+        `
+    } else {
+        result.data.forEach(function(level) {
+            levelsHtml += `
+                <div style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <span style="font-size:24px;">${level.icon || '📚'}</span>
+                        <strong style="margin-left:8px;">${level.name}</strong>
+                        <span style="color:var(--text-muted);font-size:13px;margin-left:12px;">${level.description || ''}</span>
+                        <span style="color:var(--text-muted);font-size:12px;margin-left:12px;">Ordem: ${level.order || 0}</span>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm btn-outline" onclick="showEditLevelForm(${level.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="adminDeleteLevel(${level.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `
+        })
+    }
     
     container.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
@@ -1971,41 +2022,15 @@ async function loadNiveis(container) {
                 <i class="fas fa-plus"></i> Adicionar Nível
             </button>
         </div>
-        
-        ${!levels || levels.length === 0 ? `
-            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
-                <p style="color:var(--text-secondary);">Nenhum nível criado ainda.</p>
-            </div>
-        ` : `
-            <div style="display:grid;gap:12px;">
-                ${levels.map(level => `
-                    <div style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                        <div>
-                            <span style="font-size:24px;">${level.icon || '📚'}</span>
-                            <strong style="margin-left:8px;">${level.name}</strong>
-                            <span style="color:var(--text-muted);font-size:13px;margin-left:12px;">${level.description || ''}</span>
-                            <span style="color:var(--text-muted);font-size:12px;margin-left:12px;">Ordem: ${level.order || 0}</span>
-                        </div>
-                        <div style="display:flex;gap:8px;">
-                            <button class="btn btn-sm btn-outline" onclick="showEditLevelForm(${level.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="adminDeleteLevel(${level.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `
+        ${levelsHtml}
     `
 }
 
 // ============================================
-// AULAS - LISTA E GERENCIAMENTO
+// AULAS
 // ============================================
 async function loadAulas(container) {
-    const { data: lessons, error } = await supabase
+    var lessonsResult = await supabase
         .from('lessons')
         .select(`
             *,
@@ -2014,13 +2039,55 @@ async function loadAulas(container) {
         .order('level_id')
         .order('order')
     
-    if (error) throw error
+    if (lessonsResult.error) throw lessonsResult.error
     
-    const { data: levels } = await supabase
+    var levelsResult = await supabase
         .from('levels')
         .select('id, name')
         .eq('is_active', true)
         .order('order')
+    
+    var filterOptions = '<option value="all">Todos os níveis</option>'
+    if (levelsResult.data) {
+        levelsResult.data.forEach(function(level) {
+            filterOptions += `<option value="${level.id}">${level.name}</option>`
+        })
+    }
+    
+    var lessonsHtml = ''
+    if (!lessonsResult.data || lessonsResult.data.length === 0) {
+        lessonsHtml = `
+            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
+                <p style="color:var(--text-secondary);">Nenhuma aula criada ainda.</p>
+            </div>
+        `
+    } else {
+        lessonsResult.data.forEach(function(lesson) {
+            lessonsHtml += `
+                <div class="lesson-item-admin" data-level="${lesson.level_id}" style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <span style="font-size:18px;">📖</span>
+                            <strong>${lesson.title}</strong>
+                            <span style="color:var(--text-muted);font-size:13px;background:var(--bg-secondary);padding:2px 10px;border-radius:50px;">${lesson.level?.name || 'Sem nível'}</span>
+                            <span style="color:var(--text-muted);font-size:12px;">${lesson.video_duration || 0} min</span>
+                            ${!lesson.video_url ? '<span style="color:#ff6b6b;font-size:12px;">⚠️ Sem vídeo</span>' : ''}
+                        </div>
+                        <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">${lesson.description || ''}</div>
+                        ${lesson.video_url ? `<div style="color:var(--text-muted);font-size:12px;margin-top:2px;">🔗 <a href="${lesson.video_url}" target="_blank" style="color:var(--primary-light);">${lesson.video_url}</a></div>` : ''}
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-sm btn-outline" onclick="showEditLessonForm(${lesson.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="adminDeleteLesson(${lesson.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `
+        })
+    }
     
     container.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
@@ -2033,44 +2100,13 @@ async function loadAulas(container) {
         <div style="margin-bottom:16px;">
             <label style="color:var(--text-secondary);font-size:13px;">Filtrar por nível:</label>
             <select id="lessonFilter" onchange="filterLessons()" style="padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);margin-left:8px;">
-                <option value="all">Todos os níveis</option>
-                ${levels?.map(level => `
-                    <option value="${level.id}">${level.name}</option>
-                `).join('')}
+                ${filterOptions}
             </select>
         </div>
         
-        ${!lessons || lessons.length === 0 ? `
-            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
-                <p style="color:var(--text-secondary);">Nenhuma aula criada ainda.</p>
-            </div>
-        ` : `
-            <div id="lessonsList" style="display:grid;gap:12px;">
-                ${lessons.map(lesson => `
-                    <div class="lesson-item-admin" data-level="${lesson.level_id}" style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                        <div>
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                                <span style="font-size:18px;">📖</span>
-                                <strong>${lesson.title}</strong>
-                                <span style="color:var(--text-muted);font-size:13px;background:var(--bg-secondary);padding:2px 10px;border-radius:50px;">${lesson.level?.name || 'Sem nível'}</span>
-                                <span style="color:var(--text-muted);font-size:12px;">${lesson.video_duration || 0} min</span>
-                                ${!lesson.video_url ? '<span style="color:#ff6b6b;font-size:12px;">⚠️ Sem vídeo</span>' : ''}
-                            </div>
-                            <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">${lesson.description || ''}</div>
-                            ${lesson.video_url ? `<div style="color:var(--text-muted);font-size:12px;margin-top:2px;">🔗 <a href="${lesson.video_url}" target="_blank" style="color:var(--primary-light);">${lesson.video_url}</a></div>` : ''}
-                        </div>
-                        <div style="display:flex;gap:8px;">
-                            <button class="btn btn-sm btn-outline" onclick="showEditLessonForm(${lesson.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="adminDeleteLesson(${lesson.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-        `
+        <div id="lessonsList" style="display:grid;gap:12px;">
+            ${lessonsHtml}
+        </div>
     `
 }
 
@@ -2078,9 +2114,9 @@ async function loadAulas(container) {
 // FILTRAR AULAS
 // ============================================
 function filterLessons() {
-    const filter = document.getElementById('lessonFilter')?.value
-    const items = document.querySelectorAll('.lesson-item-admin')
-    items.forEach(item => {
+    var filter = document.getElementById('lessonFilter')?.value
+    var items = document.querySelectorAll('.lesson-item-admin')
+    items.forEach(function(item) {
         if (filter === 'all' || item.dataset.level === filter) {
             item.style.display = 'flex'
         } else {
@@ -2093,7 +2129,7 @@ function filterLessons() {
 // ADMIN - ADICIONAR NÍVEL
 // ============================================
 function showAddLevelForm() {
-    const container = document.getElementById('adminTabContent')
+    var container = document.getElementById('adminTabContent')
     if (!container) return
     
     container.innerHTML = `
@@ -2129,7 +2165,7 @@ function showAddLevelForm() {
 // ADMIN - EDITAR NÍVEL
 // ============================================
 function showEditLevelForm(levelId) {
-    const container = document.getElementById('adminTabContent')
+    var container = document.getElementById('adminTabContent')
     if (!container) return
     
     supabase
@@ -2137,11 +2173,12 @@ function showEditLevelForm(levelId) {
         .select('*')
         .eq('id', levelId)
         .single()
-        .then(({ data: level, error }) => {
-            if (error) {
+        .then(function(result) {
+            if (result.error) {
                 Toast.error('Erro', 'Não foi possível carregar o nível.')
                 return
             }
+            var level = result.data
             
             container.innerHTML = `
                 <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:500px;">
@@ -2186,10 +2223,10 @@ function showEditLevelForm(levelId) {
 async function adminCreateLevel(event) {
     event.preventDefault()
     
-    const name = document.getElementById('levelName').value.trim()
-    const description = document.getElementById('levelDescription').value.trim()
-    const icon = document.getElementById('levelIcon').value.trim() || '📚'
-    const order = parseInt(document.getElementById('levelOrder').value) || 1
+    var name = document.getElementById('levelName').value.trim()
+    var description = document.getElementById('levelDescription').value.trim()
+    var icon = document.getElementById('levelIcon').value.trim() || '📚'
+    var order = parseInt(document.getElementById('levelOrder').value) || 1
     
     if (!name) {
         Toast.warning('Campo obrigatório', 'O nome do nível é obrigatório.')
@@ -2197,17 +2234,17 @@ async function adminCreateLevel(event) {
     }
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('levels')
             .insert({
-                name,
-                description,
-                icon,
-                order,
+                name: name,
+                description: description,
+                icon: icon,
+                order: order,
                 is_active: true
             })
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success('Nível criado!', 'O nível foi adicionado com sucesso.')
         loadAdminTab('niveis')
@@ -2223,11 +2260,11 @@ async function adminCreateLevel(event) {
 async function adminUpdateLevel(event, levelId) {
     event.preventDefault()
     
-    const name = document.getElementById('editLevelName').value.trim()
-    const description = document.getElementById('editLevelDescription').value.trim()
-    const icon = document.getElementById('editLevelIcon').value.trim() || '📚'
-    const order = parseInt(document.getElementById('editLevelOrder').value) || 1
-    const is_active = document.getElementById('editLevelActive').value === 'true'
+    var name = document.getElementById('editLevelName').value.trim()
+    var description = document.getElementById('editLevelDescription').value.trim()
+    var icon = document.getElementById('editLevelIcon').value.trim() || '📚'
+    var order = parseInt(document.getElementById('editLevelOrder').value) || 1
+    var is_active = document.getElementById('editLevelActive').value === 'true'
     
     if (!name) {
         Toast.warning('Campo obrigatório', 'O nome do nível é obrigatório.')
@@ -2235,12 +2272,12 @@ async function adminUpdateLevel(event, levelId) {
     }
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('levels')
-            .update({ name, description, icon, order, is_active })
+            .update({ name: name, description: description, icon: icon, order: order, is_active: is_active })
             .eq('id', levelId)
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success('Nível atualizado!', 'O nível foi atualizado com sucesso.')
         loadAdminTab('niveis')
@@ -2259,12 +2296,12 @@ async function adminDeleteLevel(levelId) {
     }
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('levels')
             .delete()
             .eq('id', levelId)
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success('Nível excluído!', 'O nível foi removido com sucesso.')
         loadAdminTab('niveis')
@@ -2278,7 +2315,7 @@ async function adminDeleteLevel(levelId) {
 // ADMIN - ADICIONAR AULA
 // ============================================
 function showAddLessonForm() {
-    const container = document.getElementById('adminTabContent')
+    var container = document.getElementById('adminTabContent')
     if (!container) return
     
     supabase
@@ -2286,11 +2323,17 @@ function showAddLessonForm() {
         .select('id, name')
         .eq('is_active', true)
         .order('order')
-        .then(({ data: levels, error }) => {
-            if (error) {
+        .then(function(result) {
+            if (result.error) {
                 Toast.error('Erro', 'Não foi possível carregar os níveis.')
                 return
             }
+            var levels = result.data
+            
+            var optionsHtml = '<option value="">— Selecione —</option>'
+            levels.forEach(function(level) {
+                optionsHtml += `<option value="${level.id}">${level.name}</option>`
+            })
             
             container.innerHTML = `
                 <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:600px;">
@@ -2299,10 +2342,7 @@ function showAddLessonForm() {
                         <div class="form-group" style="margin-bottom:12px;">
                             <label>Nível *</label>
                             <select id="lessonLevelId" required>
-                                <option value="">— Selecione —</option>
-                                ${levels.map(level => `
-                                    <option value="${level.id}">${level.name}</option>
-                                `).join('')}
+                                ${optionsHtml}
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom:12px;">
@@ -2347,17 +2387,28 @@ function showAddLessonForm() {
 // ADMIN - EDITAR AULA
 // ============================================
 function showEditLessonForm(lessonId) {
-    const container = document.getElementById('adminTabContent')
+    var container = document.getElementById('adminTabContent')
     if (!container) return
     
     Promise.all([
         supabase.from('lessons').select('*').eq('id', lessonId).single(),
         supabase.from('levels').select('id, name').eq('is_active', true).order('order')
-    ]).then(([{ data: lesson, error: lessonError }, { data: levels }]) => {
-        if (lessonError) {
+    ]).then(function(results) {
+        var lessonResult = results[0]
+        var levelsResult = results[1]
+        
+        if (lessonResult.error) {
             Toast.error('Erro', 'Não foi possível carregar a aula.')
             return
         }
+        var lesson = lessonResult.data
+        var levels = levelsResult.data || []
+        
+        var optionsHtml = '<option value="">— Selecione —</option>'
+        levels.forEach(function(level) {
+            var selected = lesson.level_id === level.id ? 'selected' : ''
+            optionsHtml += `<option value="${level.id}" ${selected}>${level.name}</option>`
+        })
         
         container.innerHTML = `
             <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:600px;">
@@ -2366,10 +2417,7 @@ function showEditLessonForm(lessonId) {
                     <div class="form-group" style="margin-bottom:12px;">
                         <label>Nível *</label>
                         <select id="editLessonLevelId" required>
-                            <option value="">— Selecione —</option>
-                            ${levels.map(level => `
-                                <option value="${level.id}" ${lesson.level_id === level.id ? 'selected' : ''}>${level.name}</option>
-                            `).join('')}
+                            ${optionsHtml}
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom:12px;">
@@ -2416,13 +2464,13 @@ function showEditLessonForm(lessonId) {
 async function adminCreateLesson(event) {
     event.preventDefault()
     
-    const level_id = document.getElementById('lessonLevelId').value
-    const title = document.getElementById('lessonTitle').value.trim()
-    const description = document.getElementById('lessonDescription').value.trim()
-    const video_url = document.getElementById('lessonVideoUrl').value.trim()
-    const video_duration = parseInt(document.getElementById('lessonDuration').value) || 15
-    const order = parseInt(document.getElementById('lessonOrder').value) || 1
-    const is_required = document.getElementById('lessonRequired').value === 'true'
+    var level_id = document.getElementById('lessonLevelId').value
+    var title = document.getElementById('lessonTitle').value.trim()
+    var description = document.getElementById('lessonDescription').value.trim()
+    var video_url = document.getElementById('lessonVideoUrl').value.trim()
+    var video_duration = parseInt(document.getElementById('lessonDuration').value) || 15
+    var order = parseInt(document.getElementById('lessonOrder').value) || 1
+    var is_required = document.getElementById('lessonRequired').value === 'true'
     
     if (!level_id || !title) {
         Toast.warning('Campos obrigatórios', 'Preencha o nível e o título da aula.')
@@ -2430,19 +2478,19 @@ async function adminCreateLesson(event) {
     }
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('lessons')
             .insert({
-                level_id,
-                title,
-                description,
-                video_url,
-                video_duration,
-                order,
-                is_required
+                level_id: level_id,
+                title: title,
+                description: description,
+                video_url: video_url,
+                video_duration: video_duration,
+                order: order,
+                is_required: is_required
             })
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success('Aula criada!', 'A aula foi adicionada com sucesso.')
         loadAdminTab('aulas')
@@ -2458,13 +2506,13 @@ async function adminCreateLesson(event) {
 async function adminUpdateLesson(event, lessonId) {
     event.preventDefault()
     
-    const level_id = document.getElementById('editLessonLevelId').value
-    const title = document.getElementById('editLessonTitle').value.trim()
-    const description = document.getElementById('editLessonDescription').value.trim()
-    const video_url = document.getElementById('editLessonVideoUrl').value.trim()
-    const video_duration = parseInt(document.getElementById('editLessonDuration').value) || 15
-    const order = parseInt(document.getElementById('editLessonOrder').value) || 1
-    const is_required = document.getElementById('editLessonRequired').value === 'true'
+    var level_id = document.getElementById('editLessonLevelId').value
+    var title = document.getElementById('editLessonTitle').value.trim()
+    var description = document.getElementById('editLessonDescription').value.trim()
+    var video_url = document.getElementById('editLessonVideoUrl').value.trim()
+    var video_duration = parseInt(document.getElementById('editLessonDuration').value) || 15
+    var order = parseInt(document.getElementById('editLessonOrder').value) || 1
+    var is_required = document.getElementById('editLessonRequired').value === 'true'
     
     if (!level_id || !title) {
         Toast.warning('Campos obrigatórios', 'Preencha o nível e o título da aula.')
@@ -2472,20 +2520,20 @@ async function adminUpdateLesson(event, lessonId) {
     }
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('lessons')
             .update({
-                level_id,
-                title,
-                description,
-                video_url,
-                video_duration,
-                order,
-                is_required
+                level_id: level_id,
+                title: title,
+                description: description,
+                video_url: video_url,
+                video_duration: video_duration,
+                order: order,
+                is_required: is_required
             })
             .eq('id', lessonId)
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success('Aula atualizada!', 'A aula foi atualizada com sucesso.')
         loadAdminTab('aulas')
@@ -2504,12 +2552,12 @@ async function adminDeleteLesson(lessonId) {
     }
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('lessons')
             .delete()
             .eq('id', lessonId)
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success('Aula excluída!', 'A aula foi removida com sucesso.')
         loadAdminTab('aulas')
@@ -2526,7 +2574,7 @@ async function adminUpdateStudentLevel(studentId, levelId) {
     if (!isAdmin) return
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('students')
             .update({ 
                 level_id: levelId || null,
@@ -2534,7 +2582,7 @@ async function adminUpdateStudentLevel(studentId, levelId) {
             })
             .eq('id', studentId)
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success('Nível atualizado!', 'O aluno foi atualizado com sucesso.')
         loadAdminTab('alunos')
@@ -2552,7 +2600,7 @@ async function adminToggleApproval(studentId, approve) {
     if (!isAdmin) return
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('students')
             .update({ 
                 is_approved: approve,
@@ -2560,7 +2608,7 @@ async function adminToggleApproval(studentId, approve) {
             })
             .eq('id', studentId)
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success(approve ? 'Aluno aprovado!' : 'Aluno bloqueado!', 
                      approve ? 'O aluno agora tem acesso aos conteúdos.' : 'O aluno foi bloqueado.')
@@ -2583,12 +2631,12 @@ async function adminDeleteStudent(studentId) {
     try {
         await supabase.from('progress').delete().eq('student_id', studentId)
         
-        const { error } = await supabase
+        var result = await supabase
             .from('students')
             .delete()
             .eq('id', studentId)
         
-        if (error) throw error
+        if (result.error) throw result.error
         
         Toast.success('Aluno excluído!', 'O aluno foi removido com sucesso.')
         loadAdminTab('alunos')
@@ -2625,13 +2673,14 @@ async function openLesson(lessonId) {
     }
     
     try {
-        const { data: lesson, error } = await supabase
+        var result = await supabase
             .from('lessons')
             .select('*')
             .eq('id', lessonId)
             .single()
         
-        if (error) throw error
+        if (result.error) throw result.error
+        var lesson = result.data
         
         if (!isAdmin && studentData && studentData.level_id !== lesson.level_id) {
             Toast.warning('Nível bloqueado', 'Você não tem acesso a este nível.')
@@ -2652,26 +2701,26 @@ async function openLesson(lessonId) {
 function showVideoModal(lesson) {
     if (!videoModal) return
     
-    const container = document.getElementById('videoContainer')
+    var container = document.getElementById('videoContainer')
     document.getElementById('videoTitle').textContent = lesson.title
     document.getElementById('videoDescription').textContent = lesson.description || 'Sem descrição disponível.'
     
-    let videoHtml = ''
+    var videoHtml = ''
     if (lesson.video_url) {
-        const url = lesson.video_url
+        var url = lesson.video_url
         if (url.includes('youtube.com') || url.includes('youtu.be')) {
-            let videoId = ''
+            var videoId = ''
             if (url.includes('youtu.be')) {
                 videoId = url.split('youtu.be/')[1]?.split('?')[0]
             } else {
                 videoId = url.split('v=')[1]?.split('&')[0]
             }
-            videoHtml = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`
+            videoHtml = '<iframe src="https://www.youtube.com/embed/' + videoId + '" allowfullscreen></iframe>'
         } else if (url.includes('vimeo.com')) {
-            const videoId = url.split('vimeo.com/')[1]?.split('/')[0]
-            videoHtml = `<iframe src="https://player.vimeo.com/video/${videoId}" allowfullscreen></iframe>`
+            var videoId = url.split('vimeo.com/')[1]?.split('/')[0]
+            videoHtml = '<iframe src="https://player.vimeo.com/video/' + videoId + '" allowfullscreen></iframe>'
         } else {
-            videoHtml = `<p style="color:var(--text-secondary);padding:20px;text-align:center;">Link: <a href="${url}" target="_blank">${url}</a></p>`
+            videoHtml = '<p style="color:var(--text-secondary);padding:20px;text-align:center;">Link: <a href="' + url + '" target="_blank">' + url + '</a></p>'
         }
     } else {
         videoHtml = `
@@ -2695,15 +2744,15 @@ function showVideoModal(lesson) {
 async function checkProgress(lessonId) {
     if (!currentUser || !markWatchedBtn || !markCompletedBtn) return
     
-    const { data } = await supabase
+    var result = await supabase
         .from('progress')
         .select('watched, completed')
         .eq('student_id', currentUser.id)
         .eq('lesson_id', lessonId)
         .maybeSingle()
     
-    const isWatched = data?.watched || false
-    const isCompleted = data?.completed || false
+    var isWatched = result.data?.watched || false
+    var isCompleted = result.data?.completed || false
     
     markWatchedBtn.textContent = isWatched ? '✅ Assistida' : '📺 Marcar como assistida'
     markWatchedBtn.disabled = isWatched
@@ -2721,12 +2770,12 @@ async function markProgress(action) {
         return
     }
     
-    const watched = action === 'watched' || action === 'completed'
-    const completed = action === 'completed'
-    const label = completed ? 'concluída' : 'assistida'
+    var watched = action === 'watched' || action === 'completed'
+    var completed = action === 'completed'
+    var label = completed ? 'concluída' : 'assistida'
     
     try {
-        const { error } = await supabase
+        var result = await supabase
             .from('progress')
             .upsert({
                 student_id: currentUser.id,
@@ -2736,9 +2785,9 @@ async function markProgress(action) {
                 watched_at: watched ? new Date().toISOString() : null
             }, { onConflict: 'student_id, lesson_id' })
         
-        if (error) throw error
+        if (result.error) throw result.error
         
-        Toast.success(`Aula ${label}!`, 'Ótimo progresso! Continue assim.')
+        Toast.success('Aula ' + label + '!', 'Ótimo progresso! Continue assim.')
         videoModal.classList.remove('active')
         loadLevels()
         
@@ -2751,7 +2800,7 @@ async function markProgress(action) {
 // THEME
 // ============================================
 function setupTheme() {
-    const toggle = document.getElementById('themeToggle')
+    var toggle = document.getElementById('themeToggle')
     if (!toggle) return
     
     if (localStorage.getItem('theme') === 'light') {
@@ -2760,7 +2809,7 @@ function setupTheme() {
     }
     
     toggle.addEventListener('click', function() {
-        const current = document.documentElement.getAttribute('data-theme')
+        var current = document.documentElement.getAttribute('data-theme')
         if (current === 'light') {
             document.documentElement.removeAttribute('data-theme')
             this.querySelector('i').className = 'fas fa-moon'
@@ -2779,8 +2828,8 @@ function setupTheme() {
 // MOBILE MENU
 // ============================================
 function setupMobileMenu() {
-    const hamburger = document.getElementById('hamburger')
-    const navLinks = document.getElementById('navLinks')
+    var hamburger = document.getElementById('hamburger')
+    var navLinks = document.getElementById('navLinks')
     if (!hamburger || !navLinks) return
     
     hamburger.addEventListener('click', function() {
@@ -2815,14 +2864,14 @@ function initEvents() {
     }
     
     if (modalClose) {
-        modalClose.addEventListener('click', () => {
+        modalClose.addEventListener('click', function() {
             authModal.classList.remove('active')
         })
         console.log('✅ Fechar modal configurado')
     }
     
     if (authModal) {
-        authModal.addEventListener('click', (e) => {
+        authModal.addEventListener('click', function(e) {
             if (e.target === authModal) {
                 authModal.classList.remove('active')
             }
@@ -2830,7 +2879,7 @@ function initEvents() {
     }
     
     if (switchToRegister) {
-        switchToRegister.addEventListener('click', (e) => {
+        switchToRegister.addEventListener('click', function(e) {
             e.preventDefault()
             if (loginForm) loginForm.classList.remove('active')
             if (registerForm) registerForm.classList.add('active')
@@ -2840,7 +2889,7 @@ function initEvents() {
     }
     
     if (switchToLogin) {
-        switchToLogin.addEventListener('click', (e) => {
+        switchToLogin.addEventListener('click', function(e) {
             e.preventDefault()
             if (registerForm) registerForm.classList.remove('active')
             if (loginForm) loginForm.classList.add('active')
@@ -2865,14 +2914,14 @@ function initEvents() {
     }
     
     if (videoClose) {
-        videoClose.addEventListener('click', () => {
+        videoClose.addEventListener('click', function() {
             videoModal.classList.remove('active')
             loadLevels()
         })
     }
     
     if (videoModal) {
-        videoModal.addEventListener('click', (e) => {
+        videoModal.addEventListener('click', function(e) {
             if (e.target === videoModal) {
                 videoModal.classList.remove('active')
                 loadLevels()
@@ -2881,15 +2930,19 @@ function initEvents() {
     }
     
     if (markWatchedBtn) {
-        markWatchedBtn.addEventListener('click', () => markProgress('watched'))
+        markWatchedBtn.addEventListener('click', function() {
+            markProgress('watched')
+        })
     }
     
     if (markCompletedBtn) {
-        markCompletedBtn.addEventListener('click', () => markProgress('completed'))
+        markCompletedBtn.addEventListener('click', function() {
+            markProgress('completed')
+        })
     }
     
     if (navAdmin) {
-        navAdmin.addEventListener('click', (e) => {
+        navAdmin.addEventListener('click', function(e) {
             e.preventDefault()
             if (isAdmin) loadAdminPanel()
         })
@@ -2927,7 +2980,7 @@ window.adminDeleteLevel = adminDeleteLevel
 window.adminDeleteLesson = adminDeleteLesson
 window.openLesson = openLesson
 window.openAuthModal = openAuthModal
-window.isAdmin = () => isAdmin
+window.isAdmin = function() { return isAdmin }
 window.switchAdminTab = switchAdminTab
 window.loadAdminTab = loadAdminTab
 window.showAddLevelForm = showAddLevelForm

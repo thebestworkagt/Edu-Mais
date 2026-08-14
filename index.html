@@ -25,6 +25,12 @@
             --radius: 16px;
             --radius-sm: 8px;
             --transition: all 0.3s ease;
+            
+            /* Cores para notificações */
+            --toast-success: #2E8B57;
+            --toast-error: #e74c3c;
+            --toast-warning: #f39c12;
+            --toast-info: #3498db;
         }
 
         [data-theme="light"] {
@@ -550,6 +556,113 @@
         .video-info p { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
         .video-info .btn { margin-right: 8px; }
 
+        /* ===== TOAST / NOTIFICATIONS ===== */
+        .toast-container {
+            position: fixed;
+            top: 90px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+            width: 100%;
+            pointer-events: none;
+        }
+        .toast-container .toast {
+            pointer-events: all;
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            animation: slideInRight 0.4s ease forwards;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        .toast-container .toast::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+        }
+        .toast-container .toast.success::before { background: var(--toast-success); }
+        .toast-container .toast.error::before { background: var(--toast-error); }
+        .toast-container .toast.warning::before { background: var(--toast-warning); }
+        .toast-container .toast.info::before { background: var(--toast-info); }
+
+        .toast-container .toast .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .toast-container .toast.success .toast-icon { color: var(--toast-success); }
+        .toast-container .toast.error .toast-icon { color: var(--toast-error); }
+        .toast-container .toast.warning .toast-icon { color: var(--toast-warning); }
+        .toast-container .toast.info .toast-icon { color: var(--toast-info); }
+
+        .toast-container .toast .toast-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .toast-container .toast .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .toast-container .toast .toast-message {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .toast-container .toast .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .toast-container .toast .toast-close:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        .toast-container .toast.hiding {
+            animation: slideOutRight 0.4s ease forwards;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+        }
+
         /* Responsive */
         @media (max-width: 992px) {
             .hero .container { grid-template-columns: 1fr; text-align: center; }
@@ -559,6 +672,7 @@
             .hero-illustration { max-width: 280px; }
             .hero-illustration > i { font-size: 80px; }
             .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+            .toast-container { right: 16px; left: 16px; max-width: none; }
         }
         @media (max-width: 768px) {
             .nav-links {
@@ -580,6 +694,7 @@
             .modal { padding: 24px; }
             .footer-grid { grid-template-columns: 1fr; text-align: center; }
             .social-icons { justify-content: center; }
+            .toast-container { top: 80px; }
         }
         @media (max-width: 480px) {
             .hero-title { font-size: 28px; }
@@ -589,6 +704,9 @@
     </style>
 </head>
 <body>
+
+<!-- ========== TOAST CONTAINER ========== -->
+<div class="toast-container" id="toastContainer"></div>
 
 <!-- ========== HEADER ========== -->
 <header class="header">
@@ -819,6 +937,95 @@ console.log('🚀 Edu Mais - Inicializado com sucesso!')
 console.log('📚 Versão 1.0.0')
 
 // ============================================
+// SISTEMA DE NOTIFICAÇÕES (TOAST)
+// ============================================
+const Toast = {
+    container: null,
+    
+    init() {
+        this.container = document.getElementById('toastContainer')
+        if (!this.container) {
+            this.container = document.createElement('div')
+            this.container.className = 'toast-container'
+            this.container.id = 'toastContainer'
+            document.body.appendChild(this.container)
+        }
+    },
+    
+    show(title, message, type = 'info', duration = 4000) {
+        if (!this.container) this.init()
+        
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        }
+        
+        const toast = document.createElement('div')
+        toast.className = `toast ${type}`
+        toast.innerHTML = `
+            <i class="fas ${icons[type] || icons.info} toast-icon"></i>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close"><i class="fas fa-times"></i></button>
+        `
+        
+        // Fechar ao clicar no X
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+            this.remove(toast)
+        })
+        
+        // Fechar automaticamente
+        const timeout = setTimeout(() => {
+            this.remove(toast)
+        }, duration)
+        
+        // Pausar timer ao passar o mouse
+        toast.addEventListener('mouseenter', () => clearTimeout(timeout))
+        toast.addEventListener('mouseleave', () => {
+            setTimeout(() => this.remove(toast), duration)
+        })
+        
+        this.container.appendChild(toast)
+        
+        // Remover após animação
+        return toast
+    },
+    
+    remove(toast) {
+        if (!toast) return
+        toast.classList.add('hiding')
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast)
+            }
+        }, 400)
+    },
+    
+    success(title, message, duration) {
+        return this.show(title, message, 'success', duration || 4000)
+    },
+    
+    error(title, message, duration) {
+        return this.show(title, message, 'error', duration || 5000)
+    },
+    
+    warning(title, message, duration) {
+        return this.show(title, message, 'warning', duration || 4000)
+    },
+    
+    info(title, message, duration) {
+        return this.show(title, message, 'info', duration || 3000)
+    }
+}
+
+// Inicializar Toast
+Toast.init()
+
+// ============================================
 // ESTADO
 // ============================================
 let currentUser = null
@@ -826,7 +1033,7 @@ let currentLevels = []
 let currentLessonId = null
 
 // ============================================
-// DOM ELEMENTS (carregados após o DOM)
+// DOM ELEMENTS
 // ============================================
 let authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
 let switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
@@ -862,12 +1069,11 @@ async function checkSession() {
         currentUser = session.user
         if (authBtn) authBtn.style.display = 'none'
         if (logoutBtn) logoutBtn.style.display = 'inline-flex'
-        console.log('👤 Usuário logado:', currentUser.email)
+        Toast.success('Bem-vindo de volta!', `Olá ${currentUser.user_metadata?.full_name || currentUser.email}`)
     } else {
         currentUser = null
         if (authBtn) authBtn.style.display = 'inline-flex'
         if (logoutBtn) logoutBtn.style.display = 'none'
-        console.log('👤 Nenhum usuário logado')
     }
     loadLevels()
 }
@@ -892,7 +1098,7 @@ async function handleLogin(e) {
     const password = document.getElementById('loginPassword').value
     
     if (!email || !password) {
-        alert('Por favor, preencha todos os campos.')
+        Toast.warning('Campos incompletos', 'Por favor, preencha todos os campos para continuar.')
         return
     }
     
@@ -901,11 +1107,10 @@ async function handleLogin(e) {
         if (error) throw error
         authModal.classList.remove('active')
         await checkSession()
-        alert('Login realizado com sucesso! 🎉')
-        // Recarregar níveis
+        Toast.success('Login realizado!', 'Seja bem-vindo(a) à Edu Mais.')
         loadLevels()
     } catch (error) {
-        alert('Erro ao fazer login: ' + error.message)
+        Toast.error('Falha no login', 'Email ou senha incorretos. Por favor, tente novamente.')
     }
 }
 
@@ -917,12 +1122,12 @@ async function handleRegister(e) {
     const password = document.getElementById('registerPassword').value
     
     if (!fullName || !email || !password) {
-        alert('Por favor, preencha todos os campos obrigatórios.')
+        Toast.warning('Campos incompletos', 'Por favor, preencha todos os campos obrigatórios.')
         return
     }
     
     if (password.length < 6) {
-        alert('A senha deve ter pelo menos 6 caracteres.')
+        Toast.warning('Senha fraca', 'A senha deve ter pelo menos 6 caracteres.')
         return
     }
     
@@ -946,13 +1151,12 @@ async function handleRegister(e) {
             console.error('Erro ao criar aluno:', studentError)
         }
         
-        alert('Conta criada com sucesso! Faça login para continuar. 🎉')
+        Toast.success('Conta criada!', 'Sua conta foi criada com sucesso. Faça login para começar.')
         registerForm.reset()
-        // Mudar para login
         if (switchToLogin) switchToLogin.click()
         
     } catch (error) {
-        alert('Erro ao criar conta: ' + error.message)
+        Toast.error('Erro ao criar conta', 'Não foi possível criar sua conta. Tente novamente.')
     }
 }
 
@@ -963,9 +1167,9 @@ async function handleLogout() {
         if (authBtn) authBtn.style.display = 'inline-flex'
         if (logoutBtn) logoutBtn.style.display = 'none'
         loadLevels()
-        alert('Logout realizado com sucesso!')
+        Toast.info('Até logo!', 'Você saiu da sua conta com sucesso.')
     } catch (error) {
-        alert('Erro ao fazer logout: ' + error.message)
+        Toast.error('Erro', 'Não foi possível sair da conta.')
     }
 }
 
@@ -976,8 +1180,6 @@ async function loadLevels() {
     if (!levelsContainer) return
     
     try {
-        console.log('📚 Carregando níveis...')
-        
         // Buscar níveis com aulas
         const { data: levels, error } = await supabase
             .from('levels')
@@ -998,7 +1200,6 @@ async function loadLevels() {
         if (error) throw error
         
         currentLevels = levels || []
-        console.log('✅ Níveis carregados:', currentLevels.length)
         
         // Buscar progresso se usuário logado
         let progressMap = new Map()
@@ -1028,7 +1229,7 @@ async function loadLevels() {
             document.getElementById('statLessons').textContent = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
             document.getElementById('statStudents').textContent = totalStudents || 0
         } catch (e) {
-            console.log('Erro ao carregar estatísticas:', e)
+            // Silencia erros de estatísticas
         }
         
         // Renderizar
@@ -1039,7 +1240,7 @@ async function loadLevels() {
         levelsContainer.innerHTML = `
             <div style="text-align:center;padding:40px;grid-column:1/-1;">
                 <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i>
-                <p style="color:var(--text-secondary);margin-top:12px;">Erro ao carregar níveis</p>
+                <p style="color:var(--text-secondary);margin-top:12px;">Não foi possível carregar os níveis.</p>
                 <button onclick="loadLevels()" class="btn btn-primary btn-sm" style="margin-top:12px;">
                     <i class="fas fa-sync"></i> Tentar novamente
                 </button>
@@ -1058,7 +1259,7 @@ function renderLevels(levels, progressMap) {
         levelsContainer.innerHTML = `
             <div style="text-align:center;padding:40px;grid-column:1/-1;">
                 <i class="fas fa-folder-open" style="font-size:48px;color:var(--text-muted);"></i>
-                <p style="color:var(--text-secondary);margin-top:12px;">Nenhum nível disponível.</p>
+                <p style="color:var(--text-secondary);margin-top:12px;">Nenhum nível disponível no momento.</p>
             </div>
         `
         return
@@ -1137,7 +1338,7 @@ function renderLevels(levels, progressMap) {
 // ============================================
 async function openLesson(lessonId) {
     if (!currentUser) {
-        alert('Você precisa estar logado para assistir às aulas.')
+        Toast.warning('Acesso restrito', 'Faça login para assistir às aulas.')
         openAuthModal()
         return
     }
@@ -1155,7 +1356,7 @@ async function openLesson(lessonId) {
         showVideoModal(lesson)
         
     } catch (error) {
-        alert('Erro ao carregar aula: ' + error.message)
+        Toast.error('Erro', 'Não foi possível carregar a aula. Tente novamente.')
     }
 }
 
@@ -1167,7 +1368,7 @@ function showVideoModal(lesson) {
     
     const container = document.getElementById('videoContainer')
     document.getElementById('videoTitle').textContent = lesson.title
-    document.getElementById('videoDescription').textContent = lesson.description || 'Sem descrição.'
+    document.getElementById('videoDescription').textContent = lesson.description || 'Sem descrição disponível.'
     
     // Vídeo
     let videoHtml = ''
@@ -1193,7 +1394,7 @@ function showVideoModal(lesson) {
                 <div style="text-align:center;">
                     <i class="fas fa-video" style="font-size:48px;color:var(--text-muted);"></i>
                     <p style="color:var(--text-secondary);margin-top:12px;">Vídeo não disponível</p>
-                    <p style="color:var(--text-muted);font-size:13px;">Adicione o link no painel admin</p>
+                    <p style="color:var(--text-muted);font-size:13px;">Adicione o link no painel administrativo</p>
                 </div>
             </div>
         `
@@ -1222,10 +1423,10 @@ async function checkProgress(lessonId) {
     const isWatched = data?.watched || false
     const isCompleted = data?.completed || false
     
-    markWatchedBtn.textContent = isWatched ? '✅ Assistido' : '📺 Marcar como assistida'
+    markWatchedBtn.textContent = isWatched ? '✅ Assistida' : '📺 Marcar como assistida'
     markWatchedBtn.disabled = isWatched
     
-    markCompletedBtn.textContent = isCompleted ? '✅ Concluída' : '🏁 Concluir aula'
+    markCompletedBtn.textContent = isCompleted ? '✅ Concluída' : '🏁 Marcar como concluída'
     markCompletedBtn.disabled = isCompleted || !isWatched
 }
 
@@ -1233,10 +1434,14 @@ async function checkProgress(lessonId) {
 // MARCAR PROGRESSO
 // ============================================
 async function markProgress(action) {
-    if (!currentUser || !currentLessonId) return
+    if (!currentUser || !currentLessonId) {
+        Toast.warning('Ação não disponível', 'Faça login para marcar seu progresso.')
+        return
+    }
     
     const watched = action === 'watched' || action === 'completed'
     const completed = action === 'completed'
+    const label = completed ? 'concluída' : 'assistida'
     
     try {
         const { error } = await supabase
@@ -1251,12 +1456,12 @@ async function markProgress(action) {
         
         if (error) throw error
         
-        alert('Progresso atualizado! 🎉')
+        Toast.success(`Aula ${label}!`, `Ótimo progresso! Continue assim.`)
         videoModal.classList.remove('active')
         loadLevels()
         
     } catch (error) {
-        alert('Erro ao atualizar progresso: ' + error.message)
+        Toast.error('Erro', 'Não foi possível atualizar seu progresso.')
     }
 }
 
@@ -1279,10 +1484,12 @@ function setupTheme() {
             document.documentElement.removeAttribute('data-theme')
             this.querySelector('i').className = 'fas fa-moon'
             localStorage.setItem('theme', 'dark')
+            Toast.info('Tema alterado', 'Modo escuro ativado.')
         } else {
             document.documentElement.setAttribute('data-theme', 'light')
             this.querySelector('i').className = 'fas fa-sun'
             localStorage.setItem('theme', 'light')
+            Toast.info('Tema alterado', 'Modo claro ativado.')
         }
     })
 }
@@ -1305,12 +1512,9 @@ function setupMobileMenu() {
 // INICIALIZAR EVENTOS
 // ============================================
 function initEvents() {
-    console.log('🔧 Inicializando eventos...')
-    
     // Botão Entrar
     if (authBtn) {
         authBtn.addEventListener('click', openAuthModal)
-        console.log('✅ Botão Entrar configurado')
     }
     
     // Botão Começar Agora
@@ -1322,7 +1526,6 @@ function initEvents() {
                 openAuthModal()
             }
         })
-        console.log('✅ Botão Começar Agora configurado')
     }
     
     // Fechar modal
@@ -1330,7 +1533,6 @@ function initEvents() {
         modalClose.addEventListener('click', () => {
             authModal.classList.remove('active')
         })
-        console.log('✅ Fechar modal configurado')
     }
     
     if (authModal) {
@@ -1349,7 +1551,6 @@ function initEvents() {
             if (registerForm) registerForm.classList.add('active')
             if (modalSubtitle) modalSubtitle.textContent = 'Crie sua conta na Edu Mais'
         })
-        console.log('✅ Switch para registro configurado')
     }
     
     if (switchToLogin) {
@@ -1359,24 +1560,20 @@ function initEvents() {
             if (loginForm) loginForm.classList.add('active')
             if (modalSubtitle) modalSubtitle.textContent = 'Entre na sua conta para continuar'
         })
-        console.log('✅ Switch para login configurado')
     }
     
     // Forms
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin)
-        console.log('✅ Formulário de login configurado')
     }
     
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegister)
-        console.log('✅ Formulário de registro configurado')
     }
     
     // Logout
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout)
-        console.log('✅ Botão Logout configurado')
     }
     
     // Vídeo modal
@@ -1398,12 +1595,10 @@ function initEvents() {
     
     if (markWatchedBtn) {
         markWatchedBtn.addEventListener('click', () => markProgress('watched'))
-        console.log('✅ Botão Marcar como assistida configurado')
     }
     
     if (markCompletedBtn) {
         markCompletedBtn.addEventListener('click', () => markProgress('completed'))
-        console.log('✅ Botão Concluir aula configurado')
     }
     
     // Menu mobile
@@ -1411,16 +1606,12 @@ function initEvents() {
     
     // Tema
     setupTheme()
-    
-    console.log('✅ Todos os eventos configurados!')
 }
 
 // ============================================
 // INICIALIZAR
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Edu Mais - Inicializando...')
-    
     // Inicializar referências DOM
     initElements()
     
@@ -1429,8 +1620,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar sessão e carregar dados
     checkSession()
-    
-    console.log('🎉 Edu Mais - Pronto para uso!')
 })
 </script>
 </body>

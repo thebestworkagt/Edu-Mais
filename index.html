@@ -30,8 +30,6 @@
             --toast-error: #e74c3c;
             --toast-warning: #f39c12;
             --toast-info: #3498db;
-            --google-color: #ea4335;
-            --google-hover: #d33426;
         }
 
         [data-theme="light"] {
@@ -100,60 +98,11 @@
         .btn-success:hover { background: #128C7E; transform: translateY(-2px); }
         .btn-warning { background: #f39c12; color: #fff; }
         .btn-warning:hover { background: #d68910; transform: translateY(-2px); }
-        
-        /* Botão Google */
-        .btn-google {
-            background: #fff;
-            color: #333;
-            border: 1px solid #ddd;
-            width: 100%;
-            justify-content: center;
-            padding: 12px;
-            font-weight: 500;
-            transition: var(--transition);
-        }
-        .btn-google:hover {
-            background: #f8f8f8;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .btn-google i {
-            color: var(--google-color);
-            font-size: 18px;
-        }
-        [data-theme="dark"] .btn-google {
-            background: #2d2d2d;
-            color: #eee;
-            border-color: #444;
-        }
-        [data-theme="dark"] .btn-google:hover {
-            background: #3d3d3d;
-        }
-        .btn-google:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
 
         .btn-sm { padding: 6px 16px; font-size: 13px; }
         .btn-lg { padding: 14px 36px; font-size: 16px; }
         .btn-full { width: 100%; justify-content: center; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 16px 0;
-            color: var(--text-muted);
-            font-size: 13px;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border-color);
-        }
 
         .header {
             position: fixed;
@@ -1024,13 +973,6 @@
             <p id="modalSubtitle">Entre na sua conta para continuar</p>
         </div>
 
-        <!-- Botão Google -->
-        <button class="btn btn-google" id="googleBtn">
-            <i class="fab fa-google"></i> Entrar com Google
-        </button>
-
-        <div class="divider">ou</div>
-
         <!-- Login com Email -->
         <form id="loginForm" class="auth-form active">
             <div class="form-group">
@@ -1056,10 +998,10 @@
             <div class="form-group">
                 <label><i class="fas fa-envelope"></i> Email</label>
                 <input type="email" id="registerEmail" placeholder="seu@email.com" required>
-                <div class="input-hint">✅ Um email de confirmação será enviado. Use um email real.</div>
+                <div class="input-hint">✅ Apenas emails reais são aceitos. Um link de confirmação será enviado.</div>
             </div>
             <div class="form-group">
-                <label><i class="fas fa-phone"></i> Telefone</label>
+                <label><i class="fas fa-phone"></i> Telefone (opcional)</label>
                 <input type="tel" id="registerPhone" placeholder="+244 900 000 000">
             </div>
             <div class="form-group">
@@ -1098,6 +1040,7 @@
         </div>
     </div>
 </div>
+
 <!-- ========== SUPABASE + SCRIPTS ========== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -1191,7 +1134,6 @@ let currentLevels = []
 let currentLessonId = null
 let isAdmin = false
 let studentData = null
-let isGoogleLoading = false
 
 // ============================================
 // DOM ELEMENTS
@@ -1200,7 +1142,6 @@ let authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
 let switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
 let videoModal, videoClose, markWatchedBtn, markCompletedBtn
 let navAdmin, adminPanel, adminContent, navNiveis
-let googleBtn
 
 // ============================================
 // INICIALIZAR REFERÊNCIAS
@@ -1225,7 +1166,6 @@ function initElements() {
     adminPanel = document.getElementById('admin')
     adminContent = document.getElementById('adminContent')
     navNiveis = document.getElementById('navNiveis')
-    googleBtn = document.getElementById('googleBtn')
 }
 
 // ============================================
@@ -1363,42 +1303,6 @@ async function handleLogin(e) {
     }
 }
 
-// ============================================
-// HANDLERS - LOGIN COM GOOGLE
-// ============================================
-async function handleGoogleLogin() {
-    if (isGoogleLoading) return
-    isGoogleLoading = true
-    
-    if (googleBtn) {
-        googleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Redirecionando...'
-        googleBtn.disabled = true
-    }
-    
-    try {
-        // ✅ SEM redirectTo - usa o Site URL configurado no Supabase
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                queryParams: {
-                    access_type: 'offline',
-                    prompt: 'consent'
-                }
-            }
-        })
-        
-        if (error) throw error
-        
-    } catch (error) {
-        console.error('Erro no login Google:', error)
-        Toast.error('Erro no login', 'Não foi possível autenticar com o Google.')
-        isGoogleLoading = false
-        if (googleBtn) {
-            googleBtn.innerHTML = '<i class="fab fa-google"></i> Entrar com Google'
-            googleBtn.disabled = false
-        }
-    }
-}
 // ============================================
 // HANDLERS - REGISTRO COM EMAIL
 // ============================================
@@ -2120,11 +2024,6 @@ function initEvents() {
     if (registerForm) registerForm.addEventListener('submit', handleRegister)
     if (logoutBtn) logoutBtn.addEventListener('click', handleLogout)
     
-    // Botão Google
-    if (googleBtn) {
-        googleBtn.addEventListener('click', handleGoogleLogin)
-    }
-    
     // Vídeo modal
     if (videoClose) {
         videoClose.addEventListener('click', () => {
@@ -2163,20 +2062,6 @@ function initEvents() {
 }
 
 // ============================================
-// PROCESSAR REDIRECIONAMENTO DO GOOGLE
-// ============================================
-async function handleOAuthRedirect() {
-    // Verificar se há uma sessão do OAuth
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session && session.user) {
-        currentUser = session.user
-        await checkSession()
-        if (isAdmin) loadAdminPanel()
-        Toast.success('Login com Google!', `Bem-vindo(a), ${session.user.user_metadata?.full_name || session.user.email}`)
-    }
-}
-
-// ============================================
 // INICIALIZAR
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -2184,11 +2069,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initElements()
     initEvents()
-    
-    // PROCESSAR RETORNO DO GOOGLE
-    handleGoogleCallback()  // ← ADICIONE ESTA LINHA
-    
-    // Verificar sessão
     checkSession()
     
     console.log('✅ Edu Mais - Pronto para uso!')
@@ -2205,41 +2085,6 @@ window.toggleApproval = toggleApproval
 window.openLesson = openLesson
 window.openAuthModal = openAuthModal
 window.isAdmin = () => isAdmin
-// ============================================
-// PROCESSAR RETORNO DO GOOGLE
-// ============================================
-async function handleGoogleCallback() {
-    // Verificar se há token na URL
-    const hash = window.location.hash
-    if (hash && hash.includes('access_token')) {
-        console.log('🔑 Token encontrado na URL, processando...')
-        
-        try {
-            // O Supabase já processa automaticamente
-            // Mas vamos forçar a verificação da sessão
-            const { data: { session }, error } = await supabase.auth.getSession()
-            
-            if (error) throw error
-            
-            if (session) {
-                currentUser = session.user
-                Toast.success('Login com Google!', `Bem-vindo(a), ${session.user.user_metadata?.full_name || session.user.email}`)
-                
-                // Limpar a URL (remover o token)
-                window.history.replaceState({}, document.title, window.location.pathname)
-                
-                await checkSession()
-                if (isAdmin) loadAdminPanel()
-                loadLevels()
-            }
-            
-        } catch (error) {
-            console.error('Erro ao processar callback:', error)
-            Toast.error('Erro', 'Não foi possível completar o login.')
-        }
-    }
-}
-
 </script>
 </body>
 </html>

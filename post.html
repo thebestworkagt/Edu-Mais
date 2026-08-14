@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artigo - Edu Mais</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/blog.css">
+</head>
+<body>
+
+<!-- ========== BLOG HEADER ========== -->
+<header class="blog-header">
+    <div class="container">
+        <a href="/" class="nav-brand">
+            <img src="assets/images/edu.png" alt="Edu Mais" class="logo" onerror="this.style.display='none'">
+            <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/">Início</a>
+            <a href="/blog.html">Blog</a>
+            <a href="/#niveis">Níveis</a>
+            <a href="/#contato">Contato</a>
+            <button class="btn btn-primary btn-sm" id="authBtnPost" style="display:inline-flex;">Entrar</button>
+            <button class="btn btn-outline-danger btn-sm" id="logoutBtnPost" style="display:none;">Sair</button>
+        </div>
+    </div>
+</header>
+
+<!-- ========== POST CONTENT ========== -->
+<div id="postContent">
+    <div class="blog-loading" style="padding:60px 20px;text-align:center;">
+        <i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--blog-primary);"></i>
+        <p style="color:var(--blog-text-muted);margin-top:12px;">Carregando artigo...</p>
+    </div>
+</div>
+
+<!-- ========== SCRIPTS ========== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/blog.js"></script>
+
+<script>
+// ============================================
+// INICIALIZAR POST
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se o usuário está logado
+    const user = window.getCurrentUser ? window.getCurrentUser() : null
+    const isAdminUser = window.isAdmin ? window.isAdmin() : false
+    
+    // Configurar botões de autenticação
+    const authBtn = document.getElementById('authBtnPost')
+    const logoutBtn = document.getElementById('logoutBtnPost')
+    
+    if (user) {
+        if (authBtn) authBtn.style.display = 'none'
+        if (logoutBtn) logoutBtn.style.display = 'inline-flex'
+    }
+    
+    if (authBtn) {
+        authBtn.addEventListener('click', function() {
+            if (window.openAuthModal) window.openAuthModal()
+        })
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            if (window.handleLogout) window.handleLogout()
+        })
+    }
+    
+    // Carregar post
+    loadPost()
+})
+</script>
+</body>
+</html>

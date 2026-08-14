@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Blog - Edu Mais</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/blog.css">
+    <style>
+        .admin-form {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+            background: var(--blog-bg);
+            min-height: 60vh;
+        }
+        .admin-form .form-card {
+            background: var(--blog-card);
+            border-radius: var(--blog-radius);
+            padding: 32px;
+            border: 1px solid var(--blog-border);
+            box-shadow: var(--blog-shadow);
+        }
+        .admin-form .form-card h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: var(--blog-text);
+        }
+        .admin-form .form-card .subtitle {
+            color: var(--blog-text-muted);
+            margin-bottom: 24px;
+        }
+        .admin-form .form-group {
+            margin-bottom: 20px;
+        }
+        .admin-form .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--blog-text-secondary);
+            margin-bottom: 4px;
+        }
+        .admin-form .form-group input,
+        .admin-form .form-group textarea,
+        .admin-form .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--blog-radius-sm);
+            border: 1px solid var(--blog-border);
+            background: var(--blog-bg);
+            color: var(--blog-text);
+            font-size: 14px;
+            transition: var(--blog-transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .admin-form .form-group input:focus,
+        .admin-form .form-group textarea:focus,
+        .admin-form .form-group select:focus {
+            outline: none;
+            border-color: var(--blog-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .admin-form .form-group textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: 'Merriweather', serif;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+        .admin-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .admin-form .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .admin-form .form-actions .btn {
+            padding: 12px 32px;
+        }
+        
+        @media (max-width: 600px) {
+            .admin-form .form-row {
+                grid-template-columns: 1fr;
+            }
+            .admin-form .form-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== BLOG HEADER ========== -->
+<header class="blog-header">
+    <div class="container">
+        <a href="/" class="nav-brand">
+            <img src="assets/images/edu.png" alt="Edu Mais" class="logo" onerror="this.style.display='none'">
+            <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/">Início</a>
+            <a href="/blog.html">Blog</a>
+            <a href="/#niveis">Níveis</a>
+            <a href="/#contato">Contato</a>
+            <button class="btn btn-outline-danger btn-sm" id="logoutBtnAdmin">Sair</button>
+        </div>
+    </div>
+</header>
+
+<!-- ========== FORM ========== -->
+<section class="admin-form">
+    <div class="form-card">
+        <h2>✍️ Nova Publicação</h2>
+        <p class="subtitle">Crie um artigo para o blog. URLs amigáveis são geradas automaticamente.</p>
+        
+        <form id="postForm" onsubmit="savePost(event)">
+            <input type="hidden" id="postId">
+            
+            <div class="form-group">
+                <label>Título *</label>
+                <input type="text" id="postTitle" placeholder="Ex: Como dominar o Excel em 30 dias" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Conteúdo * (HTML suportado)</label>
+                <textarea id="postContent" placeholder="Escreva seu artigo aqui... Use HTML para formatação." required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Resumo (opcional)</label>
+                <input type="text" id="postExcerpt" placeholder="Breve resumo do artigo (máx 160 caracteres)">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <input type="text" id="postCategory" placeholder="Ex: Dicas, Tutoriais" value="Geral">
+                </div>
+                <div class="form-group">
+                    <label>URL da imagem de destaque</label>
+                    <input type="url" id="postImage" placeholder="https://exemplo.com/imagem.jpg">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Status</label>
+                <select id="postPublished">
+                    <option value="true">📢 Publicar</option>
+                    <option value="false">📝 Salvar como rascunho</option>
+                </select>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-submit">Publicar Artigo</button>
+                <a href="/blog.html" class="btn btn-outline">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- ========== SCRIPTS ========== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/blog.js"></script>
+
+<script>
+// ============================================
+// INICIALIZAR ADMIN
+// ============================================
+document.addEventListener('DOMContentLoaded', async function() {
+    // Verificar se o usuário é admin
+    const isAdminUser = window.isAdmin ? await window.isAdmin() : false
+    
+    if (!isAdminUser) {
+        Toast.error('Acesso negado', 'Apenas administradores podem acessar esta área.')
+        setTimeout(() => {
+            window.location.href = '/blog.html'
+        }, 2000)
+        return
+    }
+    
+    // Configurar logout
+    const logoutBtn = document.getElementById('logoutBtnAdmin')
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            if (window.handleLogout) window.handleLogout()
+        })
+    }
+    
+    // Carregar post para edição (se houver)
+    loadPostForEdit()
+})
+</script>
+</body>
+</html>

@@ -1376,19 +1376,29 @@ async function handleGoogleLogin() {
     }
     
     try {
-        // URL do seu site - onde o usuário vai voltar
-        const redirectUrl = 'https://thebestworkagt.github.io/Edu-Mais'
-        
-        const { data, error } = await supabase.auth.signInWithOAuth({
+        // ✅ SEM redirectTo - usa o Site URL configurado no Supabase
+        const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: redirectUrl,
                 queryParams: {
                     access_type: 'offline',
                     prompt: 'consent'
                 }
             }
         })
+        
+        if (error) throw error
+        
+    } catch (error) {
+        console.error('Erro no login Google:', error)
+        Toast.error('Erro no login', 'Não foi possível autenticar com o Google.')
+        isGoogleLoading = false
+        if (googleBtn) {
+            googleBtn.innerHTML = '<i class="fab fa-google"></i> Entrar com Google'
+            googleBtn.disabled = false
+        }
+    }
+}
         
         if (error) throw error
         

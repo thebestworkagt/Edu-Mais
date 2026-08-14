@@ -1169,14 +1169,14 @@ function initElements() {
 }
 
 // ============================================
-// VERIFICAR SE É ADMIN
+// VERIFICAR SE É ADMIN (VERSÃO CORRIGIDA)
 // ============================================
 async function checkAdminStatus() {
     if (!currentUser) {
         isAdmin = false
         if (navAdmin) navAdmin.style.display = 'none'
         if (adminPanel) adminPanel.classList.remove('active')
-        return
+        return false
     }
     
     try {
@@ -1194,13 +1194,25 @@ async function checkAdminStatus() {
     if (navAdmin) {
         navAdmin.style.display = isAdmin ? 'inline-block' : 'none'
     }
+    
+    return isAdmin
 }
 
 // ============================================
-// BUSCAR DADOS DO ALUNO
+// BUSCAR DADOS DO ALUNO (VERSÃO CORRIGIDA)
 // ============================================
 async function fetchStudentData() {
     if (!currentUser) return null
+    
+    // ⭐ PRIMEIRO: VERIFICAR SE É ADMIN
+    const isAdminUser = await checkAdminStatus()
+    
+    // ⭐ SE FOR ADMIN, NÃO PRECISA DE DADOS DE ALUNO
+    if (isAdminUser) {
+        console.log('👑 Usuário é admin - ignorando tabela students')
+        studentData = null
+        return null
+    }
     
     try {
         const { data, error } = await supabase
@@ -1210,17 +1222,8 @@ async function fetchStudentData() {
             .single()
         
         if (error) {
-            // ⭐ SE FOR ADMIN, NÃO CRIA ALUNO!
-            const isAdminUser = await checkAdminStatus()
-            if (isAdminUser) {
-                console.log('👑 Usuário é admin, não precisa de registro em students')
-                studentData = null
-                return null
-            }
-            
-            // ⭐ SÓ CRIA ALUNO SE NÃO FOR ADMIN
             if (error.code === 'PGRST116') {
-                console.log('📝 Criando aluno para usuário:', currentUser.email)
+                console.log('📝 Criando aluno para:', currentUser.email)
                 const newStudent = {
                     id: currentUser.id,
                     email: currentUser.email,

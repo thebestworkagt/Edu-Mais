@@ -1210,8 +1210,17 @@ async function fetchStudentData() {
             .single()
         
         if (error) {
+            // ⭐ SE FOR ADMIN, NÃO CRIA ALUNO!
+            const isAdminUser = await checkAdminStatus()
+            if (isAdminUser) {
+                console.log('👑 Usuário é admin, não precisa de registro em students')
+                studentData = null
+                return null
+            }
+            
+            // ⭐ SÓ CRIA ALUNO SE NÃO FOR ADMIN
             if (error.code === 'PGRST116') {
-                console.log('Aluno não encontrado, criando...')
+                console.log('📝 Criando aluno para usuário:', currentUser.email)
                 const newStudent = {
                     id: currentUser.id,
                     email: currentUser.email,
@@ -1220,7 +1229,15 @@ async function fetchStudentData() {
                     is_approved: false,
                     level_id: null
                 }
-                await supabase.from('students').insert(newStudent)
+                const { error: insertError } = await supabase
+                    .from('students')
+                    .insert(newStudent)
+                
+                if (insertError) {
+                    console.error('❌ Erro ao criar aluno:', insertError)
+                    return null
+                }
+                studentData = newStudent
                 return newStudent
             }
             throw error

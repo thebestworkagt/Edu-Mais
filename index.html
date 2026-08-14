@@ -1691,6 +1691,9 @@ function renderLevels(levels, progressMap, userLevelAccess) {
 // ============================================
 // PAINEL ADMIN - ACESSO TOTAL (VERSÃO CORRIGIDA)
 // ============================================
+// ============================================
+// PAINEL ADMIN - ACESSO TOTAL (VERSÃO CORRIGIDA)
+// ============================================
 async function loadAdminPanel() {
     if (!isAdmin) {
         Toast.warning('Acesso negado', 'Você não tem permissão para acessar esta área.')
@@ -1713,11 +1716,14 @@ async function loadAdminPanel() {
     try {
         console.log('📊 Carregando painel admin...')
         
-        // 1. Buscar alunos
+        // ⭐ BUSCAR ALUNOS SEM O created_at (usa order por enrolled_at)
         const { data: students, error: studentsError } = await supabase
             .from('students')
-            .select('*')
-            .order('created_at', { ascending: false })
+            .select(`
+                *,
+                level:levels (id, name)
+            `)
+            .order('enrolled_at', { ascending: false })
         
         if (studentsError) {
             console.error('❌ Erro ao buscar students:', studentsError)
@@ -1854,12 +1860,10 @@ async function loadAdminPanel() {
                 <button onclick="loadAdminPanel()" class="btn btn-primary btn-sm" style="margin-top:12px;">
                     <i class="fas fa-sync"></i> Tentar novamente
                 </button>
-                <button onclick="debugAdmin()" class="btn btn-outline btn-sm" style="margin-top:12px;margin-left:8px;">
-                    <i class="fas fa-bug"></i> Depurar
-                </button>
             </div>
         `
     }
+}
 }
 
 // ============================================

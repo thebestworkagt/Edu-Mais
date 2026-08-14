@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Edu Mais</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/blog.css">
+</head>
+<body>
+
+<!-- ========== BLOG HEADER ========== -->
+<header class="blog-header">
+    <div class="container">
+        <a href="/" class="nav-brand">
+            <img src="assets/images/edu.png" alt="Edu Mais" class="logo" onerror="this.style.display='none'">
+            <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/">Início</a>
+            <a href="/blog.html" class="active">Blog</a>
+            <a href="/#niveis">Níveis</a>
+            <a href="/#contato">Contato</a>
+            <button class="btn btn-primary btn-sm" id="authBtnBlog" style="display:inline-flex;">Entrar</button>
+            <button class="btn btn-outline-danger btn-sm" id="logoutBtnBlog" style="display:none;">Sair</button>
+        </div>
+    </div>
+</header>
+
+<!-- ========== HERO ========== -->
+<section class="blog-hero">
+    <div class="container">
+        <h1>📝 Blog</h1>
+        <p>Artigos, dicas e tutoriais sobre Excel e produtividade</p>
+    </div>
+</section>
+
+<!-- ========== FEED ========== -->
+<section class="blog-feed">
+    <div class="container">
+        <!-- Toolbar -->
+        <div class="blog-toolbar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar artigos..." oninput="filterPosts()">
+            </div>
+            <select id="categoryFilter" class="filter-category" onchange="filterPosts()">
+                <option value="all">Todas as categorias</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="newPostBtn" style="display:none;" onclick="window.location.href='/blog-admin.html'">
+                <i class="fas fa-plus"></i> Novo Post
+            </button>
+        </div>
+
+        <!-- Posts -->
+        <div id="postsContainer">
+            <div class="blog-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p style="color:var(--blog-text-muted);margin-top:12px;">Carregando publicações...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ========== SCRIPTS ========== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/blog.js"></script>
+
+<script>
+// ============================================
+// INICIALIZAR BLOG
+// ============================================
+document.addEventListener('DOMContentLoaded', async function() {
+    // Verificar se o usuário está logado e é admin
+    const user = window.getCurrentUser ? await window.getCurrentUser() : null
+    const isAdminUser = window.isAdmin ? await window.isAdmin() : false
+    
+    // Mostrar botão "Novo Post" para admin
+    const newPostBtn = document.getElementById('newPostBtn')
+    if (newPostBtn && isAdminUser) {
+        newPostBtn.style.display = 'inline-flex'
+    }
+    
+    // Configurar botões de autenticação
+    const authBtn = document.getElementById('authBtnBlog')
+    const logoutBtn = document.getElementById('logoutBtnBlog')
+    
+    if (user) {
+        if (authBtn) authBtn.style.display = 'none'
+        if (logoutBtn) logoutBtn.style.display = 'inline-flex'
+    }
+    
+    if (authBtn) {
+        authBtn.addEventListener('click', function() {
+            if (window.openAuthModal) window.openAuthModal()
+        })
+    }
+    
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            if (window.handleLogout) window.handleLogout()
+        })
+    }
+    
+    // Carregar posts
+    loadPosts()
+})
+</script>
+</body>
+</html>

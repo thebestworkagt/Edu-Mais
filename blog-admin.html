@@ -145,41 +145,49 @@
 
 <script>
 // ============================================
-// INICIALIZAR ADMIN
+// INICIALIZAR ADMIN DO BLOG
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
-    // Verificar se o usuário está logado e é admin
-    var sessionResult = await supabaseBlog.auth.getSession()
+    console.log('📝 Inicializando admin do blog...')
     
-    if (!sessionResult.data.session) {
+    // ⭐ Verificar se é admin DIRETO no Supabase
+    const supabaseBlog = window.supabaseBlog || window.supabase.createClient(
+        'https://gslhfgaoqkcrhyfnmmxt.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
+    )
+    
+    const { data: { session } } = await supabaseBlog.auth.getSession()
+    
+    if (!session) {
         ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
-        setTimeout(function() {
-            window.location.href = '/Edu-Mais/'
-        }, 2000)
+        setTimeout(() => { window.location.href = '/Edu-Mais/' }, 2000)
         return
     }
     
-    var user = sessionResult.data.session.user
-    var adminResult = await supabaseBlog.from('admins').select('id').eq('id', user.id).maybeSingle()
+    const { data: adminCheck } = await supabaseBlog
+        .from('admins')
+        .select('id')
+        .eq('id', session.user.id)
+        .maybeSingle()
     
-    if (!adminResult.data) {
+    if (!adminCheck) {
         ToastBlog.error('Acesso negado', 'Apenas administradores podem acessar esta área.')
-        setTimeout(function() {
-            window.location.href = '/Edu-Mais/blog.html'
-        }, 2000)
+        setTimeout(() => { window.location.href = '/Edu-Mais/blog.html' }, 2000)
         return
     }
     
-    // É admin! Mostrar o formulário
-    console.log('✅ Admin verificado:', user.email)
+    console.log('✅ Admin verificado:', session.user.email)
     
-    // Configurar logout
-    document.getElementById('logoutBtnAdmin').addEventListener('click', async function() {
-        await supabaseBlog.auth.signOut()
-        window.location.href = '/Edu-Mais/'
-    })
+    // ⭐ Botão Sair
+    const logoutBtn = document.getElementById('logoutBtnAdmin')
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            await supabaseBlog.auth.signOut()
+            window.location.href = '/Edu-Mais/'
+        })
+    }
     
-    // Carregar post para edição (se houver)
+    // ⭐ Carregar post para edição
     await loadPostForEdit()
 })
 </script>

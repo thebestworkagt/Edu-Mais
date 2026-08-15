@@ -1175,7 +1175,6 @@ async function fetchStudentData() {
             return studentData
         }
         
-        // Buscar níveis do aluno
         const { data: levels, error: levelsError } = await supabase
             .from('student_levels')
             .select(`
@@ -1283,7 +1282,6 @@ async function handleRegister(e) {
     try {
         console.log('📝 Criando usuário...', { email, fullName })
         
-        // ⭐ SEM CONFIRMAÇÃO DE EMAIL (auto_confirm = true)
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -1292,7 +1290,6 @@ async function handleRegister(e) {
                     full_name: fullName,
                     phone: phone || null
                 },
-                // ⭐ IMPORTANTE: auto_confirm = true para não pedir confirmação
                 emailRedirectTo: window.location.origin
             }
         })
@@ -1317,7 +1314,6 @@ async function handleRegister(e) {
         console.log('✅ Usuário criado:', data.user.id)
         await new Promise(r => setTimeout(r, 1500))
         
-        // Criar na tabela students (aguardando aprovação do admin)
         await supabase.from('students').insert({
             id: data.user.id,
             email: email,
@@ -1336,6 +1332,89 @@ async function handleRegister(e) {
     } catch (error) {
         console.error('❌ Erro completo:', error)
         Toast.error('Erro ao criar conta', 'Não foi possível criar sua conta. Tente novamente.')
+    }
+}
+
+// ============================================
+// LOGOUT
+// ============================================
+async function handleLogout() {
+    try {
+        await supabase.auth.signOut()
+        currentUser = null
+        studentData = null
+        isAdmin = false
+        if (authBtn) authBtn.style.display = 'inline-flex'
+        if (logoutBtn) logoutBtn.style.display = 'none'
+        if (navAdmin) navAdmin.style.display = 'none'
+        if (adminPanel) adminPanel.classList.remove('active')
+        loadLevels()
+        Toast.info('Até logo!', 'Você saiu da sua conta com sucesso.')
+        window.location.href = '/Edu-Mais/'
+    } catch (error) {
+        Toast.error('Erro', 'Não foi possível sair da conta.')
+    }
+}
+
+// ============================================
+// CARREGAR NÍVEIS
+// ============================================
+async function loadLevels() {
+    if (!levelsContainer) return
+    
+    try {
+        const { data: levels, error } = await supabase
+            .from('levels')
+            .select('*, lessons:lessons(id, title, description, video_url, video_duration, "order")')
+            .eq('is_active', true)
+            .order('order')
+        
+        if (error) throw error
+        
+        currentLevels = levels || []
+        
+        let progressMap = new Map()
+        let userLevels = []
+        
+        if (currentUser && !isAdmin) {
+            const { data: progress } = await supabase
+                .from('progress')
+                .select('lesson_id, watched, completed')
+                .eq('student_id', currentUser.id)
+            
+            progress?.forEach(p => {
+                progressMap.set(p.lesson_id, { 
+                    watched: p.watched, 
+                    completed: p.completed 
+                })
+            })
+            
+            if (studentData && studentData.levels) {
+                userLevels = studentData.levels.map(l => l.level_id)
+            }
+        }
+        
+        if (isAdmin) {
+            userLevels = currentLevels.map(l => l.id)
+        }
+        
+        try {
+            const { count } = await supabase
+                .from('students')
+                .select('*', { count: 'exact', head: true })
+                .eq('is_approved', true)
+            
+            document.getElementById('statLevels').textContent = levels?.length || 0
+            const totalLessons = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
+            document.getElementById('statLessons').textContent = totalLessons
+            document.getElementById('statStudents').textContent = count || 0
+        } catch (e) {}
+        
+        renderLevels(levels || [], progressMap, userLevels)
+        
+    } catch (error) {
+        console.error('Erro:', error)
+        levelsContainer.innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i><p style="color:var(--text-secondary);">Erro ao carregar níveis.</p><button onclick="loadLevels()" class="btn btn-primary btn-sm">Tentar novamente</button></div>`
     }
 }
 
@@ -1408,7 +1487,7 @@ function renderLevels(levels, progressMap, userLevels) {
 }
 
 // ============================================
-// ABRIR AULA (COM VERIFICAÇÃO DE ACESSO MÚLTIPLO)
+// ABRIR AULA
 // ============================================
 async function openLesson(lessonId) {
     if (!currentUser) { Toast.warning('Acesso restrito', 'Faça login.'); openAuthModal(); return }
@@ -1418,7 +1497,6 @@ async function openLesson(lessonId) {
         const { data: lesson, error } = await supabase.from('lessons').select('*').eq('id', lessonId).single()
         if (error) throw error
         
-        // Verificar se o aluno tem acesso ao nível (múltiplos níveis)
         if (!isAdmin && studentData) {
             const hasLevelAccess = studentData.levels?.some(l => l.level_id === lesson.level_id)
             if (!hasLevelAccess) {
@@ -1543,7 +1621,7 @@ async function loadDashboard(container) {
 }
 
 // ============================================
-// ALUNOS (COM MÚLTIPLOS NÍVEIS E CHECKBOX)
+// ALUNOS
 // ============================================
 async function loadAlunos(container) {
     const { data: students, error } = await supabase

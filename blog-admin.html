@@ -4,14 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administrar Blog - Edu Mais</title>
- <!-- ===== FAVICON ===== -->
     <link rel="icon" type="image/png" href="assets/images/edu.png">
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- ... -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/style.css">
-    <link rel="stylesheet" href="assets/css/blog.css">
     <style>
         .admin-form { max-width: 800px; margin: 0 auto; padding: 40px 24px 60px; background: var(--blog-bg); min-height: 60vh; }
         .admin-form .form-card { background: var(--blog-card); border-radius: var(--blog-radius); padding: 32px; border: 1px solid var(--blog-border); box-shadow: var(--blog-shadow); }
@@ -30,25 +26,65 @@
         .admin-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .admin-form .form-actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
         .admin-form .form-actions .btn { padding: 12px 32px; }
+        .toast-container { position: fixed; top: 90px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: 100%; pointer-events: none; }
+        .toast-container .toast { pointer-events: all; padding: 16px 20px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; align-items: flex-start; gap: 14px; animation: slideInRight 0.4s ease forwards; backdrop-filter: blur(10px); position: relative; overflow: hidden; }
+        .toast-container .toast::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+        .toast-container .toast.success::before { background: #2E8B57; }
+        .toast-container .toast.error::before { background: #e74c3c; }
+        .toast-container .toast.warning::before { background: #f39c12; }
+        .toast-container .toast.info::before { background: #3498db; }
+        .toast-container .toast .toast-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+        .toast-container .toast.success .toast-icon { color: #2E8B57; }
+        .toast-container .toast.error .toast-icon { color: #e74c3c; }
+        .toast-container .toast.warning .toast-icon { color: #f39c12; }
+        .toast-container .toast.info .toast-icon { color: #3498db; }
+        .toast-container .toast .toast-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .toast-container .toast .toast-title { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .toast-container .toast .toast-message { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+        .toast-container .toast .toast-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 4px; transition: var(--transition); flex-shrink: 0; }
+        .toast-container .toast .toast-close:hover { color: var(--text-primary); transform: rotate(90deg); }
+        .toast-container .toast.hiding { animation: slideOutRight 0.4s ease forwards; }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100px); } }
+        .blog-header { background: var(--blog-card); border-bottom: 1px solid var(--blog-border); padding: 16px 0; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(20px); }
+        .blog-header .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .blog-header .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .blog-header .nav-brand .logo { height: 32px; }
+        .blog-header .nav-brand .brand-text { font-size: 18px; font-weight: 700; color: var(--blog-text); }
+        .blog-header .nav-brand .brand-text .highlight { color: var(--blog-primary); }
+        .blog-header .nav-links { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+        .blog-header .nav-links a { color: var(--blog-text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: var(--blog-transition); }
+        .blog-header .nav-links a:hover { color: var(--blog-primary); }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 24px; border: none; border-radius: 8px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; text-decoration: none; }
+        .btn-primary { background: linear-gradient(135deg, #217346 0%, #2E8B57 50%, #3BA370 100%); color: #fff; box-shadow: 0 4px 20px rgba(33,115,70,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(33,115,70,0.5); }
+        .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary-light); }
+        .btn-outline-danger { background: transparent; color: #ff6b6b; border: 2px solid #ff6b6b; }
+        .btn-outline-danger:hover { background: #ff6b6b; color: #fff; }
+        .btn-sm { padding: 6px 16px; font-size: 13px; }
         @media (max-width: 600px) { .admin-form .form-row { grid-template-columns: 1fr; } .admin-form .form-card { padding: 20px; } }
     </style>
 </head>
 <body>
 
+<!-- ========== TOAST CONTAINER ========== -->
+<div class="toast-container" id="toastContainer"></div>
+
 <!-- ========== BLOG HEADER ========== -->
 <header class="blog-header">
     <div class="container">
-        <a href="/" class="nav-brand">
+        <a href="/Edu-Mais/" class="nav-brand">
             <img src="assets/images/edu.png" alt="Edu Mais" class="logo" onerror="this.style.display='none'">
             <span class="brand-text">Edu <span class="highlight">Mais</span></span>
         </a>
         <div class="nav-links">
-    <a href="/Edu-Mais/">Início</a>
-    <a href="/Edu-Mais/blog.html">Blog</a>
-    <a href="/Edu-Mais/#niveis">Níveis</a>
-    <a href="/Edu-Mais/#contato">Contato</a>
-    <button class="btn btn-outline-danger btn-sm" id="logoutBtnAdmin">Sair</button>
-</div>
+            <a href="/Edu-Mais/">Início</a>
+            <a href="/Edu-Mais/blog.html">Blog</a>
+            <a href="/Edu-Mais/#niveis">Níveis</a>
+            <a href="/Edu-Mais/#contato">Contato</a>
+            <button class="btn btn-outline-danger btn-sm" id="logoutBtnAdmin">Sair</button>
+        </div>
     </div>
 </header>
 
@@ -108,25 +144,43 @@
 <script src="assets/js/blog.js"></script>
 
 <script>
+// ============================================
+// INICIALIZAR ADMIN
+// ============================================
 document.addEventListener('DOMContentLoaded', async function() {
-    const isAdminUser = window.isAdmin ? await window.isAdmin() : false
+    // Verificar se o usuário está logado e é admin
+    var sessionResult = await supabaseBlog.auth.getSession()
     
-    if (!isAdminUser) {
-        alert('Acesso negado. Apenas administradores podem acessar esta área.')
-        window.location.href = '/blog.html'
+    if (!sessionResult.data.session) {
+        ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
+        setTimeout(function() {
+            window.location.href = '/Edu-Mais/'
+        }, 2000)
         return
     }
     
-    // Configurar logout
-    const logoutBtn = document.getElementById('logoutBtnAdmin')
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            if (window.handleLogout) window.handleLogout()
-        })
+    var user = sessionResult.data.session.user
+    var adminResult = await supabaseBlog.from('admins').select('id').eq('id', user.id).maybeSingle()
+    
+    if (!adminResult.data) {
+        ToastBlog.error('Acesso negado', 'Apenas administradores podem acessar esta área.')
+        setTimeout(function() {
+            window.location.href = '/Edu-Mais/blog.html'
+        }, 2000)
+        return
     }
     
+    // É admin! Mostrar o formulário
+    console.log('✅ Admin verificado:', user.email)
+    
+    // Configurar logout
+    document.getElementById('logoutBtnAdmin').addEventListener('click', async function() {
+        await supabaseBlog.auth.signOut()
+        window.location.href = '/Edu-Mais/'
+    })
+    
     // Carregar post para edição (se houver)
-    loadPostForEdit()
+    await loadPostForEdit()
 })
 </script>
 </body>

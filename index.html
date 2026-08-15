@@ -1048,15 +1048,13 @@ const SUPABASE_URL = 'https://gslhfgaoqkcrhyfnmmxt.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-console.log('🚀 Edu Mais - Inicializado com sucesso!')
+console.log('🚀 Edu Mais - Inicializado')
 
 // ============================================
-// SISTEMA DE NOTIFICAÇÕES (TOAST)
+// TOAST
 // ============================================
 const Toast = {
     container: null,
-    
     init() {
         this.container = document.getElementById('toastContainer')
         if (!this.container) {
@@ -1066,17 +1064,9 @@ const Toast = {
             document.body.appendChild(this.container)
         }
     },
-    
     show(title, message, type, duration) {
         if (!this.container) this.init()
-        
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-exclamation-circle',
-            warning: 'fa-exclamation-triangle',
-            info: 'fa-info-circle'
-        }
-        
+        const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' }
         const toast = document.createElement('div')
         toast.className = 'toast ' + (type || 'info')
         toast.innerHTML = `
@@ -1087,71 +1077,38 @@ const Toast = {
             </div>
             <button class="toast-close"><i class="fas fa-times"></i></button>
         `
-        
-        toast.querySelector('.toast-close').addEventListener('click', function() {
-            Toast.remove(toast)
-        })
-        
-        var timeout = setTimeout(function() {
-            Toast.remove(toast)
-        }, duration || 4000)
-        
-        toast.addEventListener('mouseenter', function() {
-            clearTimeout(timeout)
-        })
-        toast.addEventListener('mouseleave', function() {
-            setTimeout(function() {
-                Toast.remove(toast)
-            }, duration || 4000)
-        })
-        
+        toast.querySelector('.toast-close').onclick = () => Toast.remove(toast)
+        const timeout = setTimeout(() => Toast.remove(toast), duration || 4000)
+        toast.onmouseenter = () => clearTimeout(timeout)
+        toast.onmouseleave = () => setTimeout(() => Toast.remove(toast), duration || 4000)
         this.container.appendChild(toast)
         return toast
     },
-    
-    remove: function(toast) {
-        if (!toast) return
-        toast.classList.add('hiding')
-        setTimeout(function() {
-            if (toast.parentNode) {
-                toast.parentNode.removeChild(toast)
-            }
-        }, 400)
-    },
-    
-    success: function(title, message, duration) {
-        return this.show(title, message, 'success', duration || 4000)
-    },
-    error: function(title, message, duration) {
-        return this.show(title, message, 'error', duration || 5000)
-    },
-    warning: function(title, message, duration) {
-        return this.show(title, message, 'warning', duration || 4000)
-    },
-    info: function(title, message, duration) {
-        return this.show(title, message, 'info', duration || 3000)
-    }
+    remove(toast) { if (!toast) return; toast.classList.add('hiding'); setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast) }, 400) },
+    success(title, message, d) { return this.show(title, message, 'success', d || 4000) },
+    error(title, message, d) { return this.show(title, message, 'error', d || 5000) },
+    warning(title, message, d) { return this.show(title, message, 'warning', d || 4000) },
+    info(title, message, d) { return this.show(title, message, 'info', d || 3000) }
 }
-
 Toast.init()
 
 // ============================================
 // ESTADO
 // ============================================
-var currentUser = null
-var currentLevels = []
-var currentLessonId = null
-var isAdmin = false
-var studentData = null
-var adminCurrentTab = 'dashboard'
+let currentUser = null
+let currentLevels = []
+let currentLessonId = null
+let isAdmin = false
+let studentData = null
+let adminCurrentTab = 'dashboard'
 
 // ============================================
 // DOM ELEMENTS
 // ============================================
-var authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
-var switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
-var videoModal, videoClose, markWatchedBtn, markCompletedBtn
-var navAdmin, adminPanel, adminContent, navNiveis
+let authBtn, logoutBtn, authModal, modalClose, loginForm, registerForm
+let switchToRegister, switchToLogin, modalSubtitle, ctaBtn, levelsContainer
+let videoModal, videoClose, markWatchedBtn, markCompletedBtn
+let navAdmin, adminPanel, adminContent
 
 // ============================================
 // INICIALIZAR REFERÊNCIAS
@@ -1175,13 +1132,10 @@ function initElements() {
     navAdmin = document.getElementById('navAdmin')
     adminPanel = document.getElementById('admin')
     adminContent = document.getElementById('adminContent')
-    navNiveis = document.getElementById('navNiveis')
-    
-    console.log('✅ Elementos inicializados')
 }
 
 // ============================================
-// VERIFICAR SE É ADMIN
+// ADMIN - VERIFICAR
 // ============================================
 async function checkAdminStatus() {
     if (!currentUser) {
@@ -1190,99 +1144,45 @@ async function checkAdminStatus() {
         if (adminPanel) adminPanel.classList.remove('active')
         return false
     }
-    
     try {
-        var result = await supabase
-            .from('admins')
-            .select('id, email, full_name, role')
-            .eq('id', currentUser.id)
-            .maybeSingle()
-        
-        isAdmin = !!result.data && !result.error
-        
-        if (isAdmin) {
-            console.log('👑 Admin logado:', result.data.email)
-        }
-    } catch (e) {
-        isAdmin = false
-    }
-    
-    if (navAdmin) {
-        navAdmin.style.display = isAdmin ? 'inline-block' : 'none'
-    }
-    
+        const { data, error } = await supabase.from('admins').select('id').eq('id', currentUser.id).maybeSingle()
+        isAdmin = !!data && !error
+        if (isAdmin) console.log('👑 Admin logado')
+    } catch { isAdmin = false }
+    if (navAdmin) navAdmin.style.display = isAdmin ? 'inline-block' : 'none'
     return isAdmin
 }
 
 // ============================================
-// BUSCAR DADOS DO ALUNO
+// BUSCAR ALUNO
 // ============================================
 async function fetchStudentData() {
-    if (!currentUser) return null
-    
-    if (isAdmin) {
-        console.log('👑 Admin - ignorando tabela students')
-        studentData = null
-        return null
-    }
-    
+    if (!currentUser || isAdmin) { studentData = null; return null }
     try {
-        var result = await supabase
-            .from('students')
-            .select('*')
-            .eq('id', currentUser.id)
-            .maybeSingle()
-        
-        if (result.error) throw result.error
-        
-        if (!result.data) {
-            console.log('📝 Criando aluno para:', currentUser.email)
-            var newStudent = {
-                id: currentUser.id,
-                email: currentUser.email,
-                full_name: currentUser.user_metadata?.full_name || currentUser.email,
-                is_active: true,
-                is_approved: false,
-                level_id: null
-            }
-            var insertResult = await supabase
-                .from('students')
-                .insert(newStudent)
-            
-            if (insertResult.error) {
-                console.error('❌ Erro ao criar aluno:', insertResult.error)
-                return null
-            }
+        const { data, error } = await supabase.from('students').select('*').eq('id', currentUser.id).maybeSingle()
+        if (error) throw error
+        if (!data) {
+            const newStudent = { id: currentUser.id, email: currentUser.email, full_name: currentUser.user_metadata?.full_name || currentUser.email, is_active: true, is_approved: false, level_id: null }
+            await supabase.from('students').insert(newStudent)
             studentData = newStudent
             return newStudent
         }
-        
-        studentData = result.data
-        return result.data
-    } catch (error) {
-        console.error('Erro ao buscar dados do aluno:', error)
-        return null
-    }
+        studentData = data
+        return data
+    } catch (error) { console.error('Erro:', error); return null }
 }
 
 // ============================================
-// AUTENTICAÇÃO - VERIFICAR SESSÃO
+// AUTENTICAÇÃO
 // ============================================
 async function checkSession() {
-    var sessionResult = await supabase.auth.getSession()
-    if (sessionResult.data.session) {
-        currentUser = sessionResult.data.session.user
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+        currentUser = session.user
         if (authBtn) authBtn.style.display = 'none'
         if (logoutBtn) logoutBtn.style.display = 'inline-flex'
-        
         await checkAdminStatus()
-        
-        if (!isAdmin) {
-            await fetchStudentData()
-            if (studentData && !studentData.is_approved) {
-                Toast.info('Conta pendente', 'Sua conta aguarda aprovação do administrador.')
-            }
-        }
+        if (!isAdmin) await fetchStudentData()
     } else {
         currentUser = null
         studentData = null
@@ -1295,15 +1195,8 @@ async function checkSession() {
     loadLevels()
 }
 
-// ============================================
-// ABRIR MODAL DE LOGIN
-// ============================================
 function openAuthModal() {
-    console.log('🔓 Abrindo modal de login...')
-    if (!authModal) {
-        console.error('❌ Modal não encontrado!')
-        return
-    }
+    if (!authModal) return
     authModal.classList.add('active')
     if (loginForm) loginForm.classList.add('active')
     if (registerForm) registerForm.classList.remove('active')
@@ -1311,139 +1204,64 @@ function openAuthModal() {
 }
 
 // ============================================
-// HANDLERS - LOGIN COM EMAIL
+// LOGIN
 // ============================================
 async function handleLogin(e) {
     e.preventDefault()
-    console.log('📝 Tentando login...')
-    
-    var email = document.getElementById('loginEmail').value
-    var password = document.getElementById('loginPassword').value
-    
-    if (!email || !password) {
-        Toast.warning('Campos incompletos', 'Por favor, preencha todos os campos.')
-        return
-    }
-    
+    const email = document.getElementById('loginEmail').value
+    const password = document.getElementById('loginPassword').value
+    if (!email || !password) { Toast.warning('Campos incompletos', 'Preencha todos os campos.'); return }
     try {
-        var result = await supabase.auth.signInWithPassword({ email: email, password: password })
-        if (result.error) throw result.error
+        const { error } = await supabase.auth.signInWithPassword({ email, password })
+        if (error) throw error
         authModal.classList.remove('active')
         await checkSession()
         Toast.success('Login realizado!', 'Bem-vindo(a) à Edu Mais.')
         loadLevels()
         if (isAdmin) loadAdminPanel()
     } catch (error) {
-        console.error('❌ Erro no login:', error)
-        Toast.error('Falha no login', 'Email ou senha incorretos. Tente novamente.')
+        Toast.error('Falha no login', 'Email ou senha incorretos.')
     }
 }
 
 // ============================================
-// HANDLERS - REGISTRO COM EMAIL
+// REGISTRO
 // ============================================
 async function handleRegister(e) {
     e.preventDefault()
-    
-    var fullName = document.getElementById('registerName').value.trim()
-    var email = document.getElementById('registerEmail').value.trim()
-    var phone = document.getElementById('registerPhone').value.trim()
-    var password = document.getElementById('registerPassword').value
-    
-    if (!fullName || !email || !password) {
-        Toast.warning('Campos incompletos', 'Por favor, preencha todos os campos obrigatórios.')
-        return
-    }
-    
-    if (password.length < 6) {
-        Toast.warning('Senha fraca', 'A senha deve ter pelo menos 6 caracteres.')
-        return
-    }
-    
-    if (!email.includes('@') || !email.includes('.')) {
-        Toast.warning('Email inválido', 'Por favor, insira um email válido.')
-        return
-    }
-    
+    const fullName = document.getElementById('registerName').value.trim()
+    const email = document.getElementById('registerEmail').value.trim()
+    const phone = document.getElementById('registerPhone').value.trim()
+    const password = document.getElementById('registerPassword').value
+    if (!fullName || !email || !password) { Toast.warning('Campos incompletos', 'Preencha todos os campos.'); return }
+    if (password.length < 6) { Toast.warning('Senha fraca', 'Mínimo 6 caracteres.'); return }
+    if (!email.includes('@') || !email.includes('.')) { Toast.warning('Email inválido', 'Insira um email válido.'); return }
     try {
-        console.log('📝 Criando usuário...', { email: email, fullName: fullName })
-        
-        var signUpResult = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: { 
-                data: { 
-                    full_name: fullName,
-                    phone: phone || null
-                }
-            }
+        const { data, error } = await supabase.auth.signUp({
+            email, password,
+            options: { data: { full_name: fullName, phone: phone || null } }
         })
-        
-        if (signUpResult.error) {
-            console.error('❌ Erro:', signUpResult.error)
-            if (signUpResult.error.message.includes('already registered')) {
-                Toast.error('Email já cadastrado', 'Este email já está em uso. Faça login.')
-                return
-            }
-            if (signUpResult.error.message.includes('rate limit')) {
-                Toast.warning('Muitas tentativas', 'Aguarde 15-30 minutos e tente novamente.')
-                return
-            }
-            throw signUpResult.error
+        if (error) {
+            if (error.message.includes('already registered')) { Toast.error('Email já cadastrado', 'Faça login.'); return }
+            if (error.message.includes('rate limit')) { Toast.warning('Muitas tentativas', 'Aguarde 15 minutos.'); return }
+            throw error
         }
-        
-        if (!signUpResult.data.user) {
-            throw new Error('Usuário não foi criado')
-        }
-        
-        console.log('✅ Usuário criado:', signUpResult.data.user.id)
-        await new Promise(function(resolve) { setTimeout(resolve, 1500) })
-        
-        var studentDataObj = {
-            id: signUpResult.data.user.id,
-            email: email,
-            full_name: fullName,
-            phone: phone || null,
-            is_active: true,
-            is_approved: false,
-            level_id: null,
-            enrolled_at: new Date().toISOString()
-        }
-        
-        var insertStudentResult = await supabase
-            .from('students')
-            .insert(studentDataObj)
-        
-        if (insertStudentResult.error) {
-            console.error('❌ Erro ao criar student:', insertStudentResult.error)
-            if (insertStudentResult.error.code === '23505') {
-                await supabase
-                    .from('students')
-                    .update({ email: email, full_name: fullName, phone: phone || null, is_active: true })
-                    .eq('id', signUpResult.data.user.id)
-            } else {
-                throw insertStudentResult.error
-            }
-        }
-        
-        console.log('✅ Aluno criado com sucesso!')
-        
-        Toast.success(
-            'Conta criada! 📧', 
-            'Um email de confirmação foi enviado para você. Confirme seu email para ativar sua conta.'
-        )
-        
+        if (!data.user) throw new Error('Usuário não criado')
+        await new Promise(r => setTimeout(r, 1500))
+        await supabase.from('students').insert({
+            id: data.user.id, email, full_name: fullName, phone: phone || null,
+            is_active: true, is_approved: false, level_id: null, enrolled_at: new Date().toISOString()
+        })
+        Toast.success('Conta criada! 📧', 'Confirme seu email para ativar a conta.')
         registerForm.reset()
         if (switchToLogin) switchToLogin.click()
-        
     } catch (error) {
-        console.error('❌ Erro completo:', error)
-        Toast.error('Erro ao criar conta', 'Não foi possível criar sua conta. Tente novamente.')
+        Toast.error('Erro', 'Não foi possível criar a conta.')
     }
 }
 
 // ============================================
-// HANDLERS - LOGOUT
+// LOGOUT
 // ============================================
 async function handleLogout() {
     try {
@@ -1456,92 +1274,54 @@ async function handleLogout() {
         if (navAdmin) navAdmin.style.display = 'none'
         if (adminPanel) adminPanel.classList.remove('active')
         loadLevels()
-        Toast.info('Até logo!', 'Você saiu da sua conta com sucesso.')
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível sair da conta.')
-    }
+        Toast.info('Até logo!', 'Você saiu da sua conta.')
+    } catch (error) { Toast.error('Erro', 'Não foi possível sair.') }
 }
+
+// ============================================
+// EXPOR FUNÇÕES PARA O BLOG
+// ============================================
+window.getCurrentUser = () => currentUser
+window.isAdmin = () => isAdmin
+window.handleLogout = handleLogout
+window.openAuthModal = openAuthModal
+window.checkAdminStatus = checkAdminStatus
 
 // ============================================
 // CARREGAR NÍVEIS
 // ============================================
 async function loadLevels() {
     if (!levelsContainer) return
-    
     try {
-        var levelsResult = await supabase
+        const { data: levels, error } = await supabase
             .from('levels')
-            .select(`
-                *,
-                lessons:lessons (
-                    id,
-                    title,
-                    description,
-                    video_url,
-                    video_duration,
-                    "order"
-                )
-            `)
+            .select('*, lessons:lessons(id, title, description, video_url, video_duration, "order")')
             .eq('is_active', true)
             .order('order')
+        if (error) throw error
         
-        if (levelsResult.error) throw levelsResult.error
-        
-        currentLevels = levelsResult.data || []
-        
-        var progressMap = new Map()
-        var userLevelAccess = null
+        currentLevels = levels || []
+        let progressMap = new Map()
+        let userLevelAccess = null
         
         if (currentUser && !isAdmin) {
-            var progressResult = await supabase
-                .from('progress')
-                .select('lesson_id, watched, completed')
-                .eq('student_id', currentUser.id)
-            
-            if (progressResult.data) {
-                progressResult.data.forEach(function(p) {
-                    progressMap.set(p.lesson_id, { 
-                        watched: p.watched, 
-                        completed: p.completed 
-                    })
-                })
-            }
-            
-            if (studentData) {
-                userLevelAccess = studentData.level_id
-            }
+            const { data: progress } = await supabase.from('progress').select('lesson_id, watched, completed').eq('student_id', currentUser.id)
+            progress?.forEach(p => progressMap.set(p.lesson_id, { watched: p.watched, completed: p.completed }))
+            if (studentData) userLevelAccess = studentData.level_id
         }
         
         try {
-            var countResult = await supabase
-                .from('students')
-                .select('*', { count: 'exact', head: true })
-                .eq('is_approved', true)
-            
-            document.getElementById('statLevels').textContent = levelsResult.data?.length || 0
-            var totalLessons = 0
-            if (levelsResult.data) {
-                levelsResult.data.forEach(function(l) {
-                    totalLessons += (l.lessons?.length || 0)
-                })
-            }
+            const { count } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('is_approved', true)
+            document.getElementById('statLevels').textContent = levels?.length || 0
+            const totalLessons = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
             document.getElementById('statLessons').textContent = totalLessons
-            document.getElementById('statStudents').textContent = countResult.count || 0
+            document.getElementById('statStudents').textContent = count || 0
         } catch (e) {}
         
-        renderLevels(levelsResult.data || [], progressMap, userLevelAccess)
-        
+        renderLevels(levels || [], progressMap, userLevelAccess)
     } catch (error) {
-        console.error('❌ Erro ao carregar níveis:', error)
-        levelsContainer.innerHTML = `
-            <div style="text-align:center;padding:40px;grid-column:1/-1;">
-                <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i>
-                <p style="color:var(--text-secondary);margin-top:12px;">Não foi possível carregar os níveis.</p>
-                <button onclick="loadLevels()" class="btn btn-primary btn-sm" style="margin-top:12px;">
-                    <i class="fas fa-sync"></i> Tentar novamente
-                </button>
-            </div>
-        `
+        console.error('Erro:', error)
+        levelsContainer.innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i><p style="color:var(--text-secondary);">Erro ao carregar níveis.</p><button onclick="loadLevels()" class="btn btn-primary btn-sm">Tentar novamente</button></div>`
     }
 }
 
@@ -1550,284 +1330,166 @@ async function loadLevels() {
 // ============================================
 function renderLevels(levels, progressMap, userLevelAccess) {
     if (!levelsContainer) return
-    
     if (!levels || levels.length === 0) {
-        levelsContainer.innerHTML = `
-            <div style="text-align:center;padding:40px;grid-column:1/-1;">
-                <i class="fas fa-folder-open" style="font-size:48px;color:var(--text-muted);"></i>
-                <p style="color:var(--text-secondary);margin-top:12px;">Nenhum nível disponível no momento.</p>
-            </div>
-        `
+        levelsContainer.innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-folder-open" style="font-size:48px;color:var(--text-muted);"></i><p style="color:var(--text-secondary);">Nenhum nível disponível.</p></div>`
         return
     }
     
     if (isAdmin) {
-        var adminHtml = ''
-        levels.forEach(function(level) {
-            var totalLessons = level.lessons?.length || 0
-            var watchedLessons = 0
-            if (level.lessons) {
-                level.lessons.forEach(function(l) {
-                    if (progressMap.get(l.id)?.watched) watchedLessons++
-                })
-            }
-            var isCompleted = totalLessons > 0 && watchedLessons === totalLessons
-            
-            var lessons = (level.lessons || []).slice().sort(function(a, b) {
-                return (a.order || 0) - (b.order || 0)
-            })
-            
-            var lessonsHtml = ''
-            lessons.forEach(function(lesson) {
-                var progress = progressMap.get(lesson.id) || {}
-                var isWatched = progress.watched || false
-                lessonsHtml += `
-                    <div class="lesson-item" onclick="openLesson(${lesson.id})">
-                        <span class="lesson-status ${isWatched ? 'watched' : ''}">
-                            ${isWatched ? '✅' : '▶️'}
-                        </span>
-                        <span class="lesson-title">${lesson.title}</span>
-                        <span class="lesson-duration">${lesson.video_duration || 0} min</span>
-                    </div>
-                `
-            })
-            
-            adminHtml += `
+        let html = ''
+        levels.forEach(level => {
+            const total = level.lessons?.length || 0
+            const watched = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
+            const completed = total > 0 && watched === total
+            const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+            html += `
                 <div class="level-card">
                     <div class="level-icon">${level.icon || '📚'}</div>
-                    <div class="level-header">
-                        <h3 class="level-name">${level.name}</h3>
-                        <span class="level-badge ${isCompleted ? 'completed' : 'unlocked'}">
-                            ${isCompleted ? '✅ Concluído' : '🎯 Em andamento'}
-                        </span>
-                    </div>
-                    <p class="level-description">${level.description || 'Aprenda e domine este nível.'}</p>
-                    
-                    <div class="level-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${totalLessons > 0 ? (watchedLessons / totalLessons) * 100 : 0}%"></div>
-                        </div>
-                        <span class="progress-text">${totalLessons > 0 ? Math.round((watchedLessons / totalLessons) * 100) : 0}%</span>
-                    </div>
-                    
-                    <div class="level-lessons">
-                        ${lessonsHtml}
-                    </div>
+                    <div class="level-header"><h3 class="level-name">${level.name}</h3><span class="level-badge ${completed ? 'completed' : 'unlocked'}">${completed ? '✅ Concluído' : '🎯 Em andamento'}</span></div>
+                    <p class="level-description">${level.description || ''}</p>
+                    <div class="level-progress"><div class="progress-bar"><div class="progress-fill" style="width: ${total > 0 ? (watched / total) * 100 : 0}%"></div></div><span class="progress-text">${total > 0 ? Math.round((watched / total) * 100) : 0}%</span></div>
+                    <div class="level-lessons">${lessons.map(l => `<div class="lesson-item" onclick="openLesson(${l.id})"><span class="lesson-status ${progressMap.get(l.id)?.watched ? 'watched' : ''}">${progressMap.get(l.id)?.watched ? '✅' : '▶️'}</span><span class="lesson-title">${l.title}</span><span class="lesson-duration">${l.video_duration || 0} min</span></div>`).join('')}</div>
                 </div>
             `
         })
-        levelsContainer.innerHTML = adminHtml
+        levelsContainer.innerHTML = html
         return
     }
     
     if (!currentUser) {
-        levelsContainer.innerHTML = `
-            <div class="access-denied">
-                <i class="fas fa-graduation-cap"></i>
-                <h3>Faça login para ver os níveis</h3>
-                <p>Crie sua conta ou faça login para ter acesso a todos os níveis e aulas.</p>
-                <button class="btn btn-primary" onclick="openAuthModal()">
-                    <i class="fas fa-sign-in-alt"></i> Entrar agora
-                </button>
-            </div>
-        `
+        levelsContainer.innerHTML = `<div class="access-denied"><i class="fas fa-graduation-cap"></i><h3>Faça login para ver os níveis</h3><p>Crie sua conta ou faça login.</p><button class="btn btn-primary" onclick="openAuthModal()">Entrar agora</button></div>`
         return
     }
     
     if (studentData && !studentData.is_approved) {
-        levelsContainer.innerHTML = `
-            <div class="access-denied">
-                <i class="fas fa-clock"></i>
-                <h3>Aguardando Aprovação</h3>
-                <p>Sua conta está aguardando aprovação do administrador. 
-                Você receberá um email quando tiver acesso aos conteúdos.</p>
-                <button class="btn btn-outline" onclick="loadLevels()">
-                    <i class="fas fa-sync"></i> Verificar novamente
-                </button>
-            </div>
-        `
+        levelsContainer.innerHTML = `<div class="access-denied"><i class="fas fa-clock"></i><h3>Aguardando Aprovação</h3><p>Sua conta aguarda aprovação do administrador.</p><button class="btn btn-outline" onclick="loadLevels()">Verificar novamente</button></div>`
         return
     }
     
-    var visibleLevels = levels.filter(function(level) {
-        return level.id === userLevelAccess
-    })
-    
-    if (visibleLevels.length === 0) {
-        levelsContainer.innerHTML = `
-            <div class="access-denied">
-                <i class="fas fa-info-circle"></i>
-                <h3>Nenhum nível atribuído</h3>
-                <p>O administrador ainda não atribuiu nenhum nível à sua conta.</p>
-                <button class="btn btn-outline" onclick="loadLevels()">
-                    <i class="fas fa-sync"></i> Verificar novamente
-                </button>
-            </div>
-        `
+    const visible = levels.filter(l => l.id === userLevelAccess)
+    if (visible.length === 0) {
+        levelsContainer.innerHTML = `<div class="access-denied"><i class="fas fa-info-circle"></i><h3>Nenhum nível atribuído</h3><p>O administrador ainda não atribuiu nenhum nível.</p><button class="btn btn-outline" onclick="loadLevels()">Verificar novamente</button></div>`
         return
     }
     
-    var alunoHtml = ''
-    visibleLevels.forEach(function(level) {
-        var totalLessons = level.lessons?.length || 0
-        var watchedLessons = 0
-        if (level.lessons) {
-            level.lessons.forEach(function(l) {
-                if (progressMap.get(l.id)?.watched) watchedLessons++
-            })
-        }
-        var isCompleted = totalLessons > 0 && watchedLessons === totalLessons
-        
-        var lessons = (level.lessons || []).slice().sort(function(a, b) {
-            return (a.order || 0) - (b.order || 0)
-        })
-        
-        var lessonsHtml = ''
-        lessons.forEach(function(lesson) {
-            var progress = progressMap.get(lesson.id) || {}
-            var isWatched = progress.watched || false
-            lessonsHtml += `
-                <div class="lesson-item" onclick="openLesson(${lesson.id})">
-                    <span class="lesson-status ${isWatched ? 'watched' : ''}">
-                        ${isWatched ? '✅' : '▶️'}
-                    </span>
-                    <span class="lesson-title">${lesson.title}</span>
-                    <span class="lesson-duration">${lesson.video_duration || 0} min</span>
-                </div>
-            `
-        })
-        
-        alunoHtml += `
+    let html = ''
+    visible.forEach(level => {
+        const total = level.lessons?.length || 0
+        const watched = level.lessons?.filter(l => progressMap.get(l.id)?.watched).length || 0
+        const completed = total > 0 && watched === total
+        const lessons = (level.lessons || []).sort((a, b) => (a.order || 0) - (b.order || 0))
+        html += `
             <div class="level-card">
                 <div class="level-icon">${level.icon || '📚'}</div>
-                <div class="level-header">
-                    <h3 class="level-name">${level.name}</h3>
-                    <span class="level-badge ${isCompleted ? 'completed' : 'unlocked'}">
-                        ${isCompleted ? '✅ Concluído' : '🎯 Em andamento'}
-                    </span>
-                </div>
-                <p class="level-description">${level.description || 'Aprenda e domine este nível.'}</p>
-                
-                <div class="level-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${totalLessons > 0 ? (watchedLessons / totalLessons) * 100 : 0}%"></div>
-                    </div>
-                    <span class="progress-text">${totalLessons > 0 ? Math.round((watchedLessons / totalLessons) * 100) : 0}%</span>
-                </div>
-                
-                <div class="level-lessons">
-                    ${lessonsHtml}
-                </div>
+                <div class="level-header"><h3 class="level-name">${level.name}</h3><span class="level-badge ${completed ? 'completed' : 'unlocked'}">${completed ? '✅ Concluído' : '🎯 Em andamento'}</span></div>
+                <p class="level-description">${level.description || ''}</p>
+                <div class="level-progress"><div class="progress-bar"><div class="progress-fill" style="width: ${total > 0 ? (watched / total) * 100 : 0}%"></div></div><span class="progress-text">${total > 0 ? Math.round((watched / total) * 100) : 0}%</span></div>
+                <div class="level-lessons">${lessons.map(l => `<div class="lesson-item" onclick="openLesson(${l.id})"><span class="lesson-status ${progressMap.get(l.id)?.watched ? 'watched' : ''}">${progressMap.get(l.id)?.watched ? '✅' : '▶️'}</span><span class="lesson-title">${l.title}</span><span class="lesson-duration">${l.video_duration || 0} min</span></div>`).join('')}</div>
             </div>
         `
     })
-    levelsContainer.innerHTML = alunoHtml
+    levelsContainer.innerHTML = html
 }
 
 // ============================================
-// EXPOR FUNÇÕES PARA O BLOG E OUTROS ARQUIVOS
+// ABRIR AULA
 // ============================================
-window.getCurrentUser = function() {
-    return currentUser
+async function openLesson(lessonId) {
+    if (!currentUser) { Toast.warning('Acesso restrito', 'Faça login.'); openAuthModal(); return }
+    if (!isAdmin && (!studentData || !studentData.is_approved || !studentData.level_id)) { Toast.warning('Sem acesso', 'Sua conta não tem permissão.'); return }
+    try {
+        const { data: lesson, error } = await supabase.from('lessons').select('*').eq('id', lessonId).single()
+        if (error) throw error
+        if (!isAdmin && studentData && studentData.level_id !== lesson.level_id) { Toast.warning('Nível bloqueado', 'Você não tem acesso a este nível.'); return }
+        currentLessonId = lessonId
+        showVideoModal(lesson)
+    } catch (error) { Toast.error('Erro', 'Não foi possível carregar a aula.') }
 }
-
-window.isAdmin = function() {
-    return isAdmin
-}
-
-window.handleLogout = function() {
-    return handleLogout()
-}
-
-window.openAuthModal = function() {
-    return openAuthModal()
-}
-
-console.log('✅ Funções do auth exportadas')
 
 // ============================================
-// PAINEL ADMIN - COMPLETO COM 4 ABAS
+// MODAL DE VÍDEO
+// ============================================
+function showVideoModal(lesson) {
+    if (!videoModal) return
+    document.getElementById('videoTitle').textContent = lesson.title
+    document.getElementById('videoDescription').textContent = lesson.description || ''
+    let videoHtml = ''
+    if (lesson.video_url) {
+        const url = lesson.video_url
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            let videoId = url.includes('youtu.be') ? url.split('youtu.be/')[1]?.split('?')[0] : url.split('v=')[1]?.split('&')[0]
+            videoHtml = `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`
+        } else {
+            videoHtml = `<p style="padding:20px;text-align:center;">Link: <a href="${url}" target="_blank">${url}</a></p>`
+        }
+    } else {
+        videoHtml = `<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:40px;"><div style="text-align:center;"><i class="fas fa-video" style="font-size:48px;color:var(--text-muted);"></i><p style="color:var(--text-secondary);">Vídeo não disponível</p></div></div>`
+    }
+    document.getElementById('videoContainer').innerHTML = videoHtml
+    checkProgress(lesson.id)
+    videoModal.classList.add('active')
+}
+
+async function checkProgress(lessonId) {
+    if (!currentUser) return
+    const { data } = await supabase.from('progress').select('watched, completed').eq('student_id', currentUser.id).eq('lesson_id', lessonId).maybeSingle()
+    const isWatched = data?.watched || false
+    const isCompleted = data?.completed || false
+    markWatchedBtn.textContent = isWatched ? '✅ Assistida' : '📺 Marcar como assistida'
+    markWatchedBtn.disabled = isWatched
+    markCompletedBtn.textContent = isCompleted ? '✅ Concluída' : '🏁 Marcar como concluída'
+    markCompletedBtn.disabled = isCompleted || !isWatched
+}
+
+async function markProgress(action) {
+    if (!currentUser || !currentLessonId) { Toast.warning('Ação não disponível', 'Faça login.'); return }
+    const watched = action === 'watched' || action === 'completed'
+    const completed = action === 'completed'
+    try {
+        await supabase.from('progress').upsert({ student_id: currentUser.id, lesson_id: currentLessonId, watched, completed, watched_at: watched ? new Date().toISOString() : null }, { onConflict: 'student_id, lesson_id' })
+        Toast.success('Progresso atualizado!', 'Continue assim.')
+        videoModal.classList.remove('active')
+        loadLevels()
+    } catch (error) { Toast.error('Erro', 'Não foi possível atualizar.') }
+}
+
+// ============================================
+// PAINEL ADMIN - VERSÃO SIMPLIFICADA E FUNCIONAL
 // ============================================
 async function loadAdminPanel() {
-    if (!isAdmin) {
-        Toast.warning('Acesso negado', 'Você não tem permissão para acessar esta área.')
-        return
-    }
-    
+    if (!isAdmin) { Toast.warning('Acesso negado', 'Você não tem permissão.'); return }
     if (!adminContent) return
-    
     adminPanel.classList.add('active')
     document.getElementById('admin').scrollIntoView({ behavior: 'smooth' })
     
-    renderAdminTabs()
-}
-
-function renderAdminTabs() {
-    if (!adminContent) return
-    
     adminContent.innerHTML = `
         <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:1px solid var(--border-color);padding-bottom:12px;flex-wrap:wrap;">
-            <button class="btn ${adminCurrentTab === 'dashboard' ? 'btn-primary' : 'btn-outline'}" 
-                    onclick="switchAdminTab('dashboard')" style="font-size:13px;">
-                <i class="fas fa-chart-pie"></i> Dashboard
-            </button>
-            <button class="btn ${adminCurrentTab === 'alunos' ? 'btn-primary' : 'btn-outline'}" 
-                    onclick="switchAdminTab('alunos')" style="font-size:13px;">
-                <i class="fas fa-users"></i> Alunos
-            </button>
-            <button class="btn ${adminCurrentTab === 'niveis' ? 'btn-primary' : 'btn-outline'}" 
-                    onclick="switchAdminTab('niveis')" style="font-size:13px;">
-                <i class="fas fa-layer-group"></i> Níveis
-            </button>
-            <button class="btn ${adminCurrentTab === 'aulas' ? 'btn-primary' : 'btn-outline'}" 
-                    onclick="switchAdminTab('aulas')" style="font-size:13px;">
-                <i class="fas fa-video"></i> Aulas
-            </button>
+            <button class="btn ${adminCurrentTab === 'dashboard' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('dashboard')" style="font-size:13px;"><i class="fas fa-chart-pie"></i> Dashboard</button>
+            <button class="btn ${adminCurrentTab === 'alunos' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('alunos')" style="font-size:13px;"><i class="fas fa-users"></i> Alunos</button>
+            <button class="btn ${adminCurrentTab === 'niveis' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('niveis')" style="font-size:13px;"><i class="fas fa-layer-group"></i> Níveis</button>
+            <button class="btn ${adminCurrentTab === 'aulas' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('aulas')" style="font-size:13px;"><i class="fas fa-video"></i> Aulas</button>
         </div>
-        
-        <div id="adminTabContent">
-            <div style="text-align:center;padding:40px;">
-                <i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i>
-                <p style="color:var(--text-secondary);margin-top:12px;">Carregando...</p>
-            </div>
-        </div>
+        <div id="adminTabContent"><div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i><p style="color:var(--text-secondary);">Carregando...</p></div></div>
     `
-    
     loadAdminTab(adminCurrentTab)
 }
 
 function switchAdminTab(tab) {
     adminCurrentTab = tab
-    renderAdminTabs()
+    loadAdminTab(tab)
 }
 
 async function loadAdminTab(tab) {
-    var container = document.getElementById('adminTabContent')
+    const container = document.getElementById('adminTabContent')
     if (!container) return
-    
     try {
-        if (tab === 'dashboard') {
-            await loadDashboard(container)
-        } else if (tab === 'alunos') {
-            await loadAlunos(container)
-        } else if (tab === 'niveis') {
-            await loadNiveis(container)
-        } else if (tab === 'aulas') {
-            await loadAulas(container)
-        } else {
-            container.innerHTML = '<p>Conteúdo não encontrado</p>'
-        }
+        if (tab === 'dashboard') await loadDashboard(container)
+        else if (tab === 'alunos') await loadAlunos(container)
+        else if (tab === 'niveis') await loadNiveisAdmin(container)
+        else if (tab === 'aulas') await loadAulasAdmin(container)
+        else container.innerHTML = '<p>Conteúdo não encontrado</p>'
     } catch (error) {
-        console.error('Erro ao carregar aba:', error)
-        container.innerHTML = `
-            <div style="text-align:center;padding:40px;">
-                <i class="fas fa-exclamation-triangle" style="font-size:40px;color:#ff6b6b;"></i>
-                <p style="color:var(--text-secondary);margin-top:12px;">Erro ao carregar dados.</p>
-                <button onclick="loadAdminTab('${tab}')" class="btn btn-primary btn-sm" style="margin-top:12px;">
-                    <i class="fas fa-sync"></i> Tentar novamente
-                </button>
-            </div>
-        `
+        container.innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:40px;color:#ff6b6b;"></i><p style="color:var(--text-secondary);">Erro ao carregar dados.</p><button onclick="loadAdminTab('${tab}')" class="btn btn-primary btn-sm">Tentar novamente</button></div>`
     }
 }
 
@@ -1835,67 +1497,22 @@ async function loadAdminTab(tab) {
 // DASHBOARD
 // ============================================
 async function loadDashboard(container) {
-    var totalResult = await supabase.from('students').select('*', { count: 'exact', head: true })
-    var approvedResult = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('is_approved', true)
-    var levelsResult = await supabase.from('levels').select('*', { count: 'exact', head: true }).eq('is_active', true)
-    var lessonsResult = await supabase.from('lessons').select('*', { count: 'exact', head: true })
-    
-    var studentsByLevelResult = await supabase
-        .from('students')
-        .select('level_id, level:levels(name)')
-        .eq('is_approved', true)
-    
-    var levelCounts = {}
-    if (studentsByLevelResult.data) {
-        studentsByLevelResult.data.forEach(function(s) {
-            var name = s.level?.name || 'Sem nível'
-            levelCounts[name] = (levelCounts[name] || 0) + 1
-        })
-    }
-    
-    var levelCountsHtml = ''
-    var keys = Object.keys(levelCounts)
-    if (keys.length === 0) {
-        levelCountsHtml = '<p style="color:var(--text-muted);">Nenhum aluno aprovado ainda.</p>'
-    } else {
-        keys.forEach(function(name) {
-            levelCountsHtml += `
-                <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                    <span>${name}</span>
-                    <span style="font-weight:600;color:var(--primary-light);">${levelCounts[name]} alunos</span>
-                </div>
-            `
-        })
-    }
-    
+    const { count: total } = await supabase.from('students').select('*', { count: 'exact', head: true })
+    const { count: approved } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('is_approved', true)
+    const { count: levels } = await supabase.from('levels').select('*', { count: 'exact', head: true }).eq('is_active', true)
+    const { count: lessons } = await supabase.from('lessons').select('*', { count: 'exact', head: true })
+    const { data: byLevel } = await supabase.from('students').select('level_id, level:levels(name)').eq('is_approved', true)
+    const counts = {}
+    byLevel?.forEach(s => { const name = s.level?.name || 'Sem nível'; counts[name] = (counts[name] || 0) + 1 })
     container.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
-            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${totalResult.count || 0}</div>
-                <div style="color:var(--text-muted);font-size:13px;">Total de Alunos</div>
-            </div>
-            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:#2E8B57;">${approvedResult.count || 0}</div>
-                <div style="color:var(--text-muted);font-size:13px;">Aprovados</div>
-            </div>
-            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:#f39c12;">${(totalResult.count || 0) - (approvedResult.count || 0)}</div>
-                <div style="color:var(--text-muted);font-size:13px;">Pendentes</div>
-            </div>
-            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${levelsResult.count || 0}</div>
-                <div style="color:var(--text-muted);font-size:13px;">Níveis</div>
-            </div>
-            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);text-align:center;">
-                <div style="font-size:32px;font-weight:800;color:var(--primary-light);">${lessonsResult.count || 0}</div>
-                <div style="color:var(--text-muted);font-size:13px;">Aulas</div>
-            </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px;">
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;text-align:center;border:1px solid var(--border-color);"><div style="font-size:32px;font-weight:800;color:var(--primary-light);">${total || 0}</div><div style="color:var(--text-muted);font-size:13px;">Total Alunos</div></div>
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;text-align:center;border:1px solid var(--border-color);"><div style="font-size:32px;font-weight:800;color:#2E8B57;">${approved || 0}</div><div style="color:var(--text-muted);font-size:13px;">Aprovados</div></div>
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;text-align:center;border:1px solid var(--border-color);"><div style="font-size:32px;font-weight:800;color:#f39c12;">${(total || 0) - (approved || 0)}</div><div style="color:var(--text-muted);font-size:13px;">Pendentes</div></div>
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;text-align:center;border:1px solid var(--border-color);"><div style="font-size:32px;font-weight:800;color:var(--primary-light);">${levels || 0}</div><div style="color:var(--text-muted);font-size:13px;">Níveis</div></div>
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;text-align:center;border:1px solid var(--border-color);"><div style="font-size:32px;font-weight:800;color:var(--primary-light);">${lessons || 0}</div><div style="color:var(--text-muted);font-size:13px;">Aulas</div></div>
         </div>
-        
-        <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);">
-            <h4 style="margin-bottom:12px;">📊 Alunos por Nível</h4>
-            ${levelCountsHtml}
-        </div>
+        <div style="background:var(--bg-card);border-radius:var(--radius);padding:20px;border:1px solid var(--border-color);"><h4 style="margin-bottom:12px;">📊 Alunos por Nível</h4>${Object.keys(counts).length === 0 ? '<p style="color:var(--text-muted);">Nenhum aluno aprovado.</p>' : Object.entries(counts).map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color);"><span>${k}</span><span style="font-weight:600;color:var(--primary-light);">${v} alunos</span></div>`).join('')}</div>
     `
 }
 
@@ -1903,353 +1520,275 @@ async function loadDashboard(container) {
 // ALUNOS
 // ============================================
 async function loadAlunos(container) {
-    var studentsResult = await supabase
-        .from('students')
-        .select(`
-            *,
-            level:levels (id, name)
-        `)
-        .order('enrolled_at', { ascending: false })
-    
-    if (studentsResult.error) throw studentsResult.error
-    
-    var levelsResult = await supabase
-        .from('levels')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('order')
-    
-    if (!studentsResult.data || studentsResult.data.length === 0) {
-        container.innerHTML = `
-            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
-                <i class="fas fa-users" style="font-size:48px;color:var(--text-muted);"></i>
-                <p style="color:var(--text-secondary);margin-top:12px;">Nenhum aluno cadastrado ainda.</p>
-            </div>
-        `
+    const { data: students } = await supabase.from('students').select('*, level:levels(id, name)').order('enrolled_at', { ascending: false })
+    const { data: levels } = await supabase.from('levels').select('id, name').eq('is_active', true).order('order')
+    if (!students || students.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);"><i class="fas fa-users" style="font-size:48px;color:var(--text-muted);"></i><p style="color:var(--text-secondary);">Nenhum aluno cadastrado.</p></div>`
         return
     }
-    
-    var rowsHtml = ''
-    studentsResult.data.forEach(function(student) {
-        var levelOptions = ''
-        if (levelsResult.data) {
-            levelsResult.data.forEach(function(level) {
-                var selected = student.level_id === level.id ? 'selected' : ''
-                levelOptions += `<option value="${level.id}" ${selected}>${level.name}</option>`
-            })
-        }
-        
-        rowsHtml += `
-            <tr style="border-bottom:1px solid var(--border-color);">
-                <td style="padding:12px 16px;font-weight:600;">${student.full_name || '—'}</td>
-                <td style="padding:12px 16px;color:var(--text-secondary);">${student.email}</td>
-                <td style="padding:12px 16px;">
-                    <span style="padding:4px 12px;border-radius:50px;font-size:12px;font-weight:600;background:${student.is_approved ? 'rgba(46,139,87,0.2)' : 'rgba(243,156,18,0.2)'};color:${student.is_approved ? 'var(--primary-light)' : '#f39c12'};">
-                        ${student.is_approved ? '✅ Aprovado' : '⏳ Pendente'}
-                    </span>
-                </td>
-                <td style="padding:12px 16px;">
-                    ${student.level_id ? 
-                        `<span style="color:var(--primary-light);">${student.level?.name || 'Nível ' + student.level_id}</span>` : 
-                        '<span style="color:var(--text-muted);">Nenhum</span>'
-                    }
-                </td>
-                <td style="padding:12px 16px;">
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <select onchange="adminUpdateStudentLevel('${student.id}', this.value)" style="padding:4px 8px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-size:12px;">
-                            <option value="">— Selecionar —</option>
-                            ${levelOptions}
-                        </select>
-                        <button class="btn btn-sm ${student.is_approved ? 'btn-warning' : 'btn-success'}" 
-                                onclick="adminToggleApproval('${student.id}', ${!student.is_approved})"
-                                style="padding:4px 12px;font-size:12px;">
-                            ${student.is_approved ? '⛔ Bloquear' : '✅ Aprovar'}
-                        </button>
-                        <button class="btn btn-sm btn-danger" 
-                                onclick="adminDeleteStudent('${student.id}')"
-                                style="padding:4px 12px;font-size:12px;">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `
+    let rows = ''
+    students.forEach(s => {
+        const levelOpts = levels?.map(l => `<option value="${l.id}" ${s.level_id === l.id ? 'selected' : ''}>${l.name}</option>`).join('') || ''
+        rows += `<tr style="border-bottom:1px solid var(--border-color);">
+            <td style="padding:12px 16px;font-weight:600;">${s.full_name || '—'}</td>
+            <td style="padding:12px 16px;color:var(--text-secondary);">${s.email}</td>
+            <td style="padding:12px 16px;"><span style="padding:4px 12px;border-radius:50px;font-size:12px;font-weight:600;background:${s.is_approved ? 'rgba(46,139,87,0.2)' : 'rgba(243,156,18,0.2)'};color:${s.is_approved ? 'var(--primary-light)' : '#f39c12'};">${s.is_approved ? '✅ Aprovado' : '⏳ Pendente'}</span></td>
+            <td style="padding:12px 16px;">${s.level_id ? `<span style="color:var(--primary-light);">${s.level?.name || 'Nível ' + s.level_id}</span>` : '<span style="color:var(--text-muted);">Nenhum</span>'}</td>
+            <td style="padding:12px 16px;"><div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <select onchange="adminUpdateStudentLevel('${s.id}', this.value)" style="padding:4px 8px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);font-size:12px;"><option value="">— Selecionar —</option>${levelOpts}</select>
+                <button class="btn btn-sm ${s.is_approved ? 'btn-warning' : 'btn-success'}" onclick="adminToggleApproval('${s.id}', ${!s.is_approved})" style="padding:4px 12px;font-size:12px;">${s.is_approved ? '⛔ Bloquear' : '✅ Aprovar'}</button>
+                <button class="btn btn-sm btn-danger" onclick="adminDeleteStudent('${s.id}')" style="padding:4px 12px;font-size:12px;"><i class="fas fa-trash"></i></button>
+            </div></td>
+        </tr>`
     })
+    container.innerHTML = `<div style="overflow-x:auto;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:var(--bg-secondary);"><th style="padding:12px 16px;text-align:left;font-size:13px;color:var(--text-secondary);">Aluno</th><th style="padding:12px 16px;text-align:left;font-size:13px;color:var(--text-secondary);">Email</th><th style="padding:12px 16px;text-align:left;font-size:13px;color:var(--text-secondary);">Status</th><th style="padding:12px 16px;text-align:left;font-size:13px;color:var(--text-secondary);">Nível</th><th style="padding:12px 16px;text-align:left;font-size:13px;color:var(--text-secondary);">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`
+}
+
+// ============================================
+// ADMIN - NÍVEIS
+// ============================================
+async function loadNiveisAdmin(container) {
+    const { data: levels } = await supabase.from('levels').select('*').order('order')
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h3>📚 Gerenciar Níveis</h3><button class="btn btn-primary btn-sm" onclick="showAddLevelForm()"><i class="fas fa-plus"></i> Adicionar Nível</button></div>`
+    if (!levels || levels.length === 0) {
+        html += `<div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);"><p style="color:var(--text-secondary);">Nenhum nível criado.</p></div>`
+    } else {
+        html += `<div style="display:grid;gap:12px;">`
+        levels.forEach(l => {
+            html += `<div style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div><span style="font-size:24px;">${l.icon || '📚'}</span><strong style="margin-left:8px;">${l.name}</strong><span style="color:var(--text-muted);font-size:13px;margin-left:12px;">${l.description || ''}</span><span style="color:var(--text-muted);font-size:12px;margin-left:12px;">Ordem: ${l.order || 0}</span></div>
+                <div style="display:flex;gap:8px;"><button class="btn btn-sm btn-outline" onclick="showEditLevelForm(${l.id})"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-danger" onclick="adminDeleteLevel(${l.id})"><i class="fas fa-trash"></i></button></div>
+            </div>`
+        })
+        html += `</div>`
+    }
+    container.innerHTML = html
+}
+
+// ============================================
+// ADMIN - AULAS
+// ============================================
+async function loadAulasAdmin(container) {
+    const { data: lessons } = await supabase.from('lessons').select('*, level:levels(id, name)').order('level_id').order('order')
+    const { data: levels } = await supabase.from('levels').select('id, name').eq('is_active', true).order('order')
+    let filterOptions = '<option value="all">Todos os níveis</option>'
+    levels?.forEach(l => filterOptions += `<option value="${l.id}">${l.name}</option>`)
     
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h3>📹 Gerenciar Aulas</h3><button class="btn btn-primary btn-sm" onclick="showAddLessonForm()"><i class="fas fa-plus"></i> Adicionar Aula</button></div>
+        <div style="margin-bottom:16px;"><label style="color:var(--text-secondary);font-size:13px;">Filtrar:</label><select id="lessonFilter" onchange="filterLessons()" style="padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);margin-left:8px;">${filterOptions}</select></div>`
+    
+    if (!lessons || lessons.length === 0) {
+        html += `<div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);"><p style="color:var(--text-secondary);">Nenhuma aula criada.</p></div>`
+    } else {
+        html += `<div id="lessonsList" style="display:grid;gap:12px;">`
+        lessons.forEach(l => {
+            html += `<div class="lesson-item-admin" data-level="${l.level_id}" style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-size:18px;">📖</span><strong>${l.title}</strong><span style="color:var(--text-muted);font-size:13px;background:var(--bg-secondary);padding:2px 10px;border-radius:50px;">${l.level?.name || 'Sem nível'}</span><span style="color:var(--text-muted);font-size:12px;">${l.video_duration || 0} min</span>${!l.video_url ? '<span style="color:#ff6b6b;font-size:12px;">⚠️ Sem vídeo</span>' : ''}</div>
+                <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">${l.description || ''}</div>${l.video_url ? `<div style="color:var(--text-muted);font-size:12px;">🔗 <a href="${l.video_url}" target="_blank" style="color:var(--primary-light);">${l.video_url}</a></div>` : ''}</div>
+                <div style="display:flex;gap:8px;"><button class="btn btn-sm btn-outline" onclick="showEditLessonForm(${l.id})"><i class="fas fa-edit"></i></button><button class="btn btn-sm btn-danger" onclick="adminDeleteLesson(${l.id})"><i class="fas fa-trash"></i></button></div>
+            </div>`
+        })
+        html += `</div>`
+    }
+    container.innerHTML = html
+}
+
+function filterLessons() {
+    const filter = document.getElementById('lessonFilter')?.value
+    document.querySelectorAll('.lesson-item-admin').forEach(el => {
+        el.style.display = (filter === 'all' || el.dataset.level === filter) ? 'flex' : 'none'
+    })
+}
+
+// ============================================
+// ADMIN - AÇÕES NÍVEIS
+// ============================================
+function showAddLevelForm() {
+    const container = document.getElementById('adminTabContent')
     container.innerHTML = `
-        <div style="overflow-x:auto;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
-            <table style="width:100%;border-collapse:collapse;">
-                <thead>
-                    <tr style="background:var(--bg-secondary);">
-                        <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Aluno</th>
-                        <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Email</th>
-                        <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Status</th>
-                        <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Nível</th>
-                        <th style="padding:12px 16px;text-align:left;color:var(--text-secondary);font-weight:600;font-size:13px;">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rowsHtml}
-                </tbody>
-            </table>
+        <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:500px;">
+            <h4 style="margin-bottom:16px;">➕ Adicionar Nível</h4>
+            <form onsubmit="adminCreateLevel(event)">
+                <div class="form-group" style="margin-bottom:12px;"><label>Nome *</label><input type="text" id="levelName" required></div>
+                <div class="form-group" style="margin-bottom:12px;"><label>Descrição</label><input type="text" id="levelDescription"></div>
+                <div class="form-group" style="margin-bottom:12px;"><label>Ícone</label><input type="text" id="levelIcon" value="📚"></div>
+                <div class="form-group" style="margin-bottom:12px;"><label>Ordem</label><input type="number" id="levelOrder" value="1" min="1"></div>
+                <div style="display:flex;gap:8px;"><button type="submit" class="btn btn-primary">Salvar</button><button type="button" class="btn btn-outline" onclick="loadAdminTab('niveis')">Cancelar</button></div>
+            </form>
         </div>
     `
 }
 
+function showEditLevelForm(levelId) {
+    supabase.from('levels').select('*').eq('id', levelId).single().then(({ data: level }) => {
+        const container = document.getElementById('adminTabContent')
+        container.innerHTML = `
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:500px;">
+                <h4 style="margin-bottom:16px;">✏️ Editar Nível</h4>
+                <form onsubmit="adminUpdateLevel(event, ${levelId})">
+                    <div class="form-group" style="margin-bottom:12px;"><label>Nome *</label><input type="text" id="editLevelName" value="${level.name}" required></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Descrição</label><input type="text" id="editLevelDescription" value="${level.description || ''}"></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Ícone</label><input type="text" id="editLevelIcon" value="${level.icon || '📚'}"></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Ordem</label><input type="number" id="editLevelOrder" value="${level.order || 1}" min="1"></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Ativo</label><select id="editLevelActive"><option value="true" ${level.is_active ? 'selected' : ''}>Sim</option><option value="false" ${!level.is_active ? 'selected' : ''}>Não</option></select></div>
+                    <div style="display:flex;gap:8px;"><button type="submit" class="btn btn-primary">Atualizar</button><button type="button" class="btn btn-outline" onclick="loadAdminTab('niveis')">Cancelar</button></div>
+                </form>
+            </div>
+        `
+    })
+}
+
+async function adminCreateLevel(e) {
+    e.preventDefault()
+    const name = document.getElementById('levelName').value.trim()
+    if (!name) { Toast.warning('Campo obrigatório', 'Digite o nome do nível.'); return }
+    try {
+        await supabase.from('levels').insert({ name, description: document.getElementById('levelDescription').value.trim(), icon: document.getElementById('levelIcon').value.trim() || '📚', order: parseInt(document.getElementById('levelOrder').value) || 1, is_active: true })
+        Toast.success('Nível criado!', 'Adicionado com sucesso.')
+        loadAdminTab('niveis')
+    } catch { Toast.error('Erro', 'Não foi possível criar.') }
+}
+
+async function adminUpdateLevel(e, id) {
+    e.preventDefault()
+    const name = document.getElementById('editLevelName').value.trim()
+    if (!name) { Toast.warning('Campo obrigatório', 'Digite o nome do nível.'); return }
+    try {
+        await supabase.from('levels').update({ name, description: document.getElementById('editLevelDescription').value.trim(), icon: document.getElementById('editLevelIcon').value.trim() || '📚', order: parseInt(document.getElementById('editLevelOrder').value) || 1, is_active: document.getElementById('editLevelActive').value === 'true' }).eq('id', id)
+        Toast.success('Nível atualizado!', 'Atualizado com sucesso.')
+        loadAdminTab('niveis')
+    } catch { Toast.error('Erro', 'Não foi possível atualizar.') }
+}
+
+async function adminDeleteLevel(id) {
+    if (!confirm('Excluir este nível? As aulas serão excluídas também.')) return
+    try { await supabase.from('levels').delete().eq('id', id); Toast.success('Nível excluído!', 'Removido com sucesso.'); loadAdminTab('niveis') } catch { Toast.error('Erro', 'Não foi possível excluir.') }
+}
+
 // ============================================
-// ADMIN - ATUALIZAR NÍVEL DO ALUNO
+// ADMIN - AÇÕES AULAS
+// ============================================
+function showAddLessonForm() {
+    supabase.from('levels').select('id, name').eq('is_active', true).order('order').then(({ data: levels }) => {
+        const container = document.getElementById('adminTabContent')
+        container.innerHTML = `
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:600px;">
+                <h4 style="margin-bottom:16px;">➕ Adicionar Aula</h4>
+                <form onsubmit="adminCreateLesson(event)">
+                    <div class="form-group" style="margin-bottom:12px;"><label>Nível *</label><select id="lessonLevelId" required><option value="">— Selecione —</option>${levels?.map(l => `<option value="${l.id}">${l.name}</option>`).join('')}</select></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Título *</label><input type="text" id="lessonTitle" required></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Descrição</label><textarea id="lessonDescription" rows="2"></textarea></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>URL do vídeo</label><input type="url" id="lessonVideoUrl" placeholder="https://www.youtube.com/watch?v=..."></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Duração (min)</label><input type="number" id="lessonDuration" value="15" min="1"></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Ordem</label><input type="number" id="lessonOrder" value="1" min="1"></div>
+                    <div style="display:flex;gap:8px;"><button type="submit" class="btn btn-primary">Salvar</button><button type="button" class="btn btn-outline" onclick="loadAdminTab('aulas')">Cancelar</button></div>
+                </form>
+            </div>
+        `
+    })
+}
+
+function showEditLessonForm(lessonId) {
+    Promise.all([
+        supabase.from('lessons').select('*').eq('id', lessonId).single(),
+        supabase.from('levels').select('id, name').eq('is_active', true).order('order')
+    ]).then(([{ data: lesson }, { data: levels }]) => {
+        const container = document.getElementById('adminTabContent')
+        container.innerHTML = `
+            <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:600px;">
+                <h4 style="margin-bottom:16px;">✏️ Editar Aula</h4>
+                <form onsubmit="adminUpdateLesson(event, ${lessonId})">
+                    <div class="form-group" style="margin-bottom:12px;"><label>Nível *</label><select id="editLessonLevelId" required><option value="">— Selecione —</option>${levels?.map(l => `<option value="${l.id}" ${lesson.level_id === l.id ? 'selected' : ''}>${l.name}</option>`).join('')}</select></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Título *</label><input type="text" id="editLessonTitle" value="${lesson.title}" required></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Descrição</label><textarea id="editLessonDescription" rows="2">${lesson.description || ''}</textarea></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>URL do vídeo</label><input type="url" id="editLessonVideoUrl" value="${lesson.video_url || ''}"></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Duração (min)</label><input type="number" id="editLessonDuration" value="${lesson.video_duration || 15}" min="1"></div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Ordem</label><input type="number" id="editLessonOrder" value="${lesson.order || 1}" min="1"></div>
+                    <div style="display:flex;gap:8px;"><button type="submit" class="btn btn-primary">Atualizar</button><button type="button" class="btn btn-outline" onclick="loadAdminTab('aulas')">Cancelar</button></div>
+                </form>
+            </div>
+        `
+    })
+}
+
+async function adminCreateLesson(e) {
+    e.preventDefault()
+    const level_id = document.getElementById('lessonLevelId').value
+    const title = document.getElementById('lessonTitle').value.trim()
+    if (!level_id || !title) { Toast.warning('Campos obrigatórios', 'Preencha nível e título.'); return }
+    try {
+        await supabase.from('lessons').insert({
+            level_id, title,
+            description: document.getElementById('lessonDescription').value.trim(),
+            video_url: document.getElementById('lessonVideoUrl').value.trim(),
+            video_duration: parseInt(document.getElementById('lessonDuration').value) || 15,
+            order: parseInt(document.getElementById('lessonOrder').value) || 1,
+            is_required: true
+        })
+        Toast.success('Aula criada!', 'Adicionada com sucesso.')
+        loadAdminTab('aulas')
+    } catch { Toast.error('Erro', 'Não foi possível criar.') }
+}
+
+async function adminUpdateLesson(e, id) {
+    e.preventDefault()
+    const level_id = document.getElementById('editLessonLevelId').value
+    const title = document.getElementById('editLessonTitle').value.trim()
+    if (!level_id || !title) { Toast.warning('Campos obrigatórios', 'Preencha nível e título.'); return }
+    try {
+        await supabase.from('lessons').update({
+            level_id, title,
+            description: document.getElementById('editLessonDescription').value.trim(),
+            video_url: document.getElementById('editLessonVideoUrl').value.trim(),
+            video_duration: parseInt(document.getElementById('editLessonDuration').value) || 15,
+            order: parseInt(document.getElementById('editLessonOrder').value) || 1
+        }).eq('id', id)
+        Toast.success('Aula atualizada!', 'Atualizada com sucesso.')
+        loadAdminTab('aulas')
+    } catch { Toast.error('Erro', 'Não foi possível atualizar.') }
+}
+
+async function adminDeleteLesson(id) {
+    if (!confirm('Excluir esta aula?')) return
+    try { await supabase.from('lessons').delete().eq('id', id); Toast.success('Aula excluída!'); loadAdminTab('aulas') } catch { Toast.error('Erro', 'Não foi possível excluir.') }
+}
+
+// ============================================
+// ADMIN - AÇÕES ALUNOS
 // ============================================
 async function adminUpdateStudentLevel(studentId, levelId) {
     if (!isAdmin) return
-    
-    try {
-        var result = await supabase
-            .from('students')
-            .update({ 
-                level_id: levelId || null,
-                is_approved: true
-            })
-            .eq('id', studentId)
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Nível atualizado!', 'O aluno foi atualizado com sucesso.')
-        loadAdminTab('alunos')
-        loadLevels()
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível atualizar o nível do aluno.')
-    }
+    try { await supabase.from('students').update({ level_id: levelId || null, is_approved: true }).eq('id', studentId); Toast.success('Nível atualizado!'); loadAdminTab('alunos'); loadLevels() } catch { Toast.error('Erro', 'Não foi possível atualizar.') }
 }
 
-// ============================================
-// ADMIN - APROVAR/BLOQUEAR ALUNO
-// ============================================
 async function adminToggleApproval(studentId, approve) {
     if (!isAdmin) return
-    
-    try {
-        var result = await supabase
-            .from('students')
-            .update({ 
-                is_approved: approve,
-                approved_at: approve ? new Date().toISOString() : null
-            })
-            .eq('id', studentId)
-        
-        if (result.error) throw result.error
-        
-        Toast.success(approve ? 'Aluno aprovado!' : 'Aluno bloqueado!', 
-                     approve ? 'O aluno agora tem acesso aos conteúdos.' : 'O aluno foi bloqueado.')
-        loadAdminTab('alunos')
-        loadLevels()
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível atualizar o status do aluno.')
-    }
+    try { await supabase.from('students').update({ is_approved: approve, approved_at: approve ? new Date().toISOString() : null }).eq('id', studentId); Toast.success(approve ? 'Aluno aprovado!' : 'Aluno bloqueado!'); loadAdminTab('alunos'); loadLevels() } catch { Toast.error('Erro', 'Não foi possível atualizar.') }
 }
 
-// ============================================
-// ADMIN - EXCLUIR ALUNO
-// ============================================
 async function adminDeleteStudent(studentId) {
-    if (!confirm('Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita.')) {
-        return
-    }
-    
-    try {
-        await supabase.from('progress').delete().eq('student_id', studentId)
-        
-        var result = await supabase
-            .from('students')
-            .delete()
-            .eq('id', studentId)
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Aluno excluído!', 'O aluno foi removido com sucesso.')
-        loadAdminTab('alunos')
-        loadLevels()
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível excluir o aluno.')
-    }
+    if (!confirm('Excluir este aluno?')) return
+    try { await supabase.from('progress').delete().eq('student_id', studentId); await supabase.from('students').delete().eq('id', studentId); Toast.success('Aluno excluído!'); loadAdminTab('alunos'); loadLevels() } catch { Toast.error('Erro', 'Não foi possível excluir.') }
 }
 
 // ============================================
 // REFRESH ADMIN
 // ============================================
 function refreshAdmin() {
-    if (isAdmin) {
-        loadAdminTab(adminCurrentTab)
-        Toast.info('Atualizado!', 'O painel foi atualizado com sucesso.')
-    }
-}
-
-// ============================================
-// ABRIR AULA
-// ============================================
-async function openLesson(lessonId) {
-    if (!currentUser) {
-        Toast.warning('Acesso restrito', 'Faça login para assistir às aulas.')
-        openAuthModal()
-        return
-    }
-    
-    if (!isAdmin && (!studentData || !studentData.is_approved || !studentData.level_id)) {
-        Toast.warning('Sem acesso', 'Sua conta não tem permissão para acessar este conteúdo.')
-        return
-    }
-    
-    try {
-        var result = await supabase
-            .from('lessons')
-            .select('*')
-            .eq('id', lessonId)
-            .single()
-        
-        if (result.error) throw result.error
-        var lesson = result.data
-        
-        if (!isAdmin && studentData && studentData.level_id !== lesson.level_id) {
-            Toast.warning('Nível bloqueado', 'Você não tem acesso a este nível.')
-            return
-        }
-        
-        currentLessonId = lessonId
-        showVideoModal(lesson)
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível carregar a aula. Tente novamente.')
-    }
-}
-
-// ============================================
-// MOSTRAR MODAL DE VÍDEO
-// ============================================
-function showVideoModal(lesson) {
-    if (!videoModal) return
-    
-    var container = document.getElementById('videoContainer')
-    document.getElementById('videoTitle').textContent = lesson.title
-    document.getElementById('videoDescription').textContent = lesson.description || 'Sem descrição disponível.'
-    
-    var videoHtml = ''
-    if (lesson.video_url) {
-        var url = lesson.video_url
-        if (url.includes('youtube.com') || url.includes('youtu.be')) {
-            var videoId = ''
-            if (url.includes('youtu.be')) {
-                videoId = url.split('youtu.be/')[1]?.split('?')[0]
-            } else {
-                videoId = url.split('v=')[1]?.split('&')[0]
-            }
-            videoHtml = '<iframe src="https://www.youtube.com/embed/' + videoId + '" allowfullscreen></iframe>'
-        } else if (url.includes('vimeo.com')) {
-            var videoId = url.split('vimeo.com/')[1]?.split('/')[0]
-            videoHtml = '<iframe src="https://player.vimeo.com/video/' + videoId + '" allowfullscreen></iframe>'
-        } else {
-            videoHtml = '<p style="color:var(--text-secondary);padding:20px;text-align:center;">Link: <a href="' + url + '" target="_blank">' + url + '</a></p>'
-        }
-    } else {
-        videoHtml = `
-            <div style="display:flex;align-items:center;justify-content:center;height:100%;background:var(--bg-primary);padding:40px;">
-                <div style="text-align:center;">
-                    <i class="fas fa-video" style="font-size:48px;color:var(--text-muted);"></i>
-                    <p style="color:var(--text-secondary);margin-top:12px;">Vídeo não disponível</p>
-                </div>
-            </div>
-        `
-    }
-    container.innerHTML = videoHtml
-    
-    checkProgress(lesson.id)
-    videoModal.classList.add('active')
-}
-
-// ============================================
-// VERIFICAR PROGRESSO
-// ============================================
-async function checkProgress(lessonId) {
-    if (!currentUser || !markWatchedBtn || !markCompletedBtn) return
-    
-    var result = await supabase
-        .from('progress')
-        .select('watched, completed')
-        .eq('student_id', currentUser.id)
-        .eq('lesson_id', lessonId)
-        .maybeSingle()
-    
-    var isWatched = result.data?.watched || false
-    var isCompleted = result.data?.completed || false
-    
-    markWatchedBtn.textContent = isWatched ? '✅ Assistida' : '📺 Marcar como assistida'
-    markWatchedBtn.disabled = isWatched
-    
-    markCompletedBtn.textContent = isCompleted ? '✅ Concluída' : '🏁 Marcar como concluída'
-    markCompletedBtn.disabled = isCompleted || !isWatched
-}
-
-// ============================================
-// MARCAR PROGRESSO
-// ============================================
-async function markProgress(action) {
-    if (!currentUser || !currentLessonId) {
-        Toast.warning('Ação não disponível', 'Faça login para marcar seu progresso.')
-        return
-    }
-    
-    var watched = action === 'watched' || action === 'completed'
-    var completed = action === 'completed'
-    var label = completed ? 'concluída' : 'assistida'
-    
-    try {
-        var result = await supabase
-            .from('progress')
-            .upsert({
-                student_id: currentUser.id,
-                lesson_id: currentLessonId,
-                watched: watched,
-                completed: completed,
-                watched_at: watched ? new Date().toISOString() : null
-            }, { onConflict: 'student_id, lesson_id' })
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Aula ' + label + '!', 'Ótimo progresso! Continue assim.')
-        videoModal.classList.remove('active')
-        loadLevels()
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível atualizar seu progresso.')
-    }
+    if (isAdmin) { loadAdminTab(adminCurrentTab); Toast.info('Atualizado!', 'Painel atualizado.') }
 }
 
 // ============================================
 // THEME
 // ============================================
 function setupTheme() {
-    var toggle = document.getElementById('themeToggle')
+    const toggle = document.getElementById('themeToggle')
     if (!toggle) return
-    
-    if (localStorage.getItem('theme') === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light')
-        toggle.querySelector('i').className = 'fas fa-sun'
-    }
-    
+    if (localStorage.getItem('theme') === 'light') { document.documentElement.setAttribute('data-theme', 'light'); toggle.querySelector('i').className = 'fas fa-sun' }
     toggle.addEventListener('click', function() {
-        var current = document.documentElement.getAttribute('data-theme')
-        if (current === 'light') {
-            document.documentElement.removeAttribute('data-theme')
-            this.querySelector('i').className = 'fas fa-moon'
-            localStorage.setItem('theme', 'dark')
-            Toast.info('Tema alterado', 'Modo escuro ativado.')
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light')
-            this.querySelector('i').className = 'fas fa-sun'
-            localStorage.setItem('theme', 'light')
-            Toast.info('Tema alterado', 'Modo claro ativado.')
-        }
+        const current = document.documentElement.getAttribute('data-theme')
+        if (current === 'light') { document.documentElement.removeAttribute('data-theme'); this.querySelector('i').className = 'fas fa-moon'; localStorage.setItem('theme', 'dark') }
+        else { document.documentElement.setAttribute('data-theme', 'light'); this.querySelector('i').className = 'fas fa-sun'; localStorage.setItem('theme', 'light') }
     })
 }
 
@@ -2257,143 +1796,42 @@ function setupTheme() {
 // MOBILE MENU
 // ============================================
 function setupMobileMenu() {
-    var hamburger = document.getElementById('hamburger')
-    var navLinks = document.getElementById('navLinks')
+    const hamburger = document.getElementById('hamburger')
+    const navLinks = document.getElementById('navLinks')
     if (!hamburger || !navLinks) return
-    
-    hamburger.addEventListener('click', function() {
-        this.classList.toggle('active')
-        navLinks.classList.toggle('open')
-    })
+    hamburger.addEventListener('click', function() { this.classList.toggle('active'); navLinks.classList.toggle('open') })
 }
 
 // ============================================
 // INICIALIZAR EVENTOS
 // ============================================
 function initEvents() {
-    console.log('🔧 Inicializando eventos...')
-    
-    if (authBtn) {
-        authBtn.addEventListener('click', function(e) {
-            console.log('🖱️ Clique no botão Entrar')
-            openAuthModal()
-        })
-        console.log('✅ Botão Entrar configurado')
-    }
-    
-    if (ctaBtn) {
-        ctaBtn.addEventListener('click', function() {
-            if (currentUser) {
-                document.getElementById('niveis').scrollIntoView({ behavior: 'smooth' })
-            } else {
-                openAuthModal()
-            }
-        })
-        console.log('✅ Botão Começar Agora configurado')
-    }
-    
-    if (modalClose) {
-        modalClose.addEventListener('click', function() {
-            authModal.classList.remove('active')
-        })
-        console.log('✅ Fechar modal configurado')
-    }
-    
-    if (authModal) {
-        authModal.addEventListener('click', function(e) {
-            if (e.target === authModal) {
-                authModal.classList.remove('active')
-            }
-        })
-    }
-    
-    if (switchToRegister) {
-        switchToRegister.addEventListener('click', function(e) {
-            e.preventDefault()
-            if (loginForm) loginForm.classList.remove('active')
-            if (registerForm) registerForm.classList.add('active')
-            if (modalSubtitle) modalSubtitle.textContent = 'Crie sua conta na Edu Mais'
-        })
-        console.log('✅ Switch registro configurado')
-    }
-    
-    if (switchToLogin) {
-        switchToLogin.addEventListener('click', function(e) {
-            e.preventDefault()
-            if (registerForm) registerForm.classList.remove('active')
-            if (loginForm) loginForm.classList.add('active')
-            if (modalSubtitle) modalSubtitle.textContent = 'Entre na sua conta para continuar'
-        })
-        console.log('✅ Switch login configurado')
-    }
-    
-    if (loginForm) {
-        loginForm.addEventListener('submit', handleLogin)
-        console.log('✅ Form login configurado')
-    }
-    
-    if (registerForm) {
-        registerForm.addEventListener('submit', handleRegister)
-        console.log('✅ Form registro configurado')
-    }
-    
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout)
-        console.log('✅ Logout configurado')
-    }
-    
-    if (videoClose) {
-        videoClose.addEventListener('click', function() {
-            videoModal.classList.remove('active')
-            loadLevels()
-        })
-    }
-    
-    if (videoModal) {
-        videoModal.addEventListener('click', function(e) {
-            if (e.target === videoModal) {
-                videoModal.classList.remove('active')
-                loadLevels()
-            }
-        })
-    }
-    
-    if (markWatchedBtn) {
-        markWatchedBtn.addEventListener('click', function() {
-            markProgress('watched')
-        })
-    }
-    
-    if (markCompletedBtn) {
-        markCompletedBtn.addEventListener('click', function() {
-            markProgress('completed')
-        })
-    }
-    
-    if (navAdmin) {
-        navAdmin.addEventListener('click', function(e) {
-            e.preventDefault()
-            if (isAdmin) loadAdminPanel()
-        })
-    }
-    
-    setupMobileMenu()
-    setupTheme()
-    
-    console.log('✅ Todos os eventos configurados!')
+    if (authBtn) authBtn.addEventListener('click', openAuthModal)
+    if (ctaBtn) ctaBtn.addEventListener('click', function() { currentUser ? document.getElementById('niveis').scrollIntoView({ behavior: 'smooth' }) : openAuthModal() })
+    if (modalClose) modalClose.addEventListener('click', () => authModal.classList.remove('active'))
+    if (authModal) authModal.addEventListener('click', (e) => { if (e.target === authModal) authModal.classList.remove('active') })
+    if (switchToRegister) switchToRegister.addEventListener('click', (e) => { e.preventDefault(); loginForm.classList.remove('active'); registerForm.classList.add('active'); modalSubtitle.textContent = 'Crie sua conta' })
+    if (switchToLogin) switchToLogin.addEventListener('click', (e) => { e.preventDefault(); registerForm.classList.remove('active'); loginForm.classList.add('active'); modalSubtitle.textContent = 'Entre na sua conta' })
+    if (loginForm) loginForm.addEventListener('submit', handleLogin)
+    if (registerForm) registerForm.addEventListener('submit', handleRegister)
+    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout)
+    if (videoClose) videoClose.addEventListener('click', () => { videoModal.classList.remove('active'); loadLevels() })
+    if (videoModal) videoModal.addEventListener('click', (e) => { if (e.target === videoModal) { videoModal.classList.remove('active'); loadLevels() } })
+    if (markWatchedBtn) markWatchedBtn.addEventListener('click', () => markProgress('watched'))
+    if (markCompletedBtn) markCompletedBtn.addEventListener('click', () => markProgress('completed'))
+    if (navAdmin) navAdmin.addEventListener('click', (e) => { e.preventDefault(); if (isAdmin) loadAdminPanel() })
+    setupMobileMenu(); setupTheme()
 }
 
 // ============================================
 // INICIALIZAR
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Edu Mais - Inicializando...')
-    
+    console.log('🚀 Inicializando Edu Mais...')
     initElements()
     initEvents()
     checkSession()
-    
-    console.log('✅ Edu Mais - Pronto para uso!')
+    console.log('✅ Pronto para uso!')
 })
 
 // ============================================
@@ -2405,11 +1843,24 @@ window.refreshAdmin = refreshAdmin
 window.adminUpdateStudentLevel = adminUpdateStudentLevel
 window.adminToggleApproval = adminToggleApproval
 window.adminDeleteStudent = adminDeleteStudent
+window.adminDeleteLevel = adminDeleteLevel
+window.adminDeleteLesson = adminDeleteLesson
 window.openLesson = openLesson
 window.openAuthModal = openAuthModal
-window.isAdmin = function() { return isAdmin }
-
-console.log('✅ Todas as funções exportadas!')
+window.switchAdminTab = switchAdminTab
+window.loadAdminTab = loadAdminTab
+window.showAddLevelForm = showAddLevelForm
+window.showEditLevelForm = showEditLevelForm
+window.showAddLessonForm = showAddLessonForm
+window.showEditLessonForm = showEditLessonForm
+window.adminCreateLevel = adminCreateLevel
+window.adminUpdateLevel = adminUpdateLevel
+window.adminCreateLesson = adminCreateLesson
+window.adminUpdateLesson = adminUpdateLesson
+window.filterLessons = filterLessons
+window.isAdmin = () => isAdmin
+window.getCurrentUser = () => currentUser
+window.handleLogout = handleLogout
 </script>
 </body>
 </html>

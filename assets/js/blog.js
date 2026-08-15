@@ -1,17 +1,38 @@
 // ============================================
-// CONFIGURAÇÃO SUPABASE
+// CONFIGURAÇÃO SUPABASE (BLOG)
 // ============================================
 const SUPABASE_URL = 'https://gslhfgaoqkcrhyfnmmxt.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
 
 const supabaseBlog = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+console.log('📝 Blog.js carregado')
+
+// ============================================
+// ESTADO DO BLOG
+// ============================================
+let allPosts = []
+let currentCategory = 'all'
+let searchTerm = ''
+let currentUserBlog = null
+let isAdminBlog = false
+
 // ============================================
 // TOAST PARA O BLOG
 // ============================================
 const ToastBlog = {
-    container: document.getElementById('toastContainer'),
+    container: null,
+    init: function() {
+        this.container = document.getElementById('toastContainer')
+        if (!this.container) {
+            this.container = document.createElement('div')
+            this.container.className = 'toast-container'
+            this.container.id = 'toastContainer'
+            document.body.appendChild(this.container)
+        }
+    },
     show: function(title, message, type, duration) {
+        this.init()
         const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' }
         const toast = document.createElement('div')
         toast.className = 'toast ' + (type || 'info')
@@ -31,7 +52,7 @@ const ToastBlog = {
             toast.classList.add('hiding')
             setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast) }, 400)
         }, duration || 4000)
-        ToastBlog.container.appendChild(toast)
+        this.container.appendChild(toast)
         return toast
     },
     success: function(title, msg, d) { return this.show(title, msg, 'success', d || 4000) },
@@ -41,32 +62,31 @@ const ToastBlog = {
 }
 
 // ============================================
-// ESTADO
-// ============================================
-var allPosts = []
-var currentCategory = 'all'
-var searchTerm = ''
-var currentUserBlog = null
-var isAdminBlog = false
-
-// ============================================
 // VERIFICAR SESSÃO
 // ============================================
 async function checkBlogSession() {
-    var sessionResult = await supabaseBlog.auth.getSession()
-    if (sessionResult.data.session) {
-        currentUserBlog = sessionResult.data.session.user
-        var adminResult = await supabaseBlog.from('admins').select('id').eq('id', currentUserBlog.id).maybeSingle()
-        isAdminBlog = !!adminResult.data
-        console.log('Admin check:', isAdminBlog)
+    try {
+        const { data: { session } } = await supabaseBlog.auth.getSession()
+        if (session) {
+            currentUserBlog = session.user
+            const { data } = await supabaseBlog.from('admins').select('id').eq('id', currentUserBlog.id).maybeSingle()
+            isAdminBlog = !!data
+            console.log('✅ Usuário logado no blog:', currentUserBlog.email, 'Admin:', isAdminBlog)
+        } else {
+            currentUserBlog = null
+            isAdminBlog = false
+            console.log('👤 Nenhum usuário logado no blog')
+        }
+        updateBlogButtons()
+    } catch (error) {
+        console.error('Erro ao verificar sessão:', error)
     }
-    updateBlogButtons()
 }
 
 function updateBlogButtons() {
-    var authBtn = document.getElementById('authBtnBlog')
-    var logoutBtn = document.getElementById('logoutBtnBlog')
-    var newPostBtn = document.getElementById('newPostBtn')
+    const authBtn = document.getElementById('authBtnBlog')
+    const logoutBtn = document.getElementById('logoutBtnBlog')
+    const newPostBtn = document.getElementById('newPostBtn')
     
     if (currentUserBlog) {
         if (authBtn) authBtn.style.display = 'none'
@@ -82,108 +102,144 @@ function updateBlogButtons() {
 }
 
 // ============================================
-// CARREGAR POST INDIVIDUAL (COM VISUALIZAÇÕES)
+// CARREGAR POSTS
 // ============================================
-async function loadPost() {
-    var container = document.getElementById('postContent')
-    if (!container) return
-    
-    var params = new URLSearchParams(window.location.search)
-    var slug = params.get('slug')
-    
-    if (!slug) {
-        container.innerHTML = '<div class="blog-empty"><i class="fas fa-exclamation-circle"></i><h3>Publicação não encontrada</h3><p>O artigo que você procura não existe.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
+async function loadPosts() {
+    const container = document.getElementById('postsContainer')
+    if (!container) {
+        console.error('❌ postsContainer não encontrado')
         return
     }
     
-    container.innerHTML = '<div class="blog-loading"><i class="fas fa-spinner fa-spin"></i><p style="color:var(--blog-text-muted);margin-top:12px;">Carregando artigo...</p></div>'
+    container.innerHTML = '<div class="blog-loading"><i class="fas fa-spinner fa-spin"></i><p style="color:var(--blog-text-muted);margin-top:12px;">Carregando publicações...</p></div>'
     
     try {
-        // 1. Buscar o post
-        var result = await supabaseBlog.from('posts').select('*').eq('slug', slug).single()
-        if (result.error) throw result.error
-        var post = result.data
+        console.log('📝 Carregando posts...')
+        let query = supabaseBlog
+            .from('posts')
+            .select('*')
+            .order('published_at', { ascending: false })
         
-        // 2. Verificar se está publicado (ou se é admin)
-        if (!post.is_published && !isAdminBlog) {
-            container.innerHTML = '<div class="blog-empty"><i class="fas fa-lock"></i><h3>Publicação não disponível</h3><p>Este artigo não está publicado.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
-            return
+        if (!isAdminBlog) {
+            query = query.eq('is_published', true)
         }
         
-        // 3. ⭐ INCREMENTAR VISUALIZAÇÕES (COM VERIFICAÇÃO)
-        try {
-            const viewsResult = await supabaseBlog
-                .from('posts')
-                .update({ views: (post.views || 0) + 1 })
-                .eq('id', post.id)
-            
-            if (viewsResult.error) {
-                console.error('Erro ao atualizar views:', viewsResult.error)
-            } else {
-                console.log('✅ Visualização contada:', post.views + 1)
-            }
-        } catch (viewsError) {
-            console.error('Erro ao incrementar views:', viewsError)
+        const { data, error } = await query
+        
+        if (error) {
+            console.error('❌ Erro ao buscar posts:', error)
+            throw error
         }
         
-        // 4. Renderizar o post (com as views atualizadas)
-        renderPost(post)
+        allPosts = data || []
+        console.log('✅ Posts carregados:', allPosts.length)
+        
+        renderPosts(allPosts)
+        loadCategories(allPosts)
         
     } catch (error) {
-        console.error('Erro ao carregar post:', error)
-        container.innerHTML = '<div class="blog-empty"><i class="fas fa-exclamation-triangle"></i><h3>Erro ao carregar</h3><p>Não foi possível carregar este artigo.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
+        console.error('❌ Erro ao carregar posts:', error)
+        container.innerHTML = `
+            <div class="blog-empty">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Erro ao carregar</h3>
+                <p>Não foi possível carregar as publicações.</p>
+                <button onclick="loadPosts()" class="btn btn-primary btn-sm" style="margin-top:12px;">
+                    <i class="fas fa-sync"></i> Recarregar
+                </button>
+            </div>
+        `
     }
 }
 
 // ============================================
-// RENDERIZAR POST INDIVIDUAL (COM VIEWS)
+// RENDERIZAR POSTS
 // ============================================
-function renderPost(post) {
-    var container = document.getElementById('postContent')
+function renderPosts(posts) {
+    const container = document.getElementById('postsContainer')
     if (!container) return
     
-    var imageHtml = post.featured_image ? '<img src="' + post.featured_image + '" alt="' + post.title + '" class="article-featured-image">' : ''
-    var adminHtml = ''
-    if (isAdminBlog) {
-        adminHtml = '<div class="admin-actions"><a href="/Edu-Mais/blog-admin.html?edit=' + post.id + '" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Editar</a><button class="btn btn-danger btn-sm" onclick="deletePost(' + post.id + ')"><i class="fas fa-trash"></i> Excluir</button></div>'
+    let filtered = posts.slice()
+    
+    if (currentCategory !== 'all') {
+        filtered = filtered.filter(function(p) { return p.category === currentCategory })
     }
     
-    container.innerHTML = `
-        <article class="post-article">
-            <div class="article-header">
-                <a href="/Edu-Mais/blog.html" class="back-link"><i class="fas fa-arrow-left"></i> Voltar para o blog</a>
-                <h1>${post.title}</h1>
-                <div class="article-meta">
-                    <span><i class="far fa-calendar-alt"></i> ${formatDateBlog(post.published_at)}</span>
-                    <span><i class="far fa-user"></i> ${post.author_name || 'Admin'}</span>
-                    <span><i class="far fa-folder"></i> ${post.category || 'Geral'}</span>
-                    <span><i class="far fa-eye"></i> ${post.views || 0} visualizações</span>
-                    ${!post.is_published && isAdminBlog ? '<span style="color:#f39c12;">📝 Rascunho</span>' : ''}
+    if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase().trim()
+        filtered = filtered.filter(function(p) {
+            return p.title.toLowerCase().includes(term) || 
+                   p.content.toLowerCase().includes(term) || 
+                   (p.excerpt && p.excerpt.toLowerCase().includes(term))
+        })
+    }
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="blog-empty">
+                <i class="fas fa-search"></i>
+                <h3>Nenhum resultado</h3>
+                <p>Tente ajustar seus filtros.</p>
+                <button onclick="resetFilters()" class="btn btn-outline btn-sm" style="margin-top:12px;">
+                    <i class="fas fa-undo"></i> Limpar filtros
+                </button>
+            </div>
+        `
+        return
+    }
+    
+    let html = '<div class="posts-grid">'
+    filtered.forEach(function(post) {
+        const imageHtml = post.featured_image ? 
+            '<img src="' + post.featured_image + '" alt="' + post.title + '" loading="lazy">' : 
+            '<span class="no-image"><i class="fas fa-file-alt"></i></span>'
+        
+        html += `
+            <div class="post-card" onclick="window.location.href='/Edu-Mais/post.html?slug=${post.slug}'">
+                <div class="post-image">${imageHtml}</div>
+                <div class="post-content">
+                    <div>
+                        <div class="post-meta">
+                            <span class="category">${post.category || 'Geral'}</span>
+                            <span class="date"><i class="far fa-calendar-alt"></i> ${formatDateBlog(post.published_at)}</span>
+                            ${!post.is_published && isAdminBlog ? '<span style="color:#f39c12;">📝 Rascunho</span>' : ''}
+                        </div>
+                        <h3 class="post-title"><a href="/Edu-Mais/post.html?slug=${post.slug}">${post.title}</a></h3>
+                        <p class="post-excerpt">${post.excerpt || post.content.substring(0, 160) + '...'}</p>
+                    </div>
+                    <div class="post-footer">
+                        <span class="author">
+                            <span class="avatar">${post.author_name ? post.author_name.charAt(0).toUpperCase() : 'A'}</span>
+                            ${post.author_name || 'Admin'}
+                        </span>
+                        <span><i class="far fa-eye"></i> ${post.views || 0}</span>
+                    </div>
                 </div>
             </div>
-            ${imageHtml}
-            <div class="article-content">${post.content}</div>
-            ${adminHtml}
-        </article>
-    `
+        `
+    })
+    html += '</div>'
+    container.innerHTML = html
 }
 
 // ============================================
 // CARREGAR CATEGORIAS
 // ============================================
 function loadCategories(posts) {
-    var filter = document.getElementById('categoryFilter')
+    const filter = document.getElementById('categoryFilter')
     if (!filter) return
-    var categories = ['all']
+    
+    const categories = ['all']
     posts.forEach(function(p) {
         if (p.category && categories.indexOf(p.category) === -1) {
             categories.push(p.category)
         }
     })
-    var html = ''
+    
+    let html = ''
     categories.forEach(function(cat) {
-        var label = cat === 'all' ? 'Todas as categorias' : cat
-        var selected = cat === currentCategory ? 'selected' : ''
+        const label = cat === 'all' ? 'Todas as categorias' : cat
+        const selected = cat === currentCategory ? 'selected' : ''
         html += '<option value="' + cat + '" ' + selected + '>' + label + '</option>'
     })
     filter.innerHTML = html
@@ -193,16 +249,16 @@ function loadCategories(posts) {
 // FILTRAR
 // ============================================
 function filterPosts() {
-    var filter = document.getElementById('categoryFilter')
-    var search = document.getElementById('searchInput')
+    const filter = document.getElementById('categoryFilter')
+    const search = document.getElementById('searchInput')
     currentCategory = filter ? filter.value : 'all'
     searchTerm = search ? search.value : ''
     renderPosts(allPosts)
 }
 
 function resetFilters() {
-    var filter = document.getElementById('categoryFilter')
-    var search = document.getElementById('searchInput')
+    const filter = document.getElementById('categoryFilter')
+    const search = document.getElementById('searchInput')
     if (filter) filter.value = 'all'
     if (search) search.value = ''
     currentCategory = 'all'
@@ -215,43 +271,97 @@ function resetFilters() {
 // ============================================
 function formatDateBlog(dateString) {
     if (!dateString) return 'Data não disponível'
-    var d = new Date(dateString)
-    return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+    try {
+        const d = new Date(dateString)
+        return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+    } catch {
+        return 'Data inválida'
+    }
 }
 
 // ============================================
 // CARREGAR POST INDIVIDUAL
 // ============================================
 async function loadPost() {
-    var container = document.getElementById('postContent')
-    if (!container) return
+    const container = document.getElementById('postContent')
+    if (!container) {
+        console.error('❌ postContent não encontrado')
+        return
+    }
     
-    var params = new URLSearchParams(window.location.search)
-    var slug = params.get('slug')
+    const params = new URLSearchParams(window.location.search)
+    const slug = params.get('slug')
     
     if (!slug) {
-        container.innerHTML = '<div class="blog-empty"><i class="fas fa-exclamation-circle"></i><h3>Publicação não encontrada</h3><p>O artigo que você procura não existe.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
+        container.innerHTML = `
+            <div class="blog-empty">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Publicação não encontrada</h3>
+                <p>O artigo que você procura não existe.</p>
+                <a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;">
+                    <i class="fas fa-arrow-left"></i> Voltar ao blog
+                </a>
+            </div>
+        `
         return
     }
     
     container.innerHTML = '<div class="blog-loading"><i class="fas fa-spinner fa-spin"></i><p style="color:var(--blog-text-muted);margin-top:12px;">Carregando artigo...</p></div>'
     
     try {
-        var result = await supabaseBlog.from('posts').select('*').eq('slug', slug).single()
-        if (result.error) throw result.error
-        var post = result.data
+        console.log('📝 Carregando post:', slug)
+        const { data: post, error } = await supabaseBlog.from('posts').select('*').eq('slug', slug).single()
+        
+        if (error) {
+            console.error('❌ Erro ao buscar post:', error)
+            throw error
+        }
+        
+        if (!post) {
+            throw new Error('Post não encontrado')
+        }
         
         if (!post.is_published && !isAdminBlog) {
-            container.innerHTML = '<div class="blog-empty"><i class="fas fa-lock"></i><h3>Publicação não disponível</h3><p>Este artigo não está publicado.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
+            container.innerHTML = `
+                <div class="blog-empty">
+                    <i class="fas fa-lock"></i>
+                    <h3>Publicação não disponível</h3>
+                    <p>Este artigo não está publicado.</p>
+                    <a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;">
+                        <i class="fas fa-arrow-left"></i> Voltar ao blog
+                    </a>
+                </div>
+            `
             return
         }
         
-        await supabaseBlog.from('posts').update({ views: (post.views || 0) + 1 }).eq('id', post.id)
+        // ⭐ Incrementar visualizações
+        try {
+            const newViews = (post.views || 0) + 1
+            await supabaseBlog
+                .from('posts')
+                .update({ views: newViews })
+                .eq('id', post.id)
+            post.views = newViews
+            console.log('✅ Visualizações atualizadas:', newViews)
+        } catch (viewError) {
+            console.warn('⚠️ Não foi possível atualizar views:', viewError)
+        }
+        
         renderPost(post)
         
     } catch (error) {
-        console.error('Erro:', error)
-        container.innerHTML = '<div class="blog-empty"><i class="fas fa-exclamation-triangle"></i><h3>Erro ao carregar</h3><p>Não foi possível carregar este artigo.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
+        console.error('❌ Erro ao carregar post:', error)
+        container.innerHTML = `
+            <div class="blog-empty">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Erro ao carregar</h3>
+                <p>Não foi possível carregar este artigo.</p>
+                <a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;">
+                    <i class="fas fa-arrow-left"></i> Voltar ao blog
+                </a>
+            </div>
+        `
     }
 }
 
@@ -259,19 +369,30 @@ async function loadPost() {
 // RENDERIZAR POST INDIVIDUAL
 // ============================================
 function renderPost(post) {
-    var container = document.getElementById('postContent')
+    const container = document.getElementById('postContent')
     if (!container) return
     
-    var imageHtml = post.featured_image ? '<img src="' + post.featured_image + '" alt="' + post.title + '" class="article-featured-image">' : ''
-    var adminHtml = ''
-    if (isAdminBlog) {
-        adminHtml = '<div class="admin-actions"><a href="/Edu-Mais/blog-admin.html?edit=' + post.id + '" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Editar</a><button class="btn btn-danger btn-sm" onclick="deletePost(' + post.id + ')"><i class="fas fa-trash"></i> Excluir</button></div>'
-    }
+    const imageHtml = post.featured_image ? 
+        '<img src="' + post.featured_image + '" alt="' + post.title + '" class="article-featured-image">' : 
+        ''
+    
+    const adminHtml = isAdminBlog ? `
+        <div class="admin-actions">
+            <a href="/Edu-Mais/blog-admin.html?edit=${post.id}" class="btn btn-primary btn-sm">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <button class="btn btn-danger btn-sm" onclick="deletePost(${post.id})">
+                <i class="fas fa-trash"></i> Excluir
+            </button>
+        </div>
+    ` : ''
     
     container.innerHTML = `
         <article class="post-article">
             <div class="article-header">
-                <a href="/Edu-Mais/blog.html" class="back-link"><i class="fas fa-arrow-left"></i> Voltar para o blog</a>
+                <a href="/Edu-Mais/blog.html" class="back-link">
+                    <i class="fas fa-arrow-left"></i> Voltar para o blog
+                </a>
                 <h1>${post.title}</h1>
                 <div class="article-meta">
                     <span><i class="far fa-calendar-alt"></i> ${formatDateBlog(post.published_at)}</span>
@@ -289,44 +410,48 @@ function renderPost(post) {
 }
 
 // ============================================
-// ADMIN - CRIAR/EDITAR POST (VERSÃO CORRIGIDA)
+// ADMIN - SALVAR POST
 // ============================================
 async function savePost(event) {
     event.preventDefault()
     
-    var id = document.getElementById('postId') ? document.getElementById('postId').value : null
-    var title = document.getElementById('postTitle').value.trim()
-    var content = document.getElementById('postContent').value.trim()
-    var excerpt = document.getElementById('postExcerpt').value.trim()
-    var category = document.getElementById('postCategory').value.trim() || 'Geral'
-    var featured_image = document.getElementById('postImage').value.trim()
-    var is_published = document.getElementById('postPublished').value === 'true'
+    const id = document.getElementById('postId') ? document.getElementById('postId').value : null
+    const title = document.getElementById('postTitle').value.trim()
+    const content = document.getElementById('postContent').value.trim()
+    const excerpt = document.getElementById('postExcerpt').value.trim()
+    const category = document.getElementById('postCategory').value.trim() || 'Geral'
+    const featured_image = document.getElementById('postImage').value.trim()
+    const is_published = document.getElementById('postPublished').value === 'true'
     
     if (!title || !content) {
         ToastBlog.warning('Campos obrigatórios', 'Preencha o título e o conteúdo.')
         return
     }
     
-    var slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    const slug = title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
     
     try {
-        // ⭐ VERIFICAR ADMIN DIRETO NO SUPABASE
-        var sessionResult = await supabaseBlog.auth.getSession()
+        // Verificar se é admin
+        const sessionResult = await supabaseBlog.auth.getSession()
         if (!sessionResult.data.session) {
             ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
             return
         }
         
-        var user = sessionResult.data.session.user
-        var adminResult = await supabaseBlog.from('admins').select('id').eq('id', user.id).maybeSingle()
+        const user = sessionResult.data.session.user
+        const adminResult = await supabaseBlog.from('admins').select('id').eq('id', user.id).maybeSingle()
         
         if (!adminResult.data) {
             ToastBlog.error('Acesso negado', 'Apenas administradores podem publicar.')
             return
         }
         
-        // ⭐ ADMIN VERIFICADO!
-        var postData = {
+        const postData = {
             title: title,
             slug: slug,
             content: content,
@@ -339,7 +464,7 @@ async function savePost(event) {
             updated_at: new Date().toISOString()
         }
         
-        var result
+        let result
         if (id) {
             result = await supabaseBlog.from('posts').update(postData).eq('id', id)
         } else {
@@ -370,6 +495,7 @@ async function deletePost(postId) {
         ToastBlog.success('Publicação excluída!', 'O artigo foi removido.')
         window.location.href = '/Edu-Mais/blog.html'
     } catch (error) {
+        console.error('Erro ao excluir:', error)
         ToastBlog.error('Erro', 'Não foi possível excluir.')
     }
 }
@@ -378,14 +504,13 @@ async function deletePost(postId) {
 // CARREGAR POST PARA EDIÇÃO
 // ============================================
 async function loadPostForEdit() {
-    var params = new URLSearchParams(window.location.search)
-    var editId = params.get('edit')
+    const params = new URLSearchParams(window.location.search)
+    const editId = params.get('edit')
     if (!editId) return
     
     try {
-        var result = await supabaseBlog.from('posts').select('*').eq('id', editId).single()
-        if (result.error) throw result.error
-        var post = result.data
+        const { data: post, error } = await supabaseBlog.from('posts').select('*').eq('id', editId).single()
+        if (error) throw error
         
         document.getElementById('postId').value = post.id
         document.getElementById('postTitle').value = post.title
@@ -397,8 +522,24 @@ async function loadPostForEdit() {
         document.getElementById('formTitle').textContent = '✏️ Editar Publicação'
         document.getElementById('submitBtn').textContent = 'Atualizar Publicação'
         
+        console.log('✅ Post carregado para edição:', post.title)
+        
     } catch (error) {
-        console.error('Erro ao carregar post:', error)
+        console.error('Erro ao carregar post para edição:', error)
         ToastBlog.error('Erro', 'Não foi possível carregar a publicação.')
     }
 }
+
+// ============================================
+// EXPOR FUNÇÕES GLOBAIS
+// ============================================
+window.loadPosts = loadPosts
+window.loadPost = loadPost
+window.filterPosts = filterPosts
+window.resetFilters = resetFilters
+window.savePost = savePost
+window.deletePost = deletePost
+window.loadPostForEdit = loadPostForEdit
+window.checkBlogSession = checkBlogSession
+
+console.log('✅ Blog.js carregado com sucesso!')

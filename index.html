@@ -1257,127 +1257,87 @@ async function handleLogin(e) {
 }
 
 // ============================================
-// REGISTRO
+// REGISTRO (SEM CONFIRMAÇÃO DE EMAIL)
 // ============================================
 async function handleRegister(e) {
     e.preventDefault()
+    
     const fullName = document.getElementById('registerName').value.trim()
     const email = document.getElementById('registerEmail').value.trim()
     const phone = document.getElementById('registerPhone').value.trim()
     const password = document.getElementById('registerPassword').value
-    if (!fullName || !email || !password) { Toast.warning('Campos incompletos', 'Preencha todos os campos.'); return }
-    if (password.length < 6) { Toast.warning('Senha fraca', 'Mínimo 6 caracteres.'); return }
-    if (!email.includes('@') || !email.includes('.')) { Toast.warning('Email inválido', 'Insira um email válido.'); return }
-    try {
-        const { data, error } = await supabase.auth.signUp({
-            email, password,
-            options: { data: { full_name: fullName, phone: phone || null } }
-        })
-        if (error) {
-            if (error.message.includes('already registered')) { Toast.error('Email já cadastrado', 'Faça login.'); return }
-            if (error.message.includes('rate limit')) { Toast.warning('Muitas tentativas', 'Aguarde 15 minutos.'); return }
-            throw error
-        }
-        if (!data.user) throw new Error('Usuário não criado')
-        await new Promise(r => setTimeout(r, 1500))
-        await supabase.from('students').insert({
-            id: data.user.id, email, full_name: fullName, phone: phone || null,
-            is_active: true, is_approved: false, enrolled_at: new Date().toISOString()
-        })
-        Toast.success('Conta criada! 📧', 'Confirme seu email para ativar a conta.')
-        registerForm.reset()
-        if (switchToLogin) switchToLogin.click()
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível criar a conta.')
+    
+    if (!fullName || !email || !password) {
+        Toast.warning('Campos incompletos', 'Preencha todos os campos obrigatórios.')
+        return
     }
-}
-
-// ============================================
-// LOGOUT
-// ============================================
-async function handleLogout() {
-    try {
-        await supabase.auth.signOut()
-        currentUser = null
-        studentData = null
-        isAdmin = false
-        if (authBtn) authBtn.style.display = 'inline-flex'
-        if (logoutBtn) logoutBtn.style.display = 'none'
-        if (navAdmin) navAdmin.style.display = 'none'
-        if (adminPanel) adminPanel.classList.remove('active')
-        loadLevels()
-        Toast.info('Até logo!', 'Você saiu da sua conta.')
-    } catch (error) { Toast.error('Erro', 'Não foi possível sair.') }
-}
-
-// ============================================
-// EXPOR FUNÇÕES PARA O BLOG
-// ============================================
-window.getCurrentUser = () => currentUser
-window.isAdmin = () => isAdmin
-window.handleLogout = handleLogout
-window.openAuthModal = openAuthModal
-window.checkAdminStatus = checkAdminStatus
-
-// ============================================
-// CARREGAR NÍVEIS (COM ACESSO MÚLTIPLO)
-// ============================================
-async function loadLevels() {
-    if (!levelsContainer) return
+    
+    if (password.length < 6) {
+        Toast.warning('Senha fraca', 'A senha deve ter pelo menos 6 caracteres.')
+        return
+    }
+    
+    if (!email.includes('@') || !email.includes('.')) {
+        Toast.warning('Email inválido', 'Insira um email válido.')
+        return
+    }
     
     try {
-        const { data: levels, error } = await supabase
-            .from('levels')
-            .select('*, lessons:lessons(id, title, description, video_url, video_duration, "order")')
-            .eq('is_active', true)
-            .order('order')
+        console.log('📝 Criando usuário...', { email, fullName })
         
-        if (error) throw error
-        
-        currentLevels = levels || []
-        
-        let progressMap = new Map()
-        let userLevels = []
-        
-        if (currentUser && !isAdmin) {
-            const { data: progress } = await supabase
-                .from('progress')
-                .select('lesson_id, watched, completed')
-                .eq('student_id', currentUser.id)
-            
-            progress?.forEach(p => {
-                progressMap.set(p.lesson_id, { 
-                    watched: p.watched, 
-                    completed: p.completed 
-                })
-            })
-            
-            if (studentData && studentData.levels) {
-                userLevels = studentData.levels.map(l => l.level_id)
+        // ⭐ SEM CONFIRMAÇÃO DE EMAIL (auto_confirm = true)
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    phone: phone || null
+                },
+                // ⭐ IMPORTANTE: auto_confirm = true para não pedir confirmação
+                emailRedirectTo: window.location.origin
             }
+        })
+        
+        if (error) {
+            console.error('❌ Erro:', error)
+            if (error.message.includes('already registered')) {
+                Toast.error('Email já cadastrado', 'Este email já está em uso. Faça login.')
+                return
+            }
+            if (error.message.includes('rate limit')) {
+                Toast.warning('Muitas tentativas', 'Aguarde 15 minutos e tente novamente.')
+                return
+            }
+            throw error
         }
         
-        if (isAdmin) {
-            userLevels = currentLevels.map(l => l.id)
+        if (!data.user) {
+            throw new Error('Usuário não foi criado')
         }
         
-        try {
-            const { count } = await supabase
-                .from('students')
-                .select('*', { count: 'exact', head: true })
-                .eq('is_approved', true)
-            
-            document.getElementById('statLevels').textContent = levels?.length || 0
-            const totalLessons = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
-            document.getElementById('statLessons').textContent = totalLessons
-            document.getElementById('statStudents').textContent = count || 0
-        } catch (e) {}
+        console.log('✅ Usuário criado:', data.user.id)
+        await new Promise(r => setTimeout(r, 1500))
         
-        renderLevels(levels || [], progressMap, userLevels)
+        // Criar na tabela students (aguardando aprovação do admin)
+        await supabase.from('students').insert({
+            id: data.user.id,
+            email: email,
+            full_name: fullName,
+            phone: phone || null,
+            is_active: true,
+            is_approved: false,
+            enrolled_at: new Date().toISOString()
+        })
+        
+        Toast.success('Conta criada! ✅', 'Sua conta foi criada. Aguarde a aprovação do administrador para acessar os conteúdos.')
+        
+        registerForm.reset()
+        if (switchToLogin) switchToLogin.click()
         
     } catch (error) {
-        console.error('Erro:', error)
-        levelsContainer.innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i><p style="color:var(--text-secondary);">Erro ao carregar níveis.</p><button onclick="loadLevels()" class="btn btn-primary btn-sm">Tentar novamente</button></div>`
+        console.error('❌ Erro completo:', error)
+        Toast.error('Erro ao criar conta', 'Não foi possível criar sua conta. Tente novamente.')
     }
 }
 

@@ -50,36 +50,47 @@
 
 <script>
 // ============================================
-// INICIALIZAR POST
+// INICIALIZAR POST (CORRIGIDO)
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Usar funções exportadas do index.html
-    const currentUser = window.getCurrentUser ? window.getCurrentUser() : null
-    const isAdminUser = window.isAdmin ? window.isAdmin() : false
-    
-    // Configurar botões de autenticação
+    // Configurar botão Entrar
     const authBtn = document.getElementById('authBtnPost')
-    const logoutBtn = document.getElementById('logoutBtnPost')
-    
-    if (currentUser) {
-        if (authBtn) authBtn.style.display = 'none'
-        if (logoutBtn) logoutBtn.style.display = 'inline-flex'
-    }
-    
     if (authBtn) {
-        authBtn.addEventListener('click', function() {
-            if (window.openAuthModal) window.openAuthModal()
+        authBtn.addEventListener('click', function(e) {
+            e.preventDefault()
+            // Redirecionar para o index com a âncora do modal
+            window.location.href = '/Edu-Mais/#authModal'
         })
+        console.log('✅ Botão Entrar configurado no post')
     }
     
+    // Configurar botão Sair
+    const logoutBtn = document.getElementById('logoutBtnPost')
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
-            if (window.handleLogout) window.handleLogout()
+        logoutBtn.addEventListener('click', async function() {
+            await supabaseBlog.auth.signOut()
+            window.location.reload()
         })
+        console.log('✅ Botão Sair configurado no post')
     }
     
-    // Carregar post
-    loadPost()
+    // Verificar se está logado
+    checkBlogSession().then(function() {
+        // Atualizar botões
+        const authBtn2 = document.getElementById('authBtnPost')
+        const logoutBtn2 = document.getElementById('logoutBtnPost')
+        
+        if (currentUserBlog) {
+            if (authBtn2) authBtn2.style.display = 'none'
+            if (logoutBtn2) logoutBtn2.style.display = 'inline-flex'
+        } else {
+            if (authBtn2) authBtn2.style.display = 'inline-flex'
+            if (logoutBtn2) logoutBtn2.style.display = 'none'
+        }
+        
+        // Carregar post
+        loadPost()
+    })
 })
 </script>
 </body>

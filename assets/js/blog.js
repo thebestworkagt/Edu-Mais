@@ -82,84 +82,90 @@ function updateBlogButtons() {
 }
 
 // ============================================
-// CARREGAR POSTS
+// CARREGAR POST INDIVIDUAL (COM VISUALIZAÇÕES)
 // ============================================
-async function loadPosts() {
-    var container = document.getElementById('postsContainer')
+async function loadPost() {
+    var container = document.getElementById('postContent')
     if (!container) return
     
-    container.innerHTML = '<div class="blog-loading"><i class="fas fa-spinner fa-spin"></i><p style="color:var(--blog-text-muted);margin-top:12px;">Carregando publicações...</p></div>'
+    var params = new URLSearchParams(window.location.search)
+    var slug = params.get('slug')
+    
+    if (!slug) {
+        container.innerHTML = '<div class="blog-empty"><i class="fas fa-exclamation-circle"></i><h3>Publicação não encontrada</h3><p>O artigo que você procura não existe.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
+        return
+    }
+    
+    container.innerHTML = '<div class="blog-loading"><i class="fas fa-spinner fa-spin"></i><p style="color:var(--blog-text-muted);margin-top:12px;">Carregando artigo...</p></div>'
     
     try {
-        var query = supabaseBlog
-            .from('posts')
-            .select('*')
-            .order('published_at', { ascending: false })
+        // 1. Buscar o post
+        var result = await supabaseBlog.from('posts').select('*').eq('slug', slug).single()
+        if (result.error) throw result.error
+        var post = result.data
         
-        if (!isAdminBlog) {
-            query = query.eq('is_published', true)
+        // 2. Verificar se está publicado (ou se é admin)
+        if (!post.is_published && !isAdminBlog) {
+            container.innerHTML = '<div class="blog-empty"><i class="fas fa-lock"></i><h3>Publicação não disponível</h3><p>Este artigo não está publicado.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
+            return
         }
         
-        var result = await query
-        if (result.error) throw result.error
+        // 3. ⭐ INCREMENTAR VISUALIZAÇÕES (COM VERIFICAÇÃO)
+        try {
+            const viewsResult = await supabaseBlog
+                .from('posts')
+                .update({ views: (post.views || 0) + 1 })
+                .eq('id', post.id)
+            
+            if (viewsResult.error) {
+                console.error('Erro ao atualizar views:', viewsResult.error)
+            } else {
+                console.log('✅ Visualização contada:', post.views + 1)
+            }
+        } catch (viewsError) {
+            console.error('Erro ao incrementar views:', viewsError)
+        }
         
-        allPosts = result.data || []
-        renderPosts(allPosts)
-        loadCategories(allPosts)
+        // 4. Renderizar o post (com as views atualizadas)
+        renderPost(post)
         
     } catch (error) {
-        console.error('Erro:', error)
-        container.innerHTML = '<div class="blog-empty"><i class="fas fa-exclamation-triangle"></i><h3>Erro ao carregar</h3><p>Não foi possível carregar as publicações.</p><button class="btn btn-primary btn-sm" onclick="loadPosts()" style="margin-top:12px;"><i class="fas fa-sync"></i> Recarregar</button></div>'
+        console.error('Erro ao carregar post:', error)
+        container.innerHTML = '<div class="blog-empty"><i class="fas fa-exclamation-triangle"></i><h3>Erro ao carregar</h3><p>Não foi possível carregar este artigo.</p><a href="/Edu-Mais/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>'
     }
 }
 
 // ============================================
-// RENDERIZAR POSTS
+// RENDERIZAR POST INDIVIDUAL (COM VIEWS)
 // ============================================
-function renderPosts(posts) {
-    var container = document.getElementById('postsContainer')
+function renderPost(post) {
+    var container = document.getElementById('postContent')
     if (!container) return
     
-    var filtered = posts.slice()
-    if (currentCategory !== 'all') {
-        filtered = filtered.filter(function(p) { return p.category === currentCategory })
-    }
-    if (searchTerm.trim()) {
-        var term = searchTerm.toLowerCase().trim()
-        filtered = filtered.filter(function(p) {
-            return p.title.toLowerCase().includes(term) || 
-                   p.content.toLowerCase().includes(term) || 
-                   (p.excerpt && p.excerpt.toLowerCase().includes(term))
-        })
+    var imageHtml = post.featured_image ? '<img src="' + post.featured_image + '" alt="' + post.title + '" class="article-featured-image">' : ''
+    var adminHtml = ''
+    if (isAdminBlog) {
+        adminHtml = '<div class="admin-actions"><a href="/Edu-Mais/blog-admin.html?edit=' + post.id + '" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Editar</a><button class="btn btn-danger btn-sm" onclick="deletePost(' + post.id + ')"><i class="fas fa-trash"></i> Excluir</button></div>'
     }
     
-    if (filtered.length === 0) {
-        container.innerHTML = '<div class="blog-empty"><i class="fas fa-search"></i><h3>Nenhum resultado</h3><p>Tente ajustar seus filtros.</p><button class="btn btn-outline btn-sm" onclick="resetFilters()" style="margin-top:12px;"><i class="fas fa-undo"></i> Limpar filtros</button></div>'
-        return
-    }
-    
-    var html = '<div class="posts-grid">'
-    filtered.forEach(function(post) {
-        var imageHtml = post.featured_image ? 
-            '<img src="' + post.featured_image + '" alt="' + post.title + '" loading="lazy">' : 
-            '<span class="no-image"><i class="fas fa-file-alt"></i></span>'
-        
-        html += `
-            <div class="post-card" onclick="window.location.href='/Edu-Mais/post.html?slug=${post.slug}'">
-                <div class="post-image">${imageHtml}</div>
-                <div class="post-content">
-                    <div>
-                        <div class="post-meta"><span class="category">${post.category || 'Geral'}</span><span class="date"><i class="far fa-calendar-alt"></i> ${formatDateBlog(post.published_at)}</span>${!post.is_published && isAdminBlog ? '<span style="color:#f39c12;">📝 Rascunho</span>' : ''}</div>
-                        <h3 class="post-title"><a href="/Edu-Mais/post.html?slug=${post.slug}">${post.title}</a></h3>
-                        <p class="post-excerpt">${post.excerpt || post.content.substring(0, 160) + '...'}</p>
-                    </div>
-                    <div class="post-footer"><span class="author"><span class="avatar">${post.author_name ? post.author_name.charAt(0).toUpperCase() : 'A'}</span>${post.author_name || 'Admin'}</span><span><i class="far fa-eye"></i> ${post.views || 0}</span></div>
+    container.innerHTML = `
+        <article class="post-article">
+            <div class="article-header">
+                <a href="/Edu-Mais/blog.html" class="back-link"><i class="fas fa-arrow-left"></i> Voltar para o blog</a>
+                <h1>${post.title}</h1>
+                <div class="article-meta">
+                    <span><i class="far fa-calendar-alt"></i> ${formatDateBlog(post.published_at)}</span>
+                    <span><i class="far fa-user"></i> ${post.author_name || 'Admin'}</span>
+                    <span><i class="far fa-folder"></i> ${post.category || 'Geral'}</span>
+                    <span><i class="far fa-eye"></i> ${post.views || 0} visualizações</span>
+                    ${!post.is_published && isAdminBlog ? '<span style="color:#f39c12;">📝 Rascunho</span>' : ''}
                 </div>
             </div>
-        `
-    })
-    html += '</div>'
-    container.innerHTML = html
+            ${imageHtml}
+            <div class="article-content">${post.content}</div>
+            ${adminHtml}
+        </article>
+    `
 }
 
 // ============================================

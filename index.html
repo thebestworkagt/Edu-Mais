@@ -1556,7 +1556,7 @@ async function markProgress(action) {
 }
 
 // ============================================
-// PAINEL ADMIN (COM ABA MATERIAIS)
+// PAINEL ADMIN
 // ============================================
 async function loadAdminPanel() {
     if (!isAdmin) { Toast.warning('Acesso negado', 'Você não tem permissão.'); return }
@@ -1570,7 +1570,6 @@ async function loadAdminPanel() {
             <button class="btn ${adminCurrentTab === 'alunos' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('alunos')" style="font-size:13px;"><i class="fas fa-users"></i> Alunos</button>
             <button class="btn ${adminCurrentTab === 'niveis' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('niveis')" style="font-size:13px;"><i class="fas fa-layer-group"></i> Níveis</button>
             <button class="btn ${adminCurrentTab === 'aulas' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('aulas')" style="font-size:13px;"><i class="fas fa-video"></i> Aulas</button>
-            <!-- ⭐ NOVA ABA: MATERIAIS -->
             <button class="btn ${adminCurrentTab === 'materiais' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('materiais')" style="font-size:13px;"><i class="fas fa-file-pdf"></i> Materiais</button>
         </div>
         <div id="adminTabContent"><div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i><p style="color:var(--text-secondary);">Carregando...</p></div></div>
@@ -2027,28 +2026,33 @@ async function adminDeleteLesson(id) {
 // MATERIAIS - ADMIN
 // ============================================
 async function loadMateriaisAdmin(container) {
-    const { data: materials, error } = await supabase
-        .from('materials')
-        .select('*')
-        .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    
-    container.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-            <h3>📚 Gerenciar Materiais</h3>
-            <button class="btn btn-primary btn-sm" onclick="showAddMaterialForm()">
-                <i class="fas fa-plus"></i> Adicionar Material
-            </button>
-        </div>
+    try {
+        const { data: materials, error } = await supabase
+            .from('materials')
+            .select('*')
+            .order('created_at', { ascending: false })
         
-        ${!materials || materials.length === 0 ? `
-            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
-                <p style="color:var(--text-secondary);">Nenhum material adicionado ainda.</p>
+        if (error) throw error
+        
+        let html = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+                <h3>📚 Gerenciar Materiais</h3>
+                <button class="btn btn-primary btn-sm" onclick="showAddMaterialForm()">
+                    <i class="fas fa-plus"></i> Adicionar Material
+                </button>
             </div>
-        ` : `
-            <div style="display:grid;gap:12px;">
-                ${materials.map(m => `
+        `
+        
+        if (!materials || materials.length === 0) {
+            html += `
+                <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
+                    <p style="color:var(--text-secondary);">Nenhum material adicionado ainda.</p>
+                </div>
+            `
+        } else {
+            html += `<div style="display:grid;gap:12px;">`
+            materials.forEach(m => {
+                html += `
                     <div style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
                         <div>
                             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -2076,10 +2080,24 @@ async function loadMateriaisAdmin(container) {
                             </button>
                         </div>
                     </div>
-                `).join('')}
+                `
+            })
+            html += `</div>`
+        }
+        
+        container.innerHTML = html
+    } catch (error) {
+        console.error('Erro ao carregar materiais:', error)
+        container.innerHTML = `
+            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
+                <i class="fas fa-exclamation-triangle" style="font-size:48px;color:#ff6b6b;"></i>
+                <p style="color:var(--text-secondary);">Erro ao carregar materiais.</p>
+                <button onclick="loadAdminTab('materiais')" class="btn btn-primary btn-sm" style="margin-top:12px;">
+                    <i class="fas fa-sync"></i> Tentar novamente
+                </button>
             </div>
         `
-    `
+    }
 }
 
 // ============================================

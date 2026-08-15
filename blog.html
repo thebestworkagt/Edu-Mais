@@ -184,26 +184,43 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
 <script src="assets/js/blog.js"></script>
 
+<!-- ========== SCRIPTS ========== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+<script src="assets/js/blog.js"></script>
+
 <script>
 // ============================================
-// INICIALIZAR BLOG (APENAS O MÍNIMO)
+// INICIALIZAR BLOG
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Botão Entrar
-    document.getElementById('authBtnBlog')?.addEventListener('click', function() {
-        window.location.href = '/Edu-Mais/#authModal'
-    })
+    console.log('📝 Inicializando blog...')
     
-    // Botão Sair
-    document.getElementById('logoutBtnBlog')?.addEventListener('click', async function() {
-        await supabaseBlog.auth.signOut()
-        window.location.reload()
-    })
+    // ⭐ Botão Entrar - REDIRECIONA para o index
+    const authBtn = document.getElementById('authBtnBlog')
+    if (authBtn) {
+        authBtn.addEventListener('click', function(e) {
+            e.preventDefault()
+            console.log('🖱️ Clique no botão Entrar - redirecionando...')
+            window.location.href = '/Edu-Mais/#authModal'
+        })
+    }
     
-    // Verificar sessão e carregar posts
-    checkBlogSession().then(function() {
-        loadPosts()
-    })
+    // ⭐ Botão Sair
+    const logoutBtn = document.getElementById('logoutBtnBlog')
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function() {
+            console.log('🖱️ Clique no botão Sair')
+            const supabaseBlog = window.supabaseBlog || window.supabase.createClient(
+                'https://gslhfgaoqkcrhyfnmmxt.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
+            )
+            await supabaseBlog.auth.signOut()
+            window.location.href = '/Edu-Mais/'
+        })
+    }
+    
+    // ⭐ Carregar posts
+    loadPosts()
 })
 </script>
 </body>

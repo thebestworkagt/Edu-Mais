@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
- 
         /* ===== ESTILOS COMPLETOS ===== */
         :root {
             --primary: #217346;
@@ -99,6 +98,8 @@
         .btn-success:hover { background: #128C7E; transform: translateY(-2px); }
         .btn-warning { background: #f39c12; color: #fff; }
         .btn-warning:hover { background: #d68910; transform: translateY(-2px); }
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .btn-danger:hover { background: #c0392b; transform: translateY(-2px); }
 
         .btn-sm { padding: 6px 16px; font-size: 13px; }
         .btn-lg { padding: 14px 36px; font-size: 16px; }
@@ -310,12 +311,6 @@
         }
         .level-card.locked { opacity: 0.6; cursor: not-allowed; }
         .level-card.locked:hover { transform: none; box-shadow: none; }
-        .level-card.no-access {
-            opacity: 0.4;
-            cursor: not-allowed;
-            filter: grayscale(0.8);
-        }
-        .level-card.no-access:hover { transform: none; box-shadow: none; }
         .level-icon { font-size: 40px; margin-bottom: 12px; }
         .level-header {
             display: flex;
@@ -334,7 +329,6 @@
         .level-badge.locked { background: #ff6b6b20; color: #ff6b6b; }
         .level-badge.unlocked { background: rgba(46,139,87,0.15); color: var(--primary-light); }
         .level-badge.completed { background: rgba(46,139,87,0.25); color: var(--primary-light); }
-        .level-badge.no-access { background: #95a5a620; color: #95a5a6; }
         .level-description {
             color: var(--text-secondary);
             font-size: 14px;
@@ -810,13 +804,13 @@
                 <img src="assets/images/edu.png" alt="Edu Mais" class="logo" onerror="this.style.display='none'">
                 <span class="brand-text">Edu <span class="highlight">Mais</span></span>
             </div>
-<div class="nav-links" id="navLinks">
-    <a href="#home" class="nav-link active">Início</a>
-    <a href="#niveis" class="nav-link" id="navNiveis">Níveis</a>
-    <a href="/blog.html" class="nav-link">Blog</a>  <!-- ← ADICIONE ESTA LINHA -->
-    <a href="#admin" class="nav-link" id="navAdmin" style="display:none;">Admin</a>
-    <a href="#contato" class="nav-link">Contato</a>
-</div>
+            <div class="nav-links" id="navLinks">
+                <a href="#home" class="nav-link active">Início</a>
+                <a href="#niveis" class="nav-link" id="navNiveis">Níveis</a>
+                <a href="/blog.html" class="nav-link">Blog</a>
+                <a href="#admin" class="nav-link" id="navAdmin" style="display:none;">Admin</a>
+                <a href="#contato" class="nav-link">Contato</a>
+            </div>
             <div class="nav-actions">
                 <button class="btn-theme" id="themeToggle">
                     <i class="fas fa-moon"></i>
@@ -944,6 +938,7 @@
                 <h4>Links</h4>
                 <a href="#home">Início</a>
                 <a href="#niveis">Níveis</a>
+                <a href="/blog.html">Blog</a>
                 <a href="#contato">Contato</a>
             </div>
             <div class="footer-links">
@@ -1730,6 +1725,27 @@ function renderLevels(levels, progressMap, userLevelAccess) {
 }
 
 // ============================================
+// EXPOR FUNÇÕES PARA O BLOG E OUTROS ARQUIVOS
+// ============================================
+window.getCurrentUser = function() {
+    return currentUser
+}
+
+window.isAdmin = function() {
+    return isAdmin
+}
+
+window.handleLogout = function() {
+    return handleLogout()
+}
+
+window.openAuthModal = function() {
+    return openAuthModal()
+}
+
+console.log('✅ Funções do auth exportadas')
+
+// ============================================
 // PAINEL ADMIN - COMPLETO COM 4 ABAS
 // ============================================
 async function loadAdminPanel() {
@@ -1978,595 +1994,6 @@ async function loadAlunos(container) {
             </table>
         </div>
     `
-}
-
-// ============================================
-// NÍVEIS
-// ============================================
-async function loadNiveis(container) {
-    var result = await supabase.from('levels').select('*').order('order')
-    if (result.error) throw result.error
-    
-    var levelsHtml = ''
-    if (!result.data || result.data.length === 0) {
-        levelsHtml = `
-            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
-                <p style="color:var(--text-secondary);">Nenhum nível criado ainda.</p>
-            </div>
-        `
-    } else {
-        result.data.forEach(function(level) {
-            levelsHtml += `
-                <div style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                    <div>
-                        <span style="font-size:24px;">${level.icon || '📚'}</span>
-                        <strong style="margin-left:8px;">${level.name}</strong>
-                        <span style="color:var(--text-muted);font-size:13px;margin-left:12px;">${level.description || ''}</span>
-                        <span style="color:var(--text-muted);font-size:12px;margin-left:12px;">Ordem: ${level.order || 0}</span>
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <button class="btn btn-sm btn-outline" onclick="showEditLevelForm(${level.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="adminDeleteLevel(${level.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `
-        })
-    }
-    
-    container.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-            <h3>📚 Gerenciar Níveis</h3>
-            <button class="btn btn-primary btn-sm" onclick="showAddLevelForm()">
-                <i class="fas fa-plus"></i> Adicionar Nível
-            </button>
-        </div>
-        ${levelsHtml}
-    `
-}
-
-// ============================================
-// AULAS
-// ============================================
-async function loadAulas(container) {
-    var lessonsResult = await supabase
-        .from('lessons')
-        .select(`
-            *,
-            level:levels (id, name)
-        `)
-        .order('level_id')
-        .order('order')
-    
-    if (lessonsResult.error) throw lessonsResult.error
-    
-    var levelsResult = await supabase
-        .from('levels')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('order')
-    
-    var filterOptions = '<option value="all">Todos os níveis</option>'
-    if (levelsResult.data) {
-        levelsResult.data.forEach(function(level) {
-            filterOptions += `<option value="${level.id}">${level.name}</option>`
-        })
-    }
-    
-    var lessonsHtml = ''
-    if (!lessonsResult.data || lessonsResult.data.length === 0) {
-        lessonsHtml = `
-            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
-                <p style="color:var(--text-secondary);">Nenhuma aula criada ainda.</p>
-            </div>
-        `
-    } else {
-        lessonsResult.data.forEach(function(lesson) {
-            lessonsHtml += `
-                <div class="lesson-item-admin" data-level="${lesson.level_id}" style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                    <div>
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <span style="font-size:18px;">📖</span>
-                            <strong>${lesson.title}</strong>
-                            <span style="color:var(--text-muted);font-size:13px;background:var(--bg-secondary);padding:2px 10px;border-radius:50px;">${lesson.level?.name || 'Sem nível'}</span>
-                            <span style="color:var(--text-muted);font-size:12px;">${lesson.video_duration || 0} min</span>
-                            ${!lesson.video_url ? '<span style="color:#ff6b6b;font-size:12px;">⚠️ Sem vídeo</span>' : ''}
-                        </div>
-                        <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">${lesson.description || ''}</div>
-                        ${lesson.video_url ? `<div style="color:var(--text-muted);font-size:12px;margin-top:2px;">🔗 <a href="${lesson.video_url}" target="_blank" style="color:var(--primary-light);">${lesson.video_url}</a></div>` : ''}
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <button class="btn btn-sm btn-outline" onclick="showEditLessonForm(${lesson.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="adminDeleteLesson(${lesson.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `
-        })
-    }
-    
-    container.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-            <h3>📹 Gerenciar Aulas</h3>
-            <button class="btn btn-primary btn-sm" onclick="showAddLessonForm()">
-                <i class="fas fa-plus"></i> Adicionar Aula
-            </button>
-        </div>
-        
-        <div style="margin-bottom:16px;">
-            <label style="color:var(--text-secondary);font-size:13px;">Filtrar por nível:</label>
-            <select id="lessonFilter" onchange="filterLessons()" style="padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);margin-left:8px;">
-                ${filterOptions}
-            </select>
-        </div>
-        
-        <div id="lessonsList" style="display:grid;gap:12px;">
-            ${lessonsHtml}
-        </div>
-    `
-}
-
-// ============================================
-// FILTRAR AULAS
-// ============================================
-function filterLessons() {
-    var filter = document.getElementById('lessonFilter')?.value
-    var items = document.querySelectorAll('.lesson-item-admin')
-    items.forEach(function(item) {
-        if (filter === 'all' || item.dataset.level === filter) {
-            item.style.display = 'flex'
-        } else {
-            item.style.display = 'none'
-        }
-    })
-}
-
-// ============================================
-// ADMIN - ADICIONAR NÍVEL
-// ============================================
-function showAddLevelForm() {
-    var container = document.getElementById('adminTabContent')
-    if (!container) return
-    
-    container.innerHTML = `
-        <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:500px;">
-            <h4 style="margin-bottom:16px;">➕ Adicionar Nível</h4>
-            <form id="addLevelForm" onsubmit="adminCreateLevel(event)">
-                <div class="form-group" style="margin-bottom:12px;">
-                    <label>Nome do nível *</label>
-                    <input type="text" id="levelName" placeholder="Ex: Iniciante" required>
-                </div>
-                <div class="form-group" style="margin-bottom:12px;">
-                    <label>Descrição</label>
-                    <input type="text" id="levelDescription" placeholder="Breve descrição do nível">
-                </div>
-                <div class="form-group" style="margin-bottom:12px;">
-                    <label>Ícone (emojis)</label>
-                    <input type="text" id="levelIcon" placeholder="Ex: 🌱" value="📚">
-                </div>
-                <div class="form-group" style="margin-bottom:12px;">
-                    <label>Ordem</label>
-                    <input type="number" id="levelOrder" placeholder="1" value="1" min="1">
-                </div>
-                <div style="display:flex;gap:8px;margin-top:16px;">
-                    <button type="submit" class="btn btn-primary">Salvar</button>
-                    <button type="button" class="btn btn-outline" onclick="loadAdminTab('niveis')">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    `
-}
-
-// ============================================
-// ADMIN - EDITAR NÍVEL
-// ============================================
-function showEditLevelForm(levelId) {
-    var container = document.getElementById('adminTabContent')
-    if (!container) return
-    
-    supabase
-        .from('levels')
-        .select('*')
-        .eq('id', levelId)
-        .single()
-        .then(function(result) {
-            if (result.error) {
-                Toast.error('Erro', 'Não foi possível carregar o nível.')
-                return
-            }
-            var level = result.data
-            
-            container.innerHTML = `
-                <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:500px;">
-                    <h4 style="margin-bottom:16px;">✏️ Editar Nível</h4>
-                    <form id="editLevelForm" onsubmit="adminUpdateLevel(event, ${levelId})">
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Nome do nível *</label>
-                            <input type="text" id="editLevelName" value="${level.name}" required>
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Descrição</label>
-                            <input type="text" id="editLevelDescription" value="${level.description || ''}">
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Ícone (emojis)</label>
-                            <input type="text" id="editLevelIcon" value="${level.icon || '📚'}">
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Ordem</label>
-                            <input type="number" id="editLevelOrder" value="${level.order || 1}" min="1">
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Ativo</label>
-                            <select id="editLevelActive">
-                                <option value="true" ${level.is_active ? 'selected' : ''}>Sim</option>
-                                <option value="false" ${!level.is_active ? 'selected' : ''}>Não</option>
-                            </select>
-                        </div>
-                        <div style="display:flex;gap:8px;margin-top:16px;">
-                            <button type="submit" class="btn btn-primary">Atualizar</button>
-                            <button type="button" class="btn btn-outline" onclick="loadAdminTab('niveis')">Cancelar</button>
-                        </div>
-                    </form>
-                </div>
-            `
-        })
-}
-
-// ============================================
-// ADMIN - CRIAR NÍVEL
-// ============================================
-async function adminCreateLevel(event) {
-    event.preventDefault()
-    
-    var name = document.getElementById('levelName').value.trim()
-    var description = document.getElementById('levelDescription').value.trim()
-    var icon = document.getElementById('levelIcon').value.trim() || '📚'
-    var order = parseInt(document.getElementById('levelOrder').value) || 1
-    
-    if (!name) {
-        Toast.warning('Campo obrigatório', 'O nome do nível é obrigatório.')
-        return
-    }
-    
-    try {
-        var result = await supabase
-            .from('levels')
-            .insert({
-                name: name,
-                description: description,
-                icon: icon,
-                order: order,
-                is_active: true
-            })
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Nível criado!', 'O nível foi adicionado com sucesso.')
-        loadAdminTab('niveis')
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível criar o nível.')
-    }
-}
-
-// ============================================
-// ADMIN - ATUALIZAR NÍVEL
-// ============================================
-async function adminUpdateLevel(event, levelId) {
-    event.preventDefault()
-    
-    var name = document.getElementById('editLevelName').value.trim()
-    var description = document.getElementById('editLevelDescription').value.trim()
-    var icon = document.getElementById('editLevelIcon').value.trim() || '📚'
-    var order = parseInt(document.getElementById('editLevelOrder').value) || 1
-    var is_active = document.getElementById('editLevelActive').value === 'true'
-    
-    if (!name) {
-        Toast.warning('Campo obrigatório', 'O nome do nível é obrigatório.')
-        return
-    }
-    
-    try {
-        var result = await supabase
-            .from('levels')
-            .update({ name: name, description: description, icon: icon, order: order, is_active: is_active })
-            .eq('id', levelId)
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Nível atualizado!', 'O nível foi atualizado com sucesso.')
-        loadAdminTab('niveis')
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível atualizar o nível.')
-    }
-}
-
-// ============================================
-// ADMIN - EXCLUIR NÍVEL
-// ============================================
-async function adminDeleteLevel(levelId) {
-    if (!confirm('Tem certeza que deseja excluir este nível? As aulas associadas também serão excluídas.')) {
-        return
-    }
-    
-    try {
-        var result = await supabase
-            .from('levels')
-            .delete()
-            .eq('id', levelId)
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Nível excluído!', 'O nível foi removido com sucesso.')
-        loadAdminTab('niveis')
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível excluir o nível.')
-    }
-}
-
-// ============================================
-// ADMIN - ADICIONAR AULA
-// ============================================
-function showAddLessonForm() {
-    var container = document.getElementById('adminTabContent')
-    if (!container) return
-    
-    supabase
-        .from('levels')
-        .select('id, name')
-        .eq('is_active', true)
-        .order('order')
-        .then(function(result) {
-            if (result.error) {
-                Toast.error('Erro', 'Não foi possível carregar os níveis.')
-                return
-            }
-            var levels = result.data
-            
-            var optionsHtml = '<option value="">— Selecione —</option>'
-            levels.forEach(function(level) {
-                optionsHtml += `<option value="${level.id}">${level.name}</option>`
-            })
-            
-            container.innerHTML = `
-                <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:600px;">
-                    <h4 style="margin-bottom:16px;">➕ Adicionar Aula</h4>
-                    <form id="addLessonForm" onsubmit="adminCreateLesson(event)">
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Nível *</label>
-                            <select id="lessonLevelId" required>
-                                ${optionsHtml}
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Título da aula *</label>
-                            <input type="text" id="lessonTitle" placeholder="Ex: Introdução ao Excel" required>
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Descrição</label>
-                            <textarea id="lessonDescription" rows="2" placeholder="Breve descrição da aula"></textarea>
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>URL do vídeo (YouTube)</label>
-                            <input type="url" id="lessonVideoUrl" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
-                            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Cole o link do YouTube ou Vimeo</div>
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Duração (minutos)</label>
-                            <input type="number" id="lessonDuration" placeholder="15" value="15" min="1">
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Ordem dentro do nível</label>
-                            <input type="number" id="lessonOrder" placeholder="1" value="1" min="1">
-                        </div>
-                        <div class="form-group" style="margin-bottom:12px;">
-                            <label>Aula obrigatória?</label>
-                            <select id="lessonRequired">
-                                <option value="true">Sim</option>
-                                <option value="false">Não</option>
-                            </select>
-                        </div>
-                        <div style="display:flex;gap:8px;margin-top:16px;">
-                            <button type="submit" class="btn btn-primary">Salvar</button>
-                            <button type="button" class="btn btn-outline" onclick="loadAdminTab('aulas')">Cancelar</button>
-                        </div>
-                    </form>
-                </div>
-            `
-        })
-}
-
-// ============================================
-// ADMIN - EDITAR AULA
-// ============================================
-function showEditLessonForm(lessonId) {
-    var container = document.getElementById('adminTabContent')
-    if (!container) return
-    
-    Promise.all([
-        supabase.from('lessons').select('*').eq('id', lessonId).single(),
-        supabase.from('levels').select('id, name').eq('is_active', true).order('order')
-    ]).then(function(results) {
-        var lessonResult = results[0]
-        var levelsResult = results[1]
-        
-        if (lessonResult.error) {
-            Toast.error('Erro', 'Não foi possível carregar a aula.')
-            return
-        }
-        var lesson = lessonResult.data
-        var levels = levelsResult.data || []
-        
-        var optionsHtml = '<option value="">— Selecione —</option>'
-        levels.forEach(function(level) {
-            var selected = lesson.level_id === level.id ? 'selected' : ''
-            optionsHtml += `<option value="${level.id}" ${selected}>${level.name}</option>`
-        })
-        
-        container.innerHTML = `
-            <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:600px;">
-                <h4 style="margin-bottom:16px;">✏️ Editar Aula</h4>
-                <form id="editLessonForm" onsubmit="adminUpdateLesson(event, ${lessonId})">
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label>Nível *</label>
-                        <select id="editLessonLevelId" required>
-                            ${optionsHtml}
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label>Título da aula *</label>
-                        <input type="text" id="editLessonTitle" value="${lesson.title}" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label>Descrição</label>
-                        <textarea id="editLessonDescription" rows="2">${lesson.description || ''}</textarea>
-                    </div>
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label>URL do vídeo (YouTube)</label>
-                        <input type="url" id="editLessonVideoUrl" value="${lesson.video_url || ''}" placeholder="https://www.youtube.com/watch?v=VIDEO_ID">
-                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Cole o link do YouTube ou Vimeo</div>
-                    </div>
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label>Duração (minutos)</label>
-                        <input type="number" id="editLessonDuration" value="${lesson.video_duration || 15}" min="1">
-                    </div>
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label>Ordem dentro do nível</label>
-                        <input type="number" id="editLessonOrder" value="${lesson.order || 1}" min="1">
-                    </div>
-                    <div class="form-group" style="margin-bottom:12px;">
-                        <label>Aula obrigatória?</label>
-                        <select id="editLessonRequired">
-                            <option value="true" ${lesson.is_required ? 'selected' : ''}>Sim</option>
-                            <option value="false" ${!lesson.is_required ? 'selected' : ''}>Não</option>
-                        </select>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-top:16px;">
-                        <button type="submit" class="btn btn-primary">Atualizar</button>
-                        <button type="button" class="btn btn-outline" onclick="loadAdminTab('aulas')">Cancelar</button>
-                    </div>
-                </form>
-            </div>
-        `
-    })
-}
-
-// ============================================
-// ADMIN - CRIAR AULA
-// ============================================
-async function adminCreateLesson(event) {
-    event.preventDefault()
-    
-    var level_id = document.getElementById('lessonLevelId').value
-    var title = document.getElementById('lessonTitle').value.trim()
-    var description = document.getElementById('lessonDescription').value.trim()
-    var video_url = document.getElementById('lessonVideoUrl').value.trim()
-    var video_duration = parseInt(document.getElementById('lessonDuration').value) || 15
-    var order = parseInt(document.getElementById('lessonOrder').value) || 1
-    var is_required = document.getElementById('lessonRequired').value === 'true'
-    
-    if (!level_id || !title) {
-        Toast.warning('Campos obrigatórios', 'Preencha o nível e o título da aula.')
-        return
-    }
-    
-    try {
-        var result = await supabase
-            .from('lessons')
-            .insert({
-                level_id: level_id,
-                title: title,
-                description: description,
-                video_url: video_url,
-                video_duration: video_duration,
-                order: order,
-                is_required: is_required
-            })
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Aula criada!', 'A aula foi adicionada com sucesso.')
-        loadAdminTab('aulas')
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível criar a aula.')
-    }
-}
-
-// ============================================
-// ADMIN - ATUALIZAR AULA
-// ============================================
-async function adminUpdateLesson(event, lessonId) {
-    event.preventDefault()
-    
-    var level_id = document.getElementById('editLessonLevelId').value
-    var title = document.getElementById('editLessonTitle').value.trim()
-    var description = document.getElementById('editLessonDescription').value.trim()
-    var video_url = document.getElementById('editLessonVideoUrl').value.trim()
-    var video_duration = parseInt(document.getElementById('editLessonDuration').value) || 15
-    var order = parseInt(document.getElementById('editLessonOrder').value) || 1
-    var is_required = document.getElementById('editLessonRequired').value === 'true'
-    
-    if (!level_id || !title) {
-        Toast.warning('Campos obrigatórios', 'Preencha o nível e o título da aula.')
-        return
-    }
-    
-    try {
-        var result = await supabase
-            .from('lessons')
-            .update({
-                level_id: level_id,
-                title: title,
-                description: description,
-                video_url: video_url,
-                video_duration: video_duration,
-                order: order,
-                is_required: is_required
-            })
-            .eq('id', lessonId)
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Aula atualizada!', 'A aula foi atualizada com sucesso.')
-        loadAdminTab('aulas')
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível atualizar a aula.')
-    }
-}
-
-// ============================================
-// ADMIN - EXCLUIR AULA
-// ============================================
-async function adminDeleteLesson(lessonId) {
-    if (!confirm('Tem certeza que deseja excluir esta aula?')) {
-        return
-    }
-    
-    try {
-        var result = await supabase
-            .from('lessons')
-            .delete()
-            .eq('id', lessonId)
-        
-        if (result.error) throw result.error
-        
-        Toast.success('Aula excluída!', 'A aula foi removida com sucesso.')
-        loadAdminTab('aulas')
-        
-    } catch (error) {
-        Toast.error('Erro', 'Não foi possível excluir a aula.')
-    }
 }
 
 // ============================================
@@ -2978,61 +2405,11 @@ window.refreshAdmin = refreshAdmin
 window.adminUpdateStudentLevel = adminUpdateStudentLevel
 window.adminToggleApproval = adminToggleApproval
 window.adminDeleteStudent = adminDeleteStudent
-window.adminDeleteLevel = adminDeleteLevel
-window.adminDeleteLesson = adminDeleteLesson
 window.openLesson = openLesson
 window.openAuthModal = openAuthModal
 window.isAdmin = function() { return isAdmin }
-window.switchAdminTab = switchAdminTab
-window.loadAdminTab = loadAdminTab
-window.showAddLevelForm = showAddLevelForm
-window.showEditLevelForm = showEditLevelForm
-window.showAddLessonForm = showAddLessonForm
-window.showEditLessonForm = showEditLessonForm
-window.adminCreateLevel = adminCreateLevel
-window.adminUpdateLevel = adminUpdateLevel
-window.adminCreateLesson = adminCreateLesson
-window.adminUpdateLesson = adminUpdateLesson
-window.filterLessons = filterLessons
-<!-- ========== SUPABASE + SCRIPTS ========== -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-<script>
-// ... TODO O SEU CÓDIGO JAVASCRIPT AQUI ...
-// ... (checkSession, handleLogin, loadLevels, etc) ...
 
-// ============================================
-// INICIALIZAR
-// ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Edu Mais - Inicializando...')
-    
-    initElements()
-    initEvents()
-    checkSession()
-    
-    console.log('✅ Edu Mais - Pronto para uso!')
-})
-
-// ============================================
-// EXPOR FUNÇÕES PARA O BLOG (ADICIONE AQUI!)
-// ============================================
-window.getCurrentUser = function() {
-    return currentUser
-}
-
-window.isAdmin = function() {
-    return isAdmin
-}
-
-window.handleLogout = function() {
-    return handleLogout()
-}
-
-window.openAuthModal = function() {
-    return openAuthModal()
-}
-
-console.log('✅ Funções do auth exportadas para o blog')
+console.log('✅ Todas as funções exportadas!')
 </script>
 </body>
 </html>

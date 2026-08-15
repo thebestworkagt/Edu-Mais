@@ -58,6 +58,7 @@ async function checkBlogSession() {
         currentUserBlog = sessionResult.data.session.user
         var adminResult = await supabaseBlog.from('admins').select('id').eq('id', currentUserBlog.id).maybeSingle()
         isAdminBlog = !!adminResult.data
+        console.log('Admin check:', isAdminBlog)
     }
     updateBlogButtons()
 }
@@ -282,7 +283,7 @@ function renderPost(post) {
 }
 
 // ============================================
-// ADMIN - CRIAR/EDITAR POST
+// ADMIN - CRIAR/EDITAR POST (VERSÃO CORRIGIDA)
 // ============================================
 async function savePost(event) {
     event.preventDefault()
@@ -303,11 +304,22 @@ async function savePost(event) {
     var slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
     
     try {
-        if (!isAdminBlog) {
+        // ⭐ VERIFICAR ADMIN DIRETO NO SUPABASE
+        var sessionResult = await supabaseBlog.auth.getSession()
+        if (!sessionResult.data.session) {
+            ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
+            return
+        }
+        
+        var user = sessionResult.data.session.user
+        var adminResult = await supabaseBlog.from('admins').select('id').eq('id', user.id).maybeSingle()
+        
+        if (!adminResult.data) {
             ToastBlog.error('Acesso negado', 'Apenas administradores podem publicar.')
             return
         }
         
+        // ⭐ ADMIN VERIFICADO!
         var postData = {
             title: title,
             slug: slug,
@@ -316,8 +328,8 @@ async function savePost(event) {
             category: category,
             featured_image: featured_image,
             is_published: is_published,
-            author_id: currentUserBlog ? currentUserBlog.id : null,
-            author_name: currentUserBlog && currentUserBlog.user_metadata ? currentUserBlog.user_metadata.full_name || 'Admin' : 'Admin',
+            author_id: user.id,
+            author_name: user.user_metadata ? user.user_metadata.full_name || 'Admin' : 'Admin',
             updated_at: new Date().toISOString()
         }
         
@@ -328,6 +340,7 @@ async function savePost(event) {
             postData.published_at = new Date().toISOString()
             result = await supabaseBlog.from('posts').insert(postData)
         }
+        
         if (result.error) throw result.error
         
         ToastBlog.success(id ? 'Publicação atualizada!' : 'Publicação criada!', 'O artigo foi salvo com sucesso.')
@@ -336,8 +349,8 @@ async function savePost(event) {
         }, 1000)
         
     } catch (error) {
-        console.error('Erro:', error)
-        ToastBlog.error('Erro', 'Não foi possível salvar a publicação.')
+        console.error('Erro ao salvar:', error)
+        ToastBlog.error('Erro', 'Não foi possível salvar a publicação: ' + error.message)
     }
 }
 

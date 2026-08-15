@@ -39,7 +39,6 @@
 
 <!-- ========== SCRIPTS ========== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-<script src="assets/js/auth.js"></script>
 <script src="assets/js/blog.js"></script>
 
 <script>
@@ -47,15 +46,15 @@
 // INICIALIZAR POST
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar se o usuário está logado
-    const user = window.getCurrentUser ? window.getCurrentUser() : null
+    // Usar funções exportadas do index.html
+    const currentUser = window.getCurrentUser ? window.getCurrentUser() : null
     const isAdminUser = window.isAdmin ? window.isAdmin() : false
     
     // Configurar botões de autenticação
     const authBtn = document.getElementById('authBtnPost')
     const logoutBtn = document.getElementById('logoutBtnPost')
     
-    if (user) {
+    if (currentUser) {
         if (authBtn) authBtn.style.display = 'none'
         if (logoutBtn) logoutBtn.style.display = 'inline-flex'
     }

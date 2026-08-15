@@ -1029,9 +1029,6 @@
     </div>
 </div>
 
-<!-- ========== SUPABASE + SCRIPTS ========== -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-<script>
 // ============================================
 // CONFIGURAÇÃO SUPABASE
 // ============================================
@@ -1403,6 +1400,7 @@ async function loadLevels() {
                 .from('students')
                 .select('*', { count: 'exact', head: true })
                 .eq('is_approved', true)
+                .neq('email', 'agtbeatsxpalha@gmail.com')
             
             document.getElementById('statLevels').textContent = levels?.length || 0
             const totalLessons = levels?.reduce((acc, l) => acc + (l.lessons?.length || 0), 0) || 0
@@ -1558,7 +1556,7 @@ async function markProgress(action) {
 }
 
 // ============================================
-// PAINEL ADMIN
+// PAINEL ADMIN (COM ABA MATERIAIS)
 // ============================================
 async function loadAdminPanel() {
     if (!isAdmin) { Toast.warning('Acesso negado', 'Você não tem permissão.'); return }
@@ -1572,6 +1570,8 @@ async function loadAdminPanel() {
             <button class="btn ${adminCurrentTab === 'alunos' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('alunos')" style="font-size:13px;"><i class="fas fa-users"></i> Alunos</button>
             <button class="btn ${adminCurrentTab === 'niveis' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('niveis')" style="font-size:13px;"><i class="fas fa-layer-group"></i> Níveis</button>
             <button class="btn ${adminCurrentTab === 'aulas' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('aulas')" style="font-size:13px;"><i class="fas fa-video"></i> Aulas</button>
+            <!-- ⭐ NOVA ABA: MATERIAIS -->
+            <button class="btn ${adminCurrentTab === 'materiais' ? 'btn-primary' : 'btn-outline'}" onclick="switchAdminTab('materiais')" style="font-size:13px;"><i class="fas fa-file-pdf"></i> Materiais</button>
         </div>
         <div id="adminTabContent"><div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:40px;color:var(--primary-light);"></i><p style="color:var(--text-secondary);">Carregando...</p></div></div>
     `
@@ -1591,6 +1591,7 @@ async function loadAdminTab(tab) {
         else if (tab === 'alunos') await loadAlunos(container)
         else if (tab === 'niveis') await loadNiveisAdmin(container)
         else if (tab === 'aulas') await loadAulasAdmin(container)
+        else if (tab === 'materiais') await loadMateriaisAdmin(container)
         else container.innerHTML = '<p>Conteúdo não encontrado</p>'
     } catch (error) {
         container.innerHTML = `<div style="text-align:center;padding:40px;"><i class="fas fa-exclamation-triangle" style="font-size:40px;color:#ff6b6b;"></i><p style="color:var(--text-secondary);">Erro ao carregar dados.</p><button onclick="loadAdminTab('${tab}')" class="btn btn-primary btn-sm">Tentar novamente</button></div>`
@@ -1601,11 +1602,26 @@ async function loadAdminTab(tab) {
 // DASHBOARD
 // ============================================
 async function loadDashboard(container) {
-    const { count: total } = await supabase.from('students').select('*', { count: 'exact', head: true })
-    const { count: approved } = await supabase.from('students').select('*', { count: 'exact', head: true }).eq('is_approved', true)
+    const { count: total } = await supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+        .neq('email', 'agtbeatsxpalha@gmail.com')
+    
+    const { count: approved } = await supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_approved', true)
+        .neq('email', 'agtbeatsxpalha@gmail.com')
+    
     const { count: levels } = await supabase.from('levels').select('*', { count: 'exact', head: true }).eq('is_active', true)
     const { count: lessons } = await supabase.from('lessons').select('*', { count: 'exact', head: true })
-    const { data: byLevel } = await supabase.from('students').select('level_id, level:levels(name)').eq('is_approved', true)
+    
+    const { data: byLevel } = await supabase
+        .from('students')
+        .select('level_id, level:levels(name)')
+        .eq('is_approved', true)
+        .neq('email', 'agtbeatsxpalha@gmail.com')
+    
     const counts = {}
     byLevel?.forEach(s => { const name = s.level?.name || 'Sem nível'; counts[name] = (counts[name] || 0) + 1 })
     container.innerHTML = `
@@ -1627,6 +1643,7 @@ async function loadAlunos(container) {
     const { data: students, error } = await supabase
         .from('students')
         .select('*')
+        .neq('email', 'agtbeatsxpalha@gmail.com')
         .order('enrolled_at', { ascending: false })
     
     if (error) throw error
@@ -2007,6 +2024,282 @@ async function adminDeleteLesson(id) {
 }
 
 // ============================================
+// MATERIAIS - ADMIN
+// ============================================
+async function loadMateriaisAdmin(container) {
+    const { data: materials, error } = await supabase
+        .from('materials')
+        .select('*')
+        .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    
+    container.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+            <h3>📚 Gerenciar Materiais</h3>
+            <button class="btn btn-primary btn-sm" onclick="showAddMaterialForm()">
+                <i class="fas fa-plus"></i> Adicionar Material
+            </button>
+        </div>
+        
+        ${!materials || materials.length === 0 ? `
+            <div style="text-align:center;padding:40px;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
+                <p style="color:var(--text-secondary);">Nenhum material adicionado ainda.</p>
+            </div>
+        ` : `
+            <div style="display:grid;gap:12px;">
+                ${materials.map(m => `
+                    <div style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <span style="font-size:20px;">${m.file_type === 'pdf' ? '📄' : m.file_type === 'xlsx' ? '📊' : '🔗'}</span>
+                                <strong>${m.title}</strong>
+                                <span style="color:var(--text-muted);font-size:12px;background:var(--bg-secondary);padding:2px 10px;border-radius:50px;">
+                                    ${m.is_public ? '🌍 Público' : '🔒 Privado'}
+                                </span>
+                                <span style="color:var(--text-muted);font-size:12px;">${m.category || 'Geral'}</span>
+                            </div>
+                            <div style="color:var(--text-muted);font-size:13px;margin-top:4px;">${m.description || ''}</div>
+                            <div style="color:var(--text-muted);font-size:12px;margin-top:2px;">
+                                👁️ ${m.views || 0} visualizações · ⬇️ ${m.downloads || 0} downloads
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <a href="${m.file_url}" target="_blank" class="btn btn-sm btn-success" style="padding:4px 12px;font-size:12px;">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline" onclick="showEditMaterialForm(${m.id})" style="padding:4px 12px;font-size:12px;">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="adminDeleteMaterial(${m.id})" style="padding:4px 12px;font-size:12px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `
+    `
+}
+
+// ============================================
+// ADMIN - ADICIONAR MATERIAL
+// ============================================
+function showAddMaterialForm() {
+    const container = document.getElementById('adminTabContent')
+    if (!container) return
+    
+    container.innerHTML = `
+        <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:600px;">
+            <h4 style="margin-bottom:16px;">➕ Adicionar Material</h4>
+            <form id="addMaterialForm" onsubmit="adminCreateMaterial(event)">
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>Título *</label>
+                    <input type="text" id="materialTitle" placeholder="Ex: Exercícios Práticos - Módulo 1" required>
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>Descrição</label>
+                    <textarea id="materialDescription" rows="2" placeholder="Breve descrição do material"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>URL do ficheiro *</label>
+                    <input type="url" id="materialFileUrl" placeholder="https://..." required>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Link para o ficheiro (Google Drive, Dropbox, ou URL direta)</div>
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>Tipo de ficheiro</label>
+                    <select id="materialFileType">
+                        <option value="pdf">📄 PDF</option>
+                        <option value="docx">📝 Word</option>
+                        <option value="xlsx">📊 Excel</option>
+                        <option value="link">🔗 Link</option>
+                        <option value="image">🖼️ Imagem</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>Categoria</label>
+                    <input type="text" id="materialCategory" placeholder="Ex: Exercícios, Guias, Templates" value="Geral">
+                </div>
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>Acesso</label>
+                    <select id="materialAccess">
+                        <option value="true">🌍 Público (todos veem)</option>
+                        <option value="false">🔒 Privado (apenas alunos aprovados)</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:16px;">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <button type="button" class="btn btn-outline" onclick="loadAdminTab('materiais')">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    `
+}
+
+// ============================================
+// ADMIN - CRIAR MATERIAL
+// ============================================
+async function adminCreateMaterial(e) {
+    e.preventDefault()
+    
+    const title = document.getElementById('materialTitle').value.trim()
+    const description = document.getElementById('materialDescription').value.trim()
+    const file_url = document.getElementById('materialFileUrl').value.trim()
+    const file_type = document.getElementById('materialFileType').value
+    const category = document.getElementById('materialCategory').value.trim() || 'Geral'
+    const is_public = document.getElementById('materialAccess').value === 'true'
+    
+    if (!title || !file_url) {
+        Toast.warning('Campos obrigatórios', 'Preencha o título e a URL do ficheiro.')
+        return
+    }
+    
+    try {
+        const { error } = await supabase
+            .from('materials')
+            .insert({
+                title,
+                description,
+                file_url,
+                file_type,
+                category,
+                is_public
+            })
+        
+        if (error) throw error
+        
+        Toast.success('Material adicionado!', 'O material foi criado com sucesso.')
+        loadAdminTab('materiais')
+        
+    } catch (error) {
+        console.error('Erro:', error)
+        Toast.error('Erro', 'Não foi possível criar o material.')
+    }
+}
+
+// ============================================
+// ADMIN - EDITAR MATERIAL
+// ============================================
+function showEditMaterialForm(materialId) {
+    const container = document.getElementById('adminTabContent')
+    if (!container) return
+    
+    supabase
+        .from('materials')
+        .select('*')
+        .eq('id', materialId)
+        .single()
+        .then(({ data: material, error }) => {
+            if (error) {
+                Toast.error('Erro', 'Não foi possível carregar o material.')
+                return
+            }
+            
+            container.innerHTML = `
+                <div style="background:var(--bg-card);border-radius:var(--radius);padding:24px;border:1px solid var(--border-color);max-width:600px;">
+                    <h4 style="margin-bottom:16px;">✏️ Editar Material</h4>
+                    <form id="editMaterialForm" onsubmit="adminUpdateMaterial(event, ${materialId})">
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label>Título *</label>
+                            <input type="text" id="editMaterialTitle" value="${material.title}" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label>Descrição</label>
+                            <textarea id="editMaterialDescription" rows="2">${material.description || ''}</textarea>
+                        </div>
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label>URL do ficheiro *</label>
+                            <input type="url" id="editMaterialFileUrl" value="${material.file_url}" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label>Tipo de ficheiro</label>
+                            <select id="editMaterialFileType">
+                                <option value="pdf" ${material.file_type === 'pdf' ? 'selected' : ''}>📄 PDF</option>
+                                <option value="docx" ${material.file_type === 'docx' ? 'selected' : ''}>📝 Word</option>
+                                <option value="xlsx" ${material.file_type === 'xlsx' ? 'selected' : ''}>📊 Excel</option>
+                                <option value="link" ${material.file_type === 'link' ? 'selected' : ''}>🔗 Link</option>
+                                <option value="image" ${material.file_type === 'image' ? 'selected' : ''}>🖼️ Imagem</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label>Categoria</label>
+                            <input type="text" id="editMaterialCategory" value="${material.category || 'Geral'}">
+                        </div>
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label>Acesso</label>
+                            <select id="editMaterialAccess">
+                                <option value="true" ${material.is_public ? 'selected' : ''}>🌍 Público (todos veem)</option>
+                                <option value="false" ${!material.is_public ? 'selected' : ''}>🔒 Privado (apenas alunos aprovados)</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:16px;">
+                            <button type="submit" class="btn btn-primary">Atualizar</button>
+                            <button type="button" class="btn btn-outline" onclick="loadAdminTab('materiais')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            `
+        })
+}
+
+// ============================================
+// ADMIN - ATUALIZAR MATERIAL
+// ============================================
+async function adminUpdateMaterial(e, materialId) {
+    e.preventDefault()
+    
+    const title = document.getElementById('editMaterialTitle').value.trim()
+    const description = document.getElementById('editMaterialDescription').value.trim()
+    const file_url = document.getElementById('editMaterialFileUrl').value.trim()
+    const file_type = document.getElementById('editMaterialFileType').value
+    const category = document.getElementById('editMaterialCategory').value.trim() || 'Geral'
+    const is_public = document.getElementById('editMaterialAccess').value === 'true'
+    
+    if (!title || !file_url) {
+        Toast.warning('Campos obrigatórios', 'Preencha o título e a URL do ficheiro.')
+        return
+    }
+    
+    try {
+        const { error } = await supabase
+            .from('materials')
+            .update({ title, description, file_url, file_type, category, is_public })
+            .eq('id', materialId)
+        
+        if (error) throw error
+        
+        Toast.success('Material atualizado!', 'O material foi atualizado com sucesso.')
+        loadAdminTab('materiais')
+        
+    } catch (error) {
+        console.error('Erro:', error)
+        Toast.error('Erro', 'Não foi possível atualizar o material.')
+    }
+}
+
+// ============================================
+// ADMIN - EXCLUIR MATERIAL
+// ============================================
+async function adminDeleteMaterial(materialId) {
+    if (!confirm('Tem certeza que deseja excluir este material?')) return
+    
+    try {
+        const { error } = await supabase
+            .from('materials')
+            .delete()
+            .eq('id', materialId)
+        
+        if (error) throw error
+        
+        Toast.success('Material excluído!', 'O material foi removido com sucesso.')
+        loadAdminTab('materiais')
+        
+    } catch (error) {
+        Toast.error('Erro', 'Não foi possível excluir o material.')
+    }
+}
+
+// ============================================
 // REFRESH ADMIN
 // ============================================
 function refreshAdmin() {
@@ -2093,6 +2386,12 @@ window.adminCreateLesson = adminCreateLesson
 window.adminUpdateLesson = adminUpdateLesson
 window.filterLessons = filterLessons
 window.toggleStudentLevel = toggleStudentLevel
+window.loadMateriaisAdmin = loadMateriaisAdmin
+window.showAddMaterialForm = showAddMaterialForm
+window.adminCreateMaterial = adminCreateMaterial
+window.showEditMaterialForm = showEditMaterialForm
+window.adminUpdateMaterial = adminUpdateMaterial
+window.adminDeleteMaterial = adminDeleteMaterial
 window.isAdmin = () => isAdmin
 window.getCurrentUser = () => currentUser
 window.handleLogout = handleLogout

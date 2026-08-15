@@ -129,4 +129,144 @@ async function loadPost() {
     const slug = params.get('slug')
     
     if (!slug) {
-        container.innerHTML = `<div class="blog-empty"><i class
+        container.innerHTML = `<div class="blog-empty"><i class="fas fa-exclamation-circle"></i><h3>Publicação não encontrada</h3><p>O artigo que você procura não existe.</p><a href="/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>`
+        return
+    }
+    
+    container.innerHTML = `<div class="blog-loading"><i class="fas fa-spinner fa-spin"></i><p style="color:var(--blog-text-muted);margin-top:12px;">Carregando artigo...</p></div>`
+    
+    try {
+        const { data: post, error } = await supabase.from('posts').select('*').eq('slug', slug).single()
+        if (error) throw error
+        
+        const isAdminUser = window.isAdmin ? window.isAdmin() : false
+        if (!post.is_published && !isAdminUser) {
+            container.innerHTML = `<div class="blog-empty"><i class="fas fa-lock"></i><h3>Publicação não disponível</h3><p>Este artigo não está publicado.</p><a href="/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>`
+            return
+        }
+        
+        await supabase.from('posts').update({ views: (post.views || 0) + 1 }).eq('id', post.id)
+        renderPost(post)
+        
+    } catch (error) {
+        console.error('Erro:', error)
+        container.innerHTML = `<div class="blog-empty"><i class="fas fa-exclamation-triangle"></i><h3>Erro ao carregar</h3><p>Não foi possível carregar este artigo.</p><a href="/blog.html" class="btn btn-primary btn-sm" style="margin-top:12px;"><i class="fas fa-arrow-left"></i> Voltar ao blog</a></div>`
+    }
+}
+
+// ============================================
+// RENDERIZAR POST INDIVIDUAL
+// ============================================
+function renderPost(post) {
+    const container = document.getElementById('postContent')
+    if (!container) return
+    
+    const isAdminUser = window.isAdmin ? window.isAdmin() : false
+    
+    container.innerHTML = `
+        <article class="post-article">
+            <div class="article-header">
+                <a href="/blog.html" class="back-link"><i class="fas fa-arrow-left"></i> Voltar para o blog</a>
+                <h1>${post.title}</h1>
+                <div class="article-meta">
+                    <span><i class="far fa-calendar-alt"></i> ${formatDate(post.published_at)}</span>
+                    <span><i class="far fa-user"></i> ${post.author_name || 'Admin'}</span>
+                    <span><i class="far fa-folder"></i> ${post.category || 'Geral'}</span>
+                    <span><i class="far fa-eye"></i> ${post.views || 0} visualizações</span>
+                    ${!post.is_published && isAdminUser ? '<span style="color:#f39c12;">📝 Rascunho</span>' : ''}
+                </div>
+            </div>
+            ${post.featured_image ? `<img src="${post.featured_image}" alt="${post.title}" class="article-featured-image">` : ''}
+            <div class="article-content">${post.content}</div>
+            ${isAdminUser ? `<div class="admin-actions"><a href="/blog-admin.html?edit=${post.id}" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Editar</a><button class="btn btn-danger btn-sm" onclick="deletePost(${post.id})"><i class="fas fa-trash"></i> Excluir</button></div>` : ''}
+        </article>
+    `
+}
+
+// ============================================
+// ADMIN - CRIAR/EDITAR POST
+// ============================================
+async function savePost(event) {
+    event.preventDefault()
+    
+    const id = document.getElementById('postId')?.value
+    const title = document.getElementById('postTitle').value.trim()
+    const content = document.getElementById('postContent').value.trim()
+    const excerpt = document.getElementById('postExcerpt').value.trim()
+    const category = document.getElementById('postCategory').value.trim() || 'Geral'
+    const featured_image = document.getElementById('postImage').value.trim()
+    const is_published = document.getElementById('postPublished').value === 'true'
+    
+    if (!title || !content) {
+        Toast.warning('Campos obrigatórios', 'Preencha o título e o conteúdo.')
+        return
+    }
+    
+    const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    
+    try {
+        const user = window.getCurrentUser ? window.getCurrentUser() : null
+        const isAdminUser = window.isAdmin ? window.isAdmin() : false
+        if (!isAdminUser) { Toast.error('Acesso negado', 'Apenas administradores podem publicar.'); return }
+        
+        const postData = { title, slug, content, excerpt: excerpt || content.substring(0, 160), category, featured_image, is_published, author_id: user?.id || null, author_name: user?.user_metadata?.full_name || 'Admin', updated_at: new Date().toISOString() }
+        
+        let result
+        if (id) {
+            result = await supabase.from('posts').update(postData).eq('id', id)
+        } else {
+            postData.published_at = new Date().toISOString()
+            result = await supabase.from('posts').insert(postData)
+        }
+        if (result.error) throw result.error
+        
+        Toast.success(id ? 'Publicação atualizada!' : 'Publicação criada!', 'O artigo foi salvo com sucesso.')
+        setTimeout(() => { window.location.href = `/post.html?slug=${slug}` }, 1000)
+        
+    } catch (error) {
+        console.error('Erro:', error)
+        Toast.error('Erro', 'Não foi possível salvar a publicação.')
+    }
+}
+
+// ============================================
+// ADMIN - EXCLUIR POST
+// ============================================
+async function deletePost(postId) {
+    if (!confirm('Tem certeza que deseja excluir esta publicação?')) return
+    try {
+        await supabase.from('posts').delete().eq('id', postId)
+        Toast.success('Publicação excluída!', 'O artigo foi removido.')
+        window.location.href = '/blog.html'
+    } catch (error) {
+        Toast.error('Erro', 'Não foi possível excluir.')
+    }
+}
+
+// ============================================
+// CARREGAR POST PARA EDIÇÃO
+// ============================================
+async function loadPostForEdit() {
+    const params = new URLSearchParams(window.location.search)
+    const editId = params.get('edit')
+    if (!editId) return
+    
+    try {
+        const { data: post, error } = await supabase.from('posts').select('*').eq('id', editId).single()
+        if (error) throw error
+        
+        document.getElementById('postId').value = post.id
+        document.getElementById('postTitle').value = post.title
+        document.getElementById('postContent').value = post.content
+        document.getElementById('postExcerpt').value = post.excerpt || ''
+        document.getElementById('postCategory').value = post.category || 'Geral'
+        document.getElementById('postImage').value = post.featured_image || ''
+        document.getElementById('postPublished').value = post.is_published ? 'true' : 'false'
+        document.getElementById('formTitle').textContent = '✏️ Editar Publicação'
+        document.getElementById('submitBtn').textContent = 'Atualizar Publicação'
+        
+    } catch (error) {
+        console.error('Erro ao carregar post:', error)
+        Toast.error('Erro', 'Não foi possível carregar a publicação.')
+    }
+}

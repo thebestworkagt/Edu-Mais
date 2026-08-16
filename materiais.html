@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materiais - Edu Mais</title>
+    <link rel="icon" type="image/png" href="assets/images/edu.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* ===== ESTILOS DA PÁGINA DE MATERIAIS ===== */
+        .materials-hero {
+            background: var(--primary-gradient);
+            padding: 60px 0 48px;
+            color: #fff;
+            text-align: center;
+        }
+        .materials-hero h1 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .materials-hero p {
+            font-size: 18px;
+            opacity: 0.85;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .materials-section {
+            padding: 40px 0 60px;
+            background: var(--bg-primary);
+            min-height: 60vh;
+        }
+        .materials-section .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Barra de ferramentas */
+        .materials-toolbar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .materials-toolbar .search-box {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 0 16px;
+            transition: var(--transition);
+        }
+        .materials-toolbar .search-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(33, 115, 70, 0.15);
+        }
+        .materials-toolbar .search-box i {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        .materials-toolbar .search-box input {
+            border: none;
+            background: transparent;
+            padding: 12px 12px;
+            font-size: 14px;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+        .materials-toolbar .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+        .materials-toolbar .filter-category {
+            padding: 10px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            min-width: 140px;
+        }
+        .materials-toolbar .filter-category:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Cards de materiais */
+        .materials-grid {
+            display: grid;
+            gap: 16px;
+        }
+        .material-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .material-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+        .material-card .material-info {
+            flex: 1;
+            min-width: 200px;
+        }
+        .material-card .material-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .material-card .material-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .material-card .material-info .meta {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 6px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .material-card .material-info .meta .badge {
+            padding: 2px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-public {
+            background: rgba(46, 139, 87, 0.15);
+            color: var(--primary-light);
+        }
+        .badge-private {
+            background: rgba(243, 156, 18, 0.15);
+            color: #f39c12;
+        }
+        .badge-private-locked {
+            background: rgba(231, 76, 60, 0.15);
+            color: #e74c3c;
+        }
+        .material-card .material-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Estado vazio */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .empty-state i {
+            font-size: 64px;
+            color: var(--text-muted);
+            opacity: 0.3;
+            margin-bottom: 16px;
+        }
+        .empty-state h3 {
+            font-size: 24px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            color: var(--text-secondary);
+            max-width: 400px;
+            margin: 0 auto 20px;
+        }
+
+        /* Loading */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .loading-state i {
+            font-size: 40px;
+            color: var(--primary-light);
+            animation: spin 1s linear infinite;
+        }
+        .loading-state p {
+            color: var(--text-secondary);
+            margin-top: 12px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Acesso negado */
+        .access-denied {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .access-denied i {
+            font-size: 64px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .access-denied h3 {
+            font-size: 24px;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .access-denied p {
+            color: var(--text-secondary);
+            max-width: 400px;
+            margin: 0 auto 20px;
+        }
+
+        /* Header do blog (para manter consistência) */
+        .blog-header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+        .blog-header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .blog-header .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .blog-header .nav-brand .logo {
+            height: 32px;
+        }
+        .blog-header .nav-brand .brand-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .blog-header .nav-brand .brand-text .highlight {
+            color: var(--primary-light);
+        }
+        .blog-header .nav-links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .blog-header .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .blog-header .nav-links a:hover {
+            color: var(--primary-light);
+        }
+        .blog-header .nav-links a.active {
+            color: var(--primary-light);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(33, 115, 70, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(33, 115, 70, 0.5);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary-light);
+        }
+        .btn-outline-danger {
+            background: transparent;
+            color: #ff6b6b;
+            border: 2px solid #ff6b6b;
+        }
+        .btn-outline-danger:hover {
+            background: #ff6b6b;
+            color: #fff;
+        }
+        .btn-success {
+            background: #25D366;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #128C7E;
+            transform: translateY(-2px);
+        }
+        .btn-sm {
+            padding: 6px 16px;
+            font-size: 13px;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 90px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+            width: 100%;
+            pointer-events: none;
+        }
+        .toast-container .toast {
+            pointer-events: all;
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            animation: slideInRight 0.4s ease forwards;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        .toast-container .toast::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+        }
+        .toast-container .toast.success::before {
+            background: #2E8B57;
+        }
+        .toast-container .toast.error::before {
+            background: #e74c3c;
+        }
+        .toast-container .toast.warning::before {
+            background: #f39c12;
+        }
+        .toast-container .toast.info::before {
+            background: #3498db;
+        }
+        .toast-container .toast .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .toast-container .toast.success .toast-icon {
+            color: #2E8B57;
+        }
+        .toast-container .toast.error .toast-icon {
+            color: #e74c3c;
+        }
+        .toast-container .toast.warning .toast-icon {
+            color: #f39c12;
+        }
+        .toast-container .toast.info .toast-icon {
+            color: #3498db;
+        }
+        .toast-container .toast .toast-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .toast-container .toast .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .toast-container .toast .toast-message {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .toast-container .toast .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .toast-container .toast .toast-close:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+        .toast-container .toast.hiding {
+            animation: slideOutRight 0.4s ease forwards;
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100px); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ========== TOAST ========== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ========== HEADER ========== -->
+<header class="blog-header">
+    <div class="container">
+        <a href="/Edu-Mais/" class="nav-brand">
+            <img src="assets/images/edu.png" alt="Edu Mais" class="logo" onerror="this.style.display='none'">
+            <span class="brand-text">Edu <span class="highlight">Mais</span></span>
+        </a>
+        <div class="nav-links">
+            <a href="/Edu-Mais/">Início</a>
+            <a href="/Edu-Mais/blog.html">Blog</a>
+            <a href="/Edu-Mais/materiais.html" class="active">Materiais</a>
+            <a href="/Edu-Mais/#contato">Contato</a>
+            <button class="btn btn-primary btn-sm" id="authBtn">Entrar</button>
+            <button class="btn btn-outline-danger btn-sm" id="logoutBtn" style="display:none;">Sair</button>
+        </div>
+    </div>
+</header>
+
+<!-- ========== HERO ========== -->
+<section class="materials-hero">
+    <div class="container">
+        <h1>📚 Materiais de Prática</h1>
+        <p>Acesse exercícios, guias e templates para praticar o que aprendeu</p>
+    </div>
+</section>
+
+<!-- ========== MATERIAIS ========== -->
+<section class="materials-section">
+    <div class="container">
+
+        <!-- Barra de ferramentas -->
+        <div class="materials-toolbar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar material..." oninput="filterMaterials()">
+            </div>
+            <select id="categoryFilter" class="filter-category" onchange="filterMaterials()">
+                <option value="all">Todas as categorias</option>
+            </select>
+        </div>
+
+        <!-- Lista de materiais -->
+        <div id="materialsContainer">
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Carregando materiais...</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ========== SCRIPTS ========== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
+<script>
+// ============================================
+// CONFIGURAÇÃO
+// ============================================
+const SUPABASE_URL = 'https://gslhfgaoqkcrhyfnmmxt.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// ============================================
+// ESTADO
+// ============================================
+let allMaterials = []
+let currentUser = null
+let isAdmin = false
+let isApproved = false
+let currentCategory = 'all'
+let searchTerm = ''
+
+// ============================================
+// TOAST
+// ============================================
+const Toast = {
+    container: document.getElementById('toastContainer'),
+    show(title, message, type, duration) {
+        const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' }
+        const toast = document.createElement('div')
+        toast.className = 'toast ' + (type || 'info')
+        toast.innerHTML = `
+            <i class="fas ${icons[type] || icons.info} toast-icon"></i>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close"><i class="fas fa-times"></i></button>
+        `
+        toast.querySelector('.toast-close').onclick = () => {
+            toast.classList.add('hiding')
+            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast) }, 400)
+        }
+        setTimeout(() => {
+            toast.classList.add('hiding')
+            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast) }, 400)
+        }, duration || 4000)
+        this.container.appendChild(toast)
+        return toast
+    },
+    success(title, msg, d) { return this.show(title, msg, 'success', d || 4000) },
+    error(title, msg, d) { return this.show(title, msg, 'error', d || 5000) },
+    warning(title, msg, d) { return this.show(title, msg, 'warning', d || 4000) },
+    info(title, msg, d) { return this.show(title, msg, 'info', d || 3000) }
+}
+
+// ============================================
+// VERIFICAR SESSÃO
+// ============================================
+async function checkSession() {
+    try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+            currentUser = session.user
+            // Verificar se é admin
+            const { data: adminCheck } = await supabase.from('admins').select('id').eq('id', currentUser.id).maybeSingle()
+            isAdmin = !!adminCheck
+            // Verificar se é aluno aprovado
+            const { data: studentCheck } = await supabase.from('students').select('is_approved').eq('id', currentUser.id).maybeSingle()
+            isApproved = studentCheck?.is_approved || false
+        }
+        updateButtons()
+        loadMaterials()
+    } catch (error) {
+        console.error('Erro ao verificar sessão:', error)
+        loadMaterials()
+    }
+}
+
+function updateButtons() {
+    const authBtn = document.getElementById('authBtn')
+    const logoutBtn = document.getElementById('logoutBtn')
+    if (currentUser) {
+        authBtn.style.display = 'none'
+        logoutBtn.style.display = 'inline-flex'
+    } else {
+        authBtn.style.display = 'inline-flex'
+        logoutBtn.style.display = 'none'
+    }
+}
+
+// ============================================
+// CARREGAR MATERIAIS
+// ============================================
+async function loadMaterials() {
+    const container = document.getElementById('materialsContainer')
+    if (!container) return
+
+    container.innerHTML = `<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Carregando materiais...</p></div>`
+
+    try {
+        let query = supabase
+            .from('materials')
+            .select('*')
+            .order('created_at', { ascending: false })
+
+        // Se não for admin e não for aluno aprovado, só vê públicos
+        if (!isAdmin && !isApproved) {
+            query = query.eq('is_public', true)
+        }
+
+        const { data, error } = await query
+        if (error) throw error
+
+        allMaterials = data || []
+        loadCategories(allMaterials)
+        renderMaterials(allMaterials)
+
+    } catch (error) {
+        console.error('Erro:', error)
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Erro ao carregar</h3>
+                <p>Não foi possível carregar os materiais.</p>
+                <button onclick="loadMaterials()" class="btn btn-primary btn-sm">
+                    <i class="fas fa-sync"></i> Tentar novamente
+                </button>
+            </div>
+        `
+    }
+}
+
+// ============================================
+// CARREGAR CATEGORIAS
+// ============================================
+function loadCategories(materials) {
+    const filter = document.getElementById('categoryFilter')
+    if (!filter) return
+
+    const categories = ['all']
+    materials.forEach(m => {
+        if (m.category && !categories.includes(m.category)) {
+            categories.push(m.category)
+        }
+    })
+
+    filter.innerHTML = categories.map(cat =>
+        `<option value="${cat}">${cat === 'all' ? 'Todas as categorias' : cat}</option>`
+    ).join('')
+    filter.value = currentCategory
+}
+
+// ============================================
+// FILTRAR MATERIAIS
+// ============================================
+function filterMaterials() {
+    const filter = document.getElementById('categoryFilter')
+    const search = document.getElementById('searchInput')
+
+    currentCategory = filter ? filter.value : 'all'
+    searchTerm = search ? search.value.toLowerCase().trim() : ''
+
+    let filtered = allMaterials.slice()
+
+    if (currentCategory !== 'all') {
+        filtered = filtered.filter(m => m.category === currentCategory)
+    }
+
+    if (searchTerm) {
+        filtered = filtered.filter(m =>
+            m.title.toLowerCase().includes(searchTerm) ||
+            m.description?.toLowerCase().includes(searchTerm)
+        )
+    }
+
+    renderMaterials(filtered)
+}
+
+// ============================================
+// RENDERIZAR MATERIAIS
+// ============================================
+function renderMaterials(materials) {
+    const container = document.getElementById('materialsContainer')
+    if (!container) return
+
+    if (materials.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h3>Nenhum material encontrado</h3>
+                <p>${searchTerm ? 'Tente ajustar sua busca.' : 'Ainda não há materiais disponíveis.'}</p>
+                ${searchTerm ? `<button onclick="filterMaterials()" class="btn btn-outline btn-sm">Limpar busca</button>` : ''}
+            </div>
+        `
+        return
+    }
+
+    let html = '<div class="materials-grid">'
+    materials.forEach(m => {
+        const isPrivate = !m.is_public
+        const canAccess = m.is_public || isAdmin || isApproved
+        const iconMap = {
+            'pdf': '📄',
+            'docx': '📝',
+            'xlsx': '📊',
+            'link': '🔗',
+            'image': '🖼️'
+        }
+
+        html += `
+            <div class="material-card">
+                <div class="material-info">
+                    <h3>${iconMap[m.file_type] || '📄'} ${m.title}</h3>
+                    ${m.description ? `<p>${m.description}</p>` : ''}
+                    <div class="meta">
+                        <span>📂 ${m.category || 'Geral'}</span>
+                        <span class="badge ${m.is_public ? 'badge-public' : (canAccess ? 'badge-private' : 'badge-private-locked')}">
+                            ${m.is_public ? '🌍 Público' : (canAccess ? '🔒 Privado' : '🔒 Bloqueado')}
+                        </span>
+                        <span>👁️ ${m.views || 0} visualizações</span>
+                        <span>⬇️ ${m.downloads || 0} downloads</span>
+                    </div>
+                </div>
+                <div class="material-actions">
+                    ${canAccess ? `
+                        <a href="${m.file_url}" target="_blank" class="btn btn-sm btn-success" onclick="countDownload(${m.id})">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    ` : `
+                        <button class="btn btn-sm btn-outline" onclick="redirectToLogin()" title="Faça login para acessar">
+                            <i class="fas fa-lock"></i> Acesso restrito
+                        </button>
+                    `}
+                </div>
+            </div>
+        `
+    })
+    html += '</div>'
+    container.innerHTML = html
+}
+
+// ============================================
+// CONTAR DOWNLOAD
+// ============================================
+async function countDownload(materialId) {
+    try {
+        await supabase
+            .from('materials')
+            .update({ downloads: supabase.rpc('increment', { row_id: materialId }) })
+            .eq('id', materialId)
+    } catch (error) {
+        // Silencia erro
+    }
+}
+
+// ============================================
+// REDIRECIONAR PARA LOGIN
+// ============================================
+function redirectToLogin() {
+    window.location.href = '/Edu-Mais/#authModal'
+}
+
+// ============================================
+// EVENTOS
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Botão Entrar
+    document.getElementById('authBtn')?.addEventListener('click', redirectToLogin)
+
+    // Botão Sair
+    document.getElementById('logoutBtn')?.addEventListener('click', async function() {
+        await supabase.auth.signOut()
+        window.location.href = '/Edu-Mais/'
+    })
+
+    // Verificar sessão
+    checkSession()
+})
+
+// ============================================
+// EXPOR FUNÇÕES GLOBAIS
+// ============================================
+window.filterMaterials = filterMaterials
+window.loadMaterials = loadMaterials
+</script>
+</body>
+</html>

@@ -1454,7 +1454,6 @@ async function loadLevels() {
         if (State.currentUser && !State.isAdmin) requests.push(supabase.from('progress').select('lesson_id, watched, completed').eq('student_id', State.currentUser.id));
         else requests.push(Promise.resolve({ data: [], error: null }));
         
-        // 🔥 REMOVIDO O FILTRO POR EMAIL - usa apenas contagem total
         requests.push(supabase.from('students').select('*', { count: 'exact', head: true }).eq('is_approved', true));
         
         const [{ data: levels, error }, { data: progress, error: progressError }, { count }] = await Promise.all(requests);
@@ -1668,7 +1667,6 @@ async function loadDashboard(container) {
             .from('students')
             .select('*', { count: 'exact', head: true });
         if (totalError) throw totalError;
-        console.log('✅ Total alunos:', total);
         
         // 2. Alunos aprovados
         const { count: approved, error: approvedError } = await supabase
@@ -1676,7 +1674,6 @@ async function loadDashboard(container) {
             .select('*', { count: 'exact', head: true })
             .eq('is_approved', true);
         if (approvedError) throw approvedError;
-        console.log('✅ Aprovados:', approved);
         
         // 3. Níveis ativos
         const { count: levels, error: levelsError } = await supabase
@@ -1684,14 +1681,12 @@ async function loadDashboard(container) {
             .select('*', { count: 'exact', head: true })
             .eq('is_active', true);
         if (levelsError) throw levelsError;
-        console.log('✅ Níveis:', levels);
         
         // 4. Total de aulas
         const { count: lessons, error: lessonsError } = await supabase
             .from('lessons')
             .select('*', { count: 'exact', head: true });
         if (lessonsError) throw lessonsError;
-        console.log('✅ Aulas:', lessons);
         
         // 5. Alunos por nível (usando student_levels)
         const { data: byLevel, error: byLevelError } = await supabase
@@ -1702,7 +1697,6 @@ async function loadDashboard(container) {
             `)
             .eq('completed', true);
         if (byLevelError) throw byLevelError;
-        console.log('✅ Alunos por nível:', byLevel?.length || 0);
         
         // Contar alunos por nível
         const counts = {};
@@ -1757,6 +1751,7 @@ async function loadDashboard(container) {
     }
 }
 
+/* ======================== ALUNOS ======================== */
 async function loadAlunos(container) {
     const [studentsR, levelsR, studentLevelsR] = await Promise.all([
         supabase.from('students').select('*').order('enrolled_at',{ascending:false}),
@@ -1774,13 +1769,77 @@ async function loadAlunos(container) {
     container.querySelectorAll('[data-delete-student]').forEach(b=>b.addEventListener('click',()=>adminDeleteStudent(b.dataset.deleteStudent)));
 }
 
-async function toggleStudentLevel(studentId,levelId,checked){
-    if(!State.isAdmin)return Toast.warning('Acesso negado','Apenas administradores podem fazer isso.');
-    try{
-        if(checked){const {error}=await supabase.from('student_levels').insert({student_id:studentId,level_id:levelId,unlocked_at:new Date().toISOString(),completed:false});if(error&&error.code!=='23505')throw error;Toast.success('Nível adicionado!','O aluno agora tem acesso a este nível.');}
-        else{const {error}=await supabase.from('student_levels').delete().eq('student_id',studentId).eq('level_id',levelId);if(error)throw error;Toast.success('Nível removido!','O aluno perdeu o acesso a este nível.');}
-        await Promise.all([loadAdminTab('alunos'),loadLevels()]);
-    }catch(error){console.error(error);Toast.error('Erro','Não foi possível atualizar os níveis do aluno.');}
+/* ========================= ADMIN - TOGGLE NÍVEL (CORRIGIDO) ========================= */
+async function toggleStudentLevel(studentId, levelId, checked) {
+    if (!State.isAdmin) {
+        Toast.warning('Acesso negado', 'Apenas administradores podem fazer isso.');
+        return;
+    }
+
+    console.log('📝 toggleStudentLevel chamado:', { studentId, levelId, checked });
+
+    try {
+        if (checked) {
+            // Verificar se já existe
+            const { data: existing, error: checkError } = await supabase
+                .from('student_levels')
+                .select('id')
+                .eq('student_id', studentId)
+                .eq('level_id', levelId)
+                .maybeSingle();
+
+            if (checkError) {
+                console.error('❌ Erro ao verificar existência:', checkError);
+                throw checkError;
+            }
+
+            if (existing) {
+                Toast.info('Nível já atribuído', 'Este aluno já tem acesso a este nível.');
+                return;
+            }
+
+            // Inserir nível
+            const { error: insertError } = await supabase
+                .from('student_levels')
+                .insert({
+                    student_id: studentId,
+                    level_id: levelId,
+                    unlocked_at: new Date().toISOString(),
+                    completed: false
+                });
+
+            if (insertError) {
+                console.error('❌ Erro ao inserir:', insertError);
+                throw insertError;
+            }
+
+            Toast.success('Nível adicionado!', 'O aluno agora tem acesso a este nível.');
+            console.log('✅ Nível adicionado com sucesso!');
+
+        } else {
+            // Remover nível
+            const { error: deleteError } = await supabase
+                .from('student_levels')
+                .delete()
+                .eq('student_id', studentId)
+                .eq('level_id', levelId);
+
+            if (deleteError) {
+                console.error('❌ Erro ao remover:', deleteError);
+                throw deleteError;
+            }
+
+            Toast.success('Nível removido!', 'O aluno perdeu o acesso a este nível.');
+            console.log('✅ Nível removido com sucesso!');
+        }
+
+        // Recarregar dados
+        await Promise.all([loadAdminTab('alunos'), loadLevels()]);
+
+    } catch (error) {
+        console.error('❌ Erro em toggleStudentLevel:', error);
+        Toast.error('Erro', 'Não foi possível atualizar os níveis do aluno: ' + (error.message || 'Erro desconhecido'));
+    }
 }
 
 async function adminToggleApproval(studentId,approve){
@@ -1802,12 +1861,14 @@ async function adminDeleteStudent(studentId){
     }catch(error){console.error(error);Toast.error('Erro','Não foi possível excluir.');}
 }
 
+/* ======================== NÍVEIS ADMIN ======================== */
 async function loadNiveisAdmin(container){
     const {data:levels,error}=await supabase.from('levels').select('*').order('order');if(error)throw error;
     container.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h3>📚 Gerenciar Níveis</h3><button type="button" class="btn btn-primary btn-sm" id="addLevelBtn"><i class="fas fa-plus"></i> Adicionar Nível</button></div>${levels?.length?`<div style="display:grid;gap:12px;">${levels.map(l=>`<div style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;"><div><span style="font-size:24px;">${Utils.escape(l.icon||'📚')}</span><strong style="margin-left:8px;">${Utils.escape(l.name)}</strong><span style="color:var(--text-muted);font-size:13px;margin-left:12px;">${Utils.escape(l.description||'')}</span><span style="color:var(--text-muted);font-size:12px;margin-left:12px;">Ordem: ${Number(l.order)||0}</span></div><div class="admin-actions"><button type="button" class="btn btn-sm btn-outline" data-edit-level="${Number(l.id)}"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-danger" data-delete-level="${Number(l.id)}"><i class="fas fa-trash"></i></button></div></div>`).join('')}</div>`:`<div class="access-denied"><p>Nenhum nível criado.</p></div>`}`;
     document.getElementById('addLevelBtn')?.addEventListener('click',showAddLevelForm);container.querySelectorAll('[data-edit-level]').forEach(b=>b.addEventListener('click',()=>showEditLevelForm(Number(b.dataset.editLevel))));container.querySelectorAll('[data-delete-level]').forEach(b=>b.addEventListener('click',()=>adminDeleteLevel(Number(b.dataset.deleteLevel))));
 }
 
+/* ======================== AULAS ADMIN ======================== */
 async function loadAulasAdmin(container){
     const [lr,levr]=await Promise.all([supabase.from('lessons').select('*, level:levels(id,name)').order('level_id').order('order'),supabase.from('levels').select('id,name').eq('is_active',true).order('order')]);if(lr.error)throw lr.error;if(levr.error)throw levr.error;const lessons=lr.data||[],levels=levr.data||[];
     container.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h3>📹 Gerenciar Aulas</h3><button type="button" class="btn btn-primary btn-sm" id="addLessonBtn"><i class="fas fa-plus"></i> Adicionar Aula</button></div><div style="margin-bottom:16px;"><label style="color:var(--text-secondary);font-size:13px;">Filtrar:</label><select id="lessonFilter" style="padding:8px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);margin-left:8px;"><option value="all">Todos os níveis</option>${levels.map(l=>`<option value="${Number(l.id)}">${Utils.escape(l.name)}</option>`).join('')}</select></div>${lessons.length?`<div id="lessonsList" style="display:grid;gap:12px;">${lessons.map(l=>`<div class="lesson-item-admin" data-level="${Number(l.level_id)}" style="background:var(--bg-card);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;"><div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span>📖</span><strong>${Utils.escape(l.title)}</strong><span style="color:var(--text-muted);font-size:13px;background:var(--bg-secondary);padding:2px 10px;border-radius:50px;">${Utils.escape(l.level?.name||'Sem nível')}</span><span style="color:var(--text-muted);font-size:12px;">${Number(l.video_duration)||0} min</span>${!l.video_url?'<span style="color:#ff6b6b;font-size:12px;">⚠️ Sem vídeo</span>':''}</div><div style="color:var(--text-muted);font-size:13px;margin-top:4px;">${Utils.escape(l.description||'')}</div>${Utils.safeUrl(l.video_url)?`<div style="font-size:12px;"><a href="${Utils.escape(Utils.safeUrl(l.video_url))}" target="_blank" rel="noopener noreferrer" style="color:var(--primary-light);">Abrir vídeo</a></div>`:''}</div><div class="admin-actions"><button type="button" class="btn btn-sm btn-outline" data-edit-lesson="${Number(l.id)}"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-danger" data-delete-lesson="${Number(l.id)}"><i class="fas fa-trash"></i></button></div></div>`).join('')}</div>`:`<div class="access-denied"><p>Nenhuma aula criada.</p></div>`}`;

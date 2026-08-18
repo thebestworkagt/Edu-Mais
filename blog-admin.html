@@ -7,27 +7,132 @@
     <link rel="icon" type="image/png" href="assets/images/edu.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        .admin-form { max-width: 800px; margin: 0 auto; padding: 40px 24px 60px; background: var(--blog-bg); min-height: 60vh; }
-        .admin-form .form-card { background: var(--blog-card); border-radius: var(--blog-radius); padding: 32px; border: 1px solid var(--blog-border); box-shadow: var(--blog-shadow); }
-        .admin-form .form-card h2 { font-size: 28px; margin-bottom: 8px; color: var(--blog-text); }
-        .admin-form .form-card .subtitle { color: var(--blog-text-muted); margin-bottom: 24px; }
-        .admin-form .form-group { margin-bottom: 20px; }
-        .admin-form .form-group label { display: block; font-weight: 600; font-size: 14px; color: var(--blog-text-secondary); margin-bottom: 4px; }
-        .admin-form .form-group input, .admin-form .form-group textarea, .admin-form .form-group select {
-            width: 100%; padding: 10px 14px; border-radius: var(--blog-radius-sm); border: 1px solid var(--blog-border);
-            background: var(--blog-bg); color: var(--blog-text); font-size: 14px; transition: var(--blog-transition); font-family: 'Inter', sans-serif;
+        :root {
+            --blog-bg: #f5f7fa;
+            --blog-card: #ffffff;
+            --blog-text: #1a1a2e;
+            --blog-text-secondary: #4a4a6a;
+            --blog-text-muted: #8a8aaa;
+            --blog-border: #e8ecf1;
+            --blog-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            --blog-primary: #2563eb;
+            --blog-radius: 16px;
+            --blog-radius-sm: 8px;
+            --blog-transition: all 0.3s ease;
         }
-        .admin-form .form-group input:focus, .admin-form .form-group textarea:focus, .admin-form .form-group select:focus {
-            outline: none; border-color: var(--blog-primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+
+        [data-theme="dark"] {
+            --blog-bg: #0f0f1a;
+            --blog-card: #1a1a2e;
+            --blog-text: #e8e8f0;
+            --blog-text-secondary: #a8a8c0;
+            --blog-text-muted: #6a6a8a;
+            --blog-border: #2a2a44;
+            --blog-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
-        .admin-form .form-group textarea { min-height: 200px; resize: vertical; font-family: 'Merriweather', serif; font-size: 15px; line-height: 1.8; }
-        .admin-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .admin-form .form-actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
-        .admin-form .form-actions .btn { padding: 12px 32px; }
-        .toast-container { position: fixed; top: 90px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: 100%; pointer-events: none; }
-        .toast-container .toast { pointer-events: all; padding: 16px 20px; border-radius: 8px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow); display: flex; align-items: flex-start; gap: 14px; animation: slideInRight 0.4s ease forwards; backdrop-filter: blur(10px); position: relative; overflow: hidden; }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--blog-bg);
+            color: var(--blog-text);
+            line-height: 1.6;
+            transition: var(--blog-transition);
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .highlight { color: var(--blog-primary); font-weight: 700; }
+        
+        .blog-header {
+            background: var(--blog-card);
+            border-bottom: 1px solid var(--blog-border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+        }
+        .blog-header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .blog-header .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .blog-header .nav-brand .logo { height: 32px; width: auto; }
+        .blog-header .nav-brand .brand-text { font-size: 18px; font-weight: 700; color: var(--blog-text); }
+        .blog-header .nav-brand .brand-text .highlight { color: var(--blog-primary); }
+        .blog-header .nav-links {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .blog-header .nav-links a {
+            color: var(--blog-text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--blog-transition);
+        }
+        .blog-header .nav-links a:hover { color: var(--blog-primary); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--blog-transition);
+            text-decoration: none;
+        }
+        .btn-primary { background: var(--blog-primary); color: #fff; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(37, 99, 235, 0.3); }
+        .btn-outline { background: transparent; color: var(--blog-text); border: 2px solid var(--blog-border); }
+        .btn-outline:hover { border-color: var(--blog-primary); color: var(--blog-primary); }
+        .btn-outline-danger { background: transparent; color: #ff6b6b; border: 2px solid #ff6b6b; }
+        .btn-outline-danger:hover { background: #ff6b6b; color: #fff; }
+        .btn-sm { padding: 6px 16px; font-size: 13px; }
+
+        .toast-container {
+            position: fixed;
+            top: 90px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+            width: 100%;
+            pointer-events: none;
+        }
+        .toast-container .toast {
+            pointer-events: all;
+            padding: 16px 20px;
+            border-radius: 8px;
+            background: var(--blog-card);
+            border: 1px solid var(--blog-border);
+            box-shadow: var(--blog-shadow);
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            animation: slideInRight 0.4s ease forwards;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
         .toast-container .toast::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
         .toast-container .toast.success::before { background: #2E8B57; }
         .toast-container .toast.error::before { background: #e74c3c; }
@@ -39,56 +144,147 @@
         .toast-container .toast.warning .toast-icon { color: #f39c12; }
         .toast-container .toast.info .toast-icon { color: #3498db; }
         .toast-container .toast .toast-content { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-        .toast-container .toast .toast-title { font-weight: 600; font-size: 14px; color: var(--text-primary); }
-        .toast-container .toast .toast-message { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
-        .toast-container .toast .toast-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 4px; transition: var(--transition); flex-shrink: 0; }
-        .toast-container .toast .toast-close:hover { color: var(--text-primary); transform: rotate(90deg); }
+        .toast-container .toast .toast-title { font-weight: 600; font-size: 14px; color: var(--blog-text); }
+        .toast-container .toast .toast-message { font-size: 13px; color: var(--blog-text-secondary); line-height: 1.4; }
+        .toast-container .toast .toast-close { background: none; border: none; color: var(--blog-text-muted); cursor: pointer; font-size: 16px; padding: 4px; transition: var(--blog-transition); flex-shrink: 0; }
+        .toast-container .toast .toast-close:hover { color: var(--blog-text); transform: rotate(90deg); }
         .toast-container .toast.hiding { animation: slideOutRight 0.4s ease forwards; }
         @keyframes slideInRight { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100px); } }
-        .blog-header { background: var(--blog-card); border-bottom: 1px solid var(--blog-border); padding: 16px 0; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(20px); }
-        .blog-header .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-        .blog-header .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-        .blog-header .nav-brand .logo { height: 32px; }
-        .blog-header .nav-brand .brand-text { font-size: 18px; font-weight: 700; color: var(--blog-text); }
-        .blog-header .nav-brand .brand-text .highlight { color: var(--blog-primary); }
-        .blog-header .nav-links { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
-        .blog-header .nav-links a { color: var(--blog-text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: var(--blog-transition); }
-        .blog-header .nav-links a:hover { color: var(--blog-primary); }
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 24px; border: none; border-radius: 8px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; text-decoration: none; }
-        .btn-primary { background: linear-gradient(135deg, #217346 0%, #2E8B57 50%, #3BA370 100%); color: #fff; box-shadow: 0 4px 20px rgba(33,115,70,0.3); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(33,115,70,0.5); }
-        .btn-outline { background: transparent; color: var(--text-primary); border: 2px solid var(--border-color); }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary-light); }
-        .btn-outline-danger { background: transparent; color: #ff6b6b; border: 2px solid #ff6b6b; }
-        .btn-outline-danger:hover { background: #ff6b6b; color: #fff; }
-        .btn-sm { padding: 6px 16px; font-size: 13px; }
-        @media (max-width: 600px) { .admin-form .form-row { grid-template-columns: 1fr; } .admin-form .form-card { padding: 20px; } }
+
+        .admin-form {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+            background: var(--blog-bg);
+            min-height: 60vh;
+        }
+        .admin-form .form-card {
+            background: var(--blog-card);
+            border-radius: var(--blog-radius);
+            padding: 32px;
+            border: 1px solid var(--blog-border);
+            box-shadow: var(--blog-shadow);
+        }
+        .admin-form .form-card h2 { font-size: 28px; margin-bottom: 8px; color: var(--blog-text); }
+        .admin-form .form-card .subtitle { color: var(--blog-text-muted); margin-bottom: 24px; }
+        .admin-form .form-group { margin-bottom: 20px; }
+        .admin-form .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--blog-text-secondary);
+            margin-bottom: 4px;
+        }
+        .admin-form .form-group input,
+        .admin-form .form-group textarea,
+        .admin-form .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--blog-radius-sm);
+            border: 1px solid var(--blog-border);
+            background: var(--blog-bg);
+            color: var(--blog-text);
+            font-size: 14px;
+            transition: var(--blog-transition);
+            font-family: 'Inter', sans-serif;
+        }
+        .admin-form .form-group input:focus,
+        .admin-form .form-group textarea:focus,
+        .admin-form .form-group select:focus {
+            outline: none;
+            border-color: var(--blog-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+        .admin-form .form-group textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: 'Merriweather', serif;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+        .admin-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .admin-form .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .admin-form .form-actions .btn { padding: 12px 32px; }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background: var(--blog-text);
+            transition: var(--blog-transition);
+            border-radius: 2px;
+        }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        @media (max-width: 768px) {
+            .blog-header .nav-links { display: none; }
+            .blog-header .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: var(--blog-card);
+                padding: 16px 24px;
+                border-bottom: 1px solid var(--blog-border);
+            }
+            .hamburger { display: flex; }
+            .admin-form .form-row { grid-template-columns: 1fr; }
+            .admin-form .form-card { padding: 20px; }
+        }
+        @media (max-width: 480px) {
+            .admin-form .form-card h2 { font-size: 22px; }
+        }
     </style>
 </head>
 <body>
 
-<!-- ========== TOAST CONTAINER ========== -->
+<!-- ===== TOAST ===== -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- ========== BLOG HEADER ========== -->
+<!-- ===== HEADER ===== -->
 <header class="blog-header">
     <div class="container">
         <a href="/Edu-Mais/" class="nav-brand">
             <img src="assets/images/edu.png" alt="Edu Mais" class="logo" onerror="this.style.display='none'">
             <span class="brand-text">Edu <span class="highlight">Mais</span></span>
         </a>
-        <div class="nav-links">
+        <div class="nav-links" id="navLinks">
             <a href="/Edu-Mais/">Início</a>
             <a href="/Edu-Mais/blog.html">Blog</a>
-            <a href="/Edu-Mais/#niveis">Níveis</a>
+            <a href="/Edu-Mais/materiais.html">Materiais</a>
             <a href="/Edu-Mais/#contato">Contato</a>
             <button class="btn btn-outline-danger btn-sm" id="logoutBtnAdmin">Sair</button>
         </div>
+        <button class="hamburger" id="hamburger">
+            <span></span><span></span><span></span>
+        </button>
     </div>
 </header>
 
-<!-- ========== FORM ========== -->
+<!-- ===== FORM ===== -->
 <section class="admin-form">
     <div class="form-card">
         <h2 id="formTitle">✍️ Nova Publicação</h2>
@@ -139,46 +335,197 @@
     </div>
 </section>
 
-<!-- ========== SCRIPTS ========== -->
+<!-- ===== SCRIPTS ===== -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-<script src="assets/js/blog.js"></script>
-
 <script>
 // ============================================
-// INICIALIZAR ADMIN DO BLOG
+// CONFIGURAÇÃO SUPABASE
+// ============================================
+const SUPABASE_URL = 'https://gslhfgaoqkcrhyfnmmxt.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
+
+const supabaseBlog = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+// ============================================
+// TOAST
+// ============================================
+const ToastBlog = {
+    container: document.getElementById('toastContainer'),
+    show: function(title, message, type, duration) {
+        const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' }
+        const toast = document.createElement('div')
+        toast.className = 'toast ' + (type || 'info')
+        toast.innerHTML = `
+            <i class="fas ${icons[type] || icons.info} toast-icon"></i>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close"><i class="fas fa-times"></i></button>
+        `
+        toast.querySelector('.toast-close').onclick = function() {
+            toast.classList.add('hiding')
+            setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast) }, 400)
+        }
+        setTimeout(function() {
+            toast.classList.add('hiding')
+            setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast) }, 400)
+        }, duration || 4000)
+        ToastBlog.container.appendChild(toast)
+        return toast
+    },
+    success: function(title, msg, d) { return this.show(title, msg, 'success', d || 4000) },
+    error: function(title, msg, d) { return this.show(title, msg, 'error', d || 5000) },
+    warning: function(title, msg, d) { return this.show(title, msg, 'warning', d || 4000) },
+    info: function(title, msg, d) { return this.show(title, msg, 'info', d || 3000) }
+}
+
+// ============================================
+// VERIFICAR ADMIN
+// ============================================
+let isAdminBlog = false
+
+async function checkAdmin() {
+    try {
+        const { data: { session } } = await supabaseBlog.auth.getSession()
+        if (!session) {
+            ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
+            setTimeout(() => { window.location.href = '/Edu-Mais/' }, 2000)
+            return false
+        }
+        
+        const { data } = await supabaseBlog.from('admins').select('id').eq('id', session.user.id).maybeSingle()
+        if (!data) {
+            ToastBlog.error('Acesso negado', 'Apenas administradores podem acessar esta área.')
+            setTimeout(() => { window.location.href = '/Edu-Mais/blog.html' }, 2000)
+            return false
+        }
+        
+        isAdminBlog = true
+        console.log('✅ Admin verificado:', session.user.email)
+        return true
+        
+    } catch (error) {
+        console.error('Erro ao verificar admin:', error)
+        ToastBlog.error('Erro', 'Não foi possível verificar suas permissões.')
+        return false
+    }
+}
+
+// ============================================
+// CARREGAR POST PARA EDIÇÃO
+// ============================================
+async function loadPostForEdit() {
+    const params = new URLSearchParams(window.location.search)
+    const editId = params.get('edit')
+    if (!editId) return
+    
+    try {
+        const { data: post, error } = await supabaseBlog.from('posts').select('*').eq('id', editId).single()
+        if (error) throw error
+        
+        document.getElementById('postId').value = post.id
+        document.getElementById('postTitle').value = post.title
+        document.getElementById('postContent').value = post.content
+        document.getElementById('postExcerpt').value = post.excerpt || ''
+        document.getElementById('postCategory').value = post.category || 'Geral'
+        document.getElementById('postImage').value = post.featured_image || ''
+        document.getElementById('postPublished').value = post.is_published ? 'true' : 'false'
+        document.getElementById('formTitle').textContent = '✏️ Editar Publicação'
+        document.getElementById('submitBtn').textContent = 'Atualizar Publicação'
+        
+        console.log('✅ Post carregado para edição:', post.title)
+        
+    } catch (error) {
+        console.error('Erro ao carregar post:', error)
+        ToastBlog.error('Erro', 'Não foi possível carregar a publicação.')
+    }
+}
+
+// ============================================
+// SALVAR POST
+// ============================================
+async function savePost(event) {
+    event.preventDefault()
+    
+    const id = document.getElementById('postId')?.value || null
+    const title = document.getElementById('postTitle').value.trim()
+    const content = document.getElementById('postContent').value.trim()
+    const excerpt = document.getElementById('postExcerpt').value.trim()
+    const category = document.getElementById('postCategory').value.trim() || 'Geral'
+    const featured_image = document.getElementById('postImage').value.trim()
+    const is_published = document.getElementById('postPublished').value === 'true'
+    
+    if (!title || !content) {
+        ToastBlog.warning('Campos obrigatórios', 'Preencha o título e o conteúdo.')
+        return
+    }
+    
+    const slug = title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    
+    try {
+        const { data: { session } } = await supabaseBlog.auth.getSession()
+        if (!session) {
+            ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
+            return
+        }
+        
+        const postData = {
+            title: title,
+            slug: slug,
+            content: content,
+            excerpt: excerpt || content.substring(0, 160),
+            category: category,
+            featured_image: featured_image,
+            is_published: is_published,
+            author_id: session.user.id,
+            author_name: session.user.user_metadata?.full_name || 'Admin',
+            updated_at: new Date().toISOString()
+        }
+        
+        let result
+        if (id) {
+            result = await supabaseBlog.from('posts').update(postData).eq('id', id)
+        } else {
+            postData.published_at = new Date().toISOString()
+            result = await supabaseBlog.from('posts').insert(postData)
+        }
+        
+        if (result.error) throw result.error
+        
+        ToastBlog.success(id ? 'Publicação atualizada!' : 'Publicação criada!', 'O artigo foi salvo com sucesso.')
+        setTimeout(function() {
+            window.location.href = '/Edu-Mais/post.html?slug=' + slug
+        }, 1000)
+        
+    } catch (error) {
+        console.error('Erro ao salvar:', error)
+        ToastBlog.error('Erro', 'Não foi possível salvar a publicação.')
+    }
+}
+
+// ============================================
+// EVENTOS
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('📝 Inicializando admin do blog...')
     
-    // ⭐ Verificar se é admin DIRETO no Supabase
-    const supabaseBlog = window.supabaseBlog || window.supabase.createClient(
-        'https://gslhfgaoqkcrhyfnmmxt.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
-    )
-    
-    const { data: { session } } = await supabaseBlog.auth.getSession()
-    
-    if (!session) {
-        ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
-        setTimeout(() => { window.location.href = '/Edu-Mais/' }, 2000)
-        return
+    // Menu mobile
+    const hamburger = document.getElementById('hamburger')
+    const navLinks = document.getElementById('navLinks')
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', function() {
+            this.classList.toggle('active')
+            navLinks.classList.toggle('open')
+        })
     }
     
-    const { data: adminCheck } = await supabaseBlog
-        .from('admins')
-        .select('id')
-        .eq('id', session.user.id)
-        .maybeSingle()
-    
-    if (!adminCheck) {
-        ToastBlog.error('Acesso negado', 'Apenas administradores podem acessar esta área.')
-        setTimeout(() => { window.location.href = '/Edu-Mais/blog.html' }, 2000)
-        return
-    }
-    
-    console.log('✅ Admin verificado:', session.user.email)
-    
-    // ⭐ Botão Sair
+    // Botão Sair
     const logoutBtn = document.getElementById('logoutBtnAdmin')
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async function() {
@@ -187,9 +534,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         })
     }
     
-    // ⭐ Carregar post para edição
-    await loadPostForEdit()
+    // Verificar admin
+    const isAdmin = await checkAdmin()
+    if (isAdmin) {
+        await loadPostForEdit()
+    }
 })
+
+// ============================================
+// EXPOR FUNÇÕES
+// ============================================
+window.savePost = savePost
 </script>
 </body>
 </html>

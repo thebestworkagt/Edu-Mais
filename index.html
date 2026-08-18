@@ -1751,53 +1751,114 @@ async function loadDashboard(container) {
     }
 }
 
-/* ======================== ALUNOS ======================== */
+/* ======================== ALUNOS (COM EVENT LISTENERS CORRIGIDOS) ======================== */
 async function loadAlunos(container) {
     const [studentsR, levelsR, studentLevelsR] = await Promise.all([
-        supabase.from('students').select('*').order('enrolled_at',{ascending:false}),
-        supabase.from('levels').select('id,name,icon').eq('is_active',true).order('order'),
-        supabase.from('student_levels').select('student_id,level_id,completed')
+        supabase.from('students').select('*').order('enrolled_at', { ascending: false }),
+        supabase.from('levels').select('id, name, icon').eq('is_active', true).order('order'),
+        supabase.from('student_levels').select('student_id, level_id, completed')
     ]);
-    [studentsR,levelsR,studentLevelsR].forEach(r=>{if(r.error)throw r.error;});
-    const students=studentsR.data||[], levels=levelsR.data||[], sl=studentLevelsR.data||[];
-    const levelsByStudent={}; sl.forEach(x=>(levelsByStudent[x.student_id]??=[]).push(x.level_id));
-    if(!students.length){container.innerHTML=`<div class="access-denied"><i class="fas fa-users"></i><p>Nenhum aluno cadastrado.</p></div>`;return;}
-    const rows=students.map(s=>`<tr><td>${Utils.escape(s.full_name||'—')}</td><td>${Utils.escape(s.email)}</td><td><span class="status-badge ${s.is_approved?'approved':'pending'}">${s.is_approved?'✅ Aprovado':'⏳ Pendente'}</span></td><td><div class="admin-levels">${levels.map(l=>`<label style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:13px;cursor:pointer;"><input type="checkbox" data-student="${Utils.escape(s.id)}" data-level="${Number(l.id)}" ${levelsByStudent[s.id]?.includes(l.id)?'checked':''}> ${Utils.escape(l.icon||'📚')} ${Utils.escape(l.name)}</label>`).join('')}</div></td><td><div class="admin-actions"><button type="button" class="btn btn-sm ${s.is_approved?'btn-warning':'btn-success'}" data-approve="${Utils.escape(s.id)}" data-value="${!s.is_approved}">${s.is_approved?'⛔ Bloquear':'✅ Aprovar'}</button><button type="button" class="btn btn-sm btn-danger" data-delete-student="${Utils.escape(s.id)}"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
-    container.innerHTML=`<div style="margin-bottom:16px;color:var(--text-muted);font-size:14px;"><i class="fas fa-info-circle"></i> Marque/desmarque os níveis para atribuir ou remover o acesso do aluno.</div><div style="overflow-x:auto;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);"><table class="admin-table"><thead><tr><th>Aluno</th><th>Email</th><th>Status</th><th>Níveis</th><th>Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-    container.querySelectorAll('.level-checkbox').forEach(cb=>cb.addEventListener('change',()=>toggleStudentLevel(cb.dataset.student,Number(cb.dataset.level),cb.checked)));
-    container.querySelectorAll('[data-approve]').forEach(b=>b.addEventListener('click',()=>adminToggleApproval(b.dataset.approve,b.dataset.value==='true')));
-    container.querySelectorAll('[data-delete-student]').forEach(b=>b.addEventListener('click',()=>adminDeleteStudent(b.dataset.deleteStudent)));
+
+    [studentsR, levelsR, studentLevelsR].forEach(r => { if (r.error) throw r.error; });
+
+    const students = studentsR.data || [];
+    const levels = levelsR.data || [];
+    const sl = studentLevelsR.data || [];
+
+    const levelsByStudent = {};
+    sl.forEach(x => {
+        if (!levelsByStudent[x.student_id]) levelsByStudent[x.student_id] = [];
+        levelsByStudent[x.student_id].push(x.level_id);
+    });
+
+    if (!students.length) {
+        container.innerHTML = `<div class="access-denied"><i class="fas fa-users"></i><p>Nenhum aluno cadastrado.</p></div>`;
+        return;
+    }
+
+    // ⭐ CRIAR OS CHECKBOXES COM onclick DIRETO
+    const rows = students.map(s => {
+        const userLevels = levelsByStudent[s.id] || [];
+
+        let levelsHtml = '';
+        levels?.forEach(level => {
+            const checked = userLevels.includes(level.id) ? 'checked' : '';
+            levelsHtml += `
+                <label style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" 
+                           class="level-checkbox" 
+                           data-student="${Utils.escape(s.id)}" 
+                           data-level="${Number(level.id)}"
+                           ${checked}
+                           onclick="toggleStudentLevel('${s.id}', ${Number(level.id)}, this.checked)">
+                    ${Utils.escape(level.icon || '📚')} ${Utils.escape(level.name)}
+                </label>
+            `;
+        });
+
+        return `<tr>
+            <td style="padding:12px 16px;font-weight:600;">${Utils.escape(s.full_name || '—')}</td>
+            <td style="padding:12px 16px;color:var(--text-secondary);">${Utils.escape(s.email)}</td>
+            <td style="padding:12px 16px;">
+                <span class="status-badge ${s.is_approved ? 'approved' : 'pending'}">
+                    ${s.is_approved ? '✅ Aprovado' : '⏳ Pendente'}
+                </span>
+            </td>
+            <td style="padding:12px 16px;font-size:13px;">
+                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                    ${levelsHtml || '<span style="color:var(--text-muted);">Nenhum nível</span>'}
+                </div>
+            </td>
+            <td style="padding:12px 16px;">
+                <div class="admin-actions">
+                    <button class="btn btn-sm ${s.is_approved ? 'btn-warning' : 'btn-success'}" 
+                            onclick="adminToggleApproval('${s.id}', ${!s.is_approved})">
+                        ${s.is_approved ? '⛔ Bloquear' : '✅ Aprovar'}
+                    </button>
+                    <button class="btn btn-sm btn-danger" 
+                            onclick="adminDeleteStudent('${s.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+        <div style="margin-bottom:16px;color:var(--text-muted);font-size:14px;">
+            <i class="fas fa-info-circle"></i> Marque/desmarque os níveis para atribuir ou remover o acesso do aluno.
+        </div>
+        <div style="overflow-x:auto;background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border-color);">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Níveis</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+    `;
+
+    // ⭐ REMOVER OS event listeners antigos (se houver)
+    // Os checkboxes já têm onclick diretamente no HTML
 }
 
 /* ========================= ADMIN - TOGGLE NÍVEL (CORRIGIDO) ========================= */
 async function toggleStudentLevel(studentId, levelId, checked) {
+    console.log('📝 toggleStudentLevel chamado:', { studentId, levelId, checked });
+
     if (!State.isAdmin) {
         Toast.warning('Acesso negado', 'Apenas administradores podem fazer isso.');
         return;
     }
 
-    console.log('📝 toggleStudentLevel chamado:', { studentId, levelId, checked });
-
     try {
         if (checked) {
-            // Verificar se já existe
-            const { data: existing, error: checkError } = await supabase
-                .from('student_levels')
-                .select('id')
-                .eq('student_id', studentId)
-                .eq('level_id', levelId)
-                .maybeSingle();
-
-            if (checkError) {
-                console.error('❌ Erro ao verificar existência:', checkError);
-                throw checkError;
-            }
-
-            if (existing) {
-                Toast.info('Nível já atribuído', 'Este aluno já tem acesso a este nível.');
-                return;
-            }
-
             // Inserir nível
             const { error: insertError } = await supabase
                 .from('student_levels')
@@ -1809,6 +1870,11 @@ async function toggleStudentLevel(studentId, levelId, checked) {
                 });
 
             if (insertError) {
+                // Se for erro de chave duplicada, ignorar
+                if (insertError.code === '23505') {
+                    Toast.info('Nível já atribuído', 'Este aluno já tem acesso a este nível.');
+                    return;
+                }
                 console.error('❌ Erro ao inserir:', insertError);
                 throw insertError;
             }
@@ -1834,31 +1900,13 @@ async function toggleStudentLevel(studentId, levelId, checked) {
         }
 
         // Recarregar dados
-        await Promise.all([loadAdminTab('alunos'), loadLevels()]);
+        await loadAdminTab('alunos');
+        await loadLevels();
 
     } catch (error) {
         console.error('❌ Erro em toggleStudentLevel:', error);
-        Toast.error('Erro', 'Não foi possível atualizar os níveis do aluno: ' + (error.message || 'Erro desconhecido'));
+        Toast.error('Erro', 'Não foi possível atualizar os níveis do aluno.');
     }
-}
-
-async function adminToggleApproval(studentId,approve){
-    if(!State.isAdmin)return;
-    try{const {error}=await supabase.from('students').update({is_approved:approve,approved_at:approve?new Date().toISOString():null}).eq('id',studentId);if(error)throw error;Toast.success(approve?'Aluno aprovado!':'Aluno bloqueado!');await Promise.all([loadAdminTab('alunos'),loadLevels()]);}
-    catch(error){console.error(error);Toast.error('Erro','Não foi possível atualizar.');}
-}
-
-async function adminDeleteStudent(studentId){
-    if(!State.isAdmin||!confirm('Excluir este aluno?'))return;
-    try{
-        const {error: progressError}=await supabase.from('progress').delete().eq('student_id',studentId);
-        if(progressError) throw progressError;
-        const {error: levelsError}=await supabase.from('student_levels').delete().eq('student_id',studentId);
-        if(levelsError) throw levelsError;
-        const {error: studentError}=await supabase.from('students').delete().eq('id',studentId);
-        if(studentError) throw studentError;
-        Toast.success('Aluno excluído!');await Promise.all([loadAdminTab('alunos'),loadLevels()]);
-    }catch(error){console.error(error);Toast.error('Erro','Não foi possível excluir.');}
 }
 
 /* ======================== NÍVEIS ADMIN ======================== */
@@ -1971,6 +2019,7 @@ Object.assign(window,{
     adminCreateLevel,adminUpdateLevel,adminCreateLesson,adminUpdateLesson,filterLessons,toggleStudentLevel,loadMateriaisAdmin,
     showAddMaterialForm,adminCreateMaterial,showEditMaterialForm,adminUpdateMaterial,adminDeleteMaterial,handleLogout,
     getCurrentUser:()=>State.currentUser,isAdmin:()=>State.isAdmin
+    window.toggleStudentLevel = toggleStudentLevel;
 });
 </script>
 </body>

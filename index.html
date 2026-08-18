@@ -1657,38 +1657,33 @@ async function loadAdminTab(tab) {
     }
 }
 
-/* ======================== DASHBOARD (CORRIGIDO) ======================== */
+/* ======================== DASHBOARD ======================== */
 async function loadDashboard(container) {
     try {
         console.log('📊 Carregando dashboard...');
         
-        // 1. Total de alunos
         const { count: total, error: totalError } = await supabase
             .from('students')
             .select('*', { count: 'exact', head: true });
         if (totalError) throw totalError;
         
-        // 2. Alunos aprovados
         const { count: approved, error: approvedError } = await supabase
             .from('students')
             .select('*', { count: 'exact', head: true })
             .eq('is_approved', true);
         if (approvedError) throw approvedError;
         
-        // 3. Níveis ativos
         const { count: levels, error: levelsError } = await supabase
             .from('levels')
             .select('*', { count: 'exact', head: true })
             .eq('is_active', true);
         if (levelsError) throw levelsError;
         
-        // 4. Total de aulas
         const { count: lessons, error: lessonsError } = await supabase
             .from('lessons')
             .select('*', { count: 'exact', head: true });
         if (lessonsError) throw lessonsError;
         
-        // 5. Alunos por nível (usando student_levels)
         const { data: byLevel, error: byLevelError } = await supabase
             .from('student_levels')
             .select(`
@@ -1698,7 +1693,6 @@ async function loadDashboard(container) {
             .eq('completed', true);
         if (byLevelError) throw byLevelError;
         
-        // Contar alunos por nível
         const counts = {};
         (byLevel || []).forEach(s => {
             const name = s.level?.name || 'Sem nível';
@@ -1751,7 +1745,7 @@ async function loadDashboard(container) {
     }
 }
 
-/* ======================== ALUNOS (COM EVENT LISTENERS CORRIGIDOS) ======================== */
+/* ======================== ALUNOS ======================== */
 async function loadAlunos(container) {
     const [studentsR, levelsR, studentLevelsR] = await Promise.all([
         supabase.from('students').select('*').order('enrolled_at', { ascending: false }),
@@ -1776,7 +1770,6 @@ async function loadAlunos(container) {
         return;
     }
 
-    // ⭐ CRIAR OS CHECKBOXES COM onclick DIRETO
     const rows = students.map(s => {
         const userLevels = levelsByStudent[s.id] || [];
 
@@ -1843,12 +1836,9 @@ async function loadAlunos(container) {
             </table>
         </div>
     `;
-
-    // ⭐ REMOVER OS event listeners antigos (se houver)
-    // Os checkboxes já têm onclick diretamente no HTML
 }
 
-/* ========================= ADMIN - TOGGLE NÍVEL (CORRIGIDO) ========================= */
+/* ========================= ADMIN - TOGGLE NÍVEL ========================= */
 async function toggleStudentLevel(studentId, levelId, checked) {
     console.log('📝 toggleStudentLevel chamado:', { studentId, levelId, checked });
 
@@ -1859,7 +1849,6 @@ async function toggleStudentLevel(studentId, levelId, checked) {
 
     try {
         if (checked) {
-            // Inserir nível
             const { error: insertError } = await supabase
                 .from('student_levels')
                 .insert({
@@ -1870,7 +1859,6 @@ async function toggleStudentLevel(studentId, levelId, checked) {
                 });
 
             if (insertError) {
-                // Se for erro de chave duplicada, ignorar
                 if (insertError.code === '23505') {
                     Toast.info('Nível já atribuído', 'Este aluno já tem acesso a este nível.');
                     return;
@@ -1883,7 +1871,6 @@ async function toggleStudentLevel(studentId, levelId, checked) {
             console.log('✅ Nível adicionado com sucesso!');
 
         } else {
-            // Remover nível
             const { error: deleteError } = await supabase
                 .from('student_levels')
                 .delete()
@@ -1899,13 +1886,88 @@ async function toggleStudentLevel(studentId, levelId, checked) {
             console.log('✅ Nível removido com sucesso!');
         }
 
-        // Recarregar dados
         await loadAdminTab('alunos');
         await loadLevels();
 
     } catch (error) {
         console.error('❌ Erro em toggleStudentLevel:', error);
         Toast.error('Erro', 'Não foi possível atualizar os níveis do aluno.');
+    }
+}
+
+/* ========================= ADMIN - APROVAR/BLOQUEAR ALUNO ========================= */
+async function adminToggleApproval(studentId, approve) {
+    console.log('📝 adminToggleApproval chamado:', { studentId, approve });
+
+    if (!State.isAdmin) {
+        Toast.warning('Acesso negado', 'Apenas administradores podem fazer isso.');
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('students')
+            .update({ 
+                is_approved: approve,
+                approved_at: approve ? new Date().toISOString() : null
+            })
+            .eq('id', studentId);
+
+        if (error) throw error;
+
+        Toast.success(approve ? '✅ Aluno aprovado!' : '⛔ Aluno bloqueado!');
+        console.log('✅ Status atualizado com sucesso!');
+
+        await loadAdminTab('alunos');
+        await loadLevels();
+
+    } catch (error) {
+        console.error('❌ Erro em adminToggleApproval:', error);
+        Toast.error('Erro', 'Não foi possível atualizar o status do aluno.');
+    }
+}
+
+/* ========================= ADMIN - EXCLUIR ALUNO ========================= */
+async function adminDeleteStudent(studentId) {
+    console.log('📝 adminDeleteStudent chamado:', { studentId });
+
+    if (!State.isAdmin) {
+        Toast.warning('Acesso negado', 'Apenas administradores podem fazer isso.');
+        return;
+    }
+
+    if (!confirm('Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+
+    try {
+        const { error: progressError } = await supabase
+            .from('progress')
+            .delete()
+            .eq('student_id', studentId);
+        if (progressError) throw progressError;
+
+        const { error: levelsError } = await supabase
+            .from('student_levels')
+            .delete()
+            .eq('student_id', studentId);
+        if (levelsError) throw levelsError;
+
+        const { error: studentError } = await supabase
+            .from('students')
+            .delete()
+            .eq('id', studentId);
+        if (studentError) throw studentError;
+
+        Toast.success('Aluno excluído!', 'O aluno foi removido com sucesso.');
+        console.log('✅ Aluno excluído com sucesso!');
+
+        await loadAdminTab('alunos');
+        await loadLevels();
+
+    } catch (error) {
+        console.error('❌ Erro em adminDeleteStudent:', error);
+        Toast.error('Erro', 'Não foi possível excluir o aluno.');
     }
 }
 
@@ -1951,7 +2013,6 @@ function refreshAdmin(){if(State.isAdmin){loadAdminTab(State.adminCurrentTab);To
 function setupTheme(){
     const toggle = DOM.themeToggle;
     if (!toggle) {
-        // Fallback: aplicar tema salvo mesmo sem botão
         const saved = localStorage.getItem('theme');
         const light = saved ? saved === 'light' : window.matchMedia?.('(prefers-color-scheme: light)').matches;
         document.documentElement.toggleAttribute('data-theme', light);
@@ -2014,10 +2075,16 @@ document.addEventListener('DOMContentLoaded',async()=>{
 
 /* Compatibilidade: funções públicas existentes continuam disponíveis. */
 Object.assign(window,{
-    loadAdminPanel,loadLevels,refreshAdmin,adminToggleApproval,adminDeleteStudent,adminDeleteLevel,adminDeleteLesson,
-    openLesson,openAuthModal,switchAdminTab,loadAdminTab,showAddLevelForm,showEditLevelForm,showAddLessonForm,showEditLessonForm,
-    adminCreateLevel,adminUpdateLevel,adminCreateLesson,adminUpdateLesson,filterLessons,toggleStudentLevel,loadMateriaisAdmin,
-    showAddMaterialForm,adminCreateMaterial,showEditMaterialForm,adminUpdateMaterial,adminDeleteMaterial,handleLogout,
+    loadAdminPanel,loadLevels,refreshAdmin,
+    adminToggleApproval,
+    adminDeleteStudent,
+    adminDeleteLevel,adminDeleteLesson,
+    openLesson,openAuthModal,switchAdminTab,loadAdminTab,
+    showAddLevelForm,showEditLevelForm,showAddLessonForm,showEditLessonForm,
+    adminCreateLevel,adminUpdateLevel,adminCreateLesson,adminUpdateLesson,
+    filterLessons,toggleStudentLevel,loadMateriaisAdmin,
+    showAddMaterialForm,adminCreateMaterial,showEditMaterialForm,adminUpdateMaterial,adminDeleteMaterial,
+    handleLogout,
     getCurrentUser:()=>State.currentUser,isAdmin:()=>State.isAdmin
 });
 </script>

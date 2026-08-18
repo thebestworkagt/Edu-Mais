@@ -1,24 +1,17 @@
 // ============================================
-// CONFIGURAÇÃO SUPABASE (BLOG)
+// BLOG - LÓGICA COMPLETA (PARA USO EM blog.html E post.html)
+// ============================================
+
+// ============================================
+// CONFIGURAÇÃO SUPABASE
 // ============================================
 const SUPABASE_URL = 'https://gslhfgaoqkcrhyfnmmxt.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzbGhmZ2FvcWtjcmh5Zm5tbXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MDY1OTEsImV4cCI6MjEwMjI4MjU5MX0.tuUvoVuFni1eh0M_j-iG_qI-vwa3116a7mgyCqhVejk'
 
 const supabaseBlog = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-console.log('📝 Blog.js carregado')
-
 // ============================================
-// ESTADO DO BLOG
-// ============================================
-let allPosts = []
-let currentCategory = 'all'
-let searchTerm = ''
-let currentUserBlog = null
-let isAdminBlog = false
-
-// ============================================
-// TOAST PARA O BLOG
+// TOAST
 // ============================================
 const ToastBlog = {
     container: null,
@@ -61,6 +54,17 @@ const ToastBlog = {
     info: function(title, msg, d) { return this.show(title, msg, 'info', d || 3000) }
 }
 
+ToastBlog.init()
+
+// ============================================
+// ESTADO
+// ============================================
+let allPosts = []
+let currentCategory = 'all'
+let searchTerm = ''
+let currentUserBlog = null
+let isAdminBlog = false
+
 // ============================================
 // VERIFICAR SESSÃO
 // ============================================
@@ -71,11 +75,10 @@ async function checkBlogSession() {
             currentUserBlog = session.user
             const { data } = await supabaseBlog.from('admins').select('id').eq('id', currentUserBlog.id).maybeSingle()
             isAdminBlog = !!data
-            console.log('✅ Usuário logado no blog:', currentUserBlog.email, 'Admin:', isAdminBlog)
+            console.log('✅ Usuário logado:', currentUserBlog.email, 'Admin:', isAdminBlog)
         } else {
             currentUserBlog = null
             isAdminBlog = false
-            console.log('👤 Nenhum usuário logado no blog')
         }
         updateBlogButtons()
     } catch (error) {
@@ -106,10 +109,7 @@ function updateBlogButtons() {
 // ============================================
 async function loadPosts() {
     const container = document.getElementById('postsContainer')
-    if (!container) {
-        console.error('❌ postsContainer não encontrado')
-        return
-    }
+    if (!container) return
     
     container.innerHTML = '<div class="blog-loading"><i class="fas fa-spinner fa-spin"></i><p style="color:var(--blog-text-muted);margin-top:12px;">Carregando publicações...</p></div>'
     
@@ -284,10 +284,7 @@ function formatDateBlog(dateString) {
 // ============================================
 async function loadPost() {
     const container = document.getElementById('postContent')
-    if (!container) {
-        console.error('❌ postContent não encontrado')
-        return
-    }
+    if (!container) return
     
     const params = new URLSearchParams(window.location.search)
     const slug = params.get('slug')
@@ -335,7 +332,7 @@ async function loadPost() {
             return
         }
         
-        // ⭐ Incrementar visualizações
+        // Incrementar visualizações
         try {
             const newViews = (post.views || 0) + 1
             await supabaseBlog
@@ -343,9 +340,9 @@ async function loadPost() {
                 .update({ views: newViews })
                 .eq('id', post.id)
             post.views = newViews
-            console.log('✅ Visualizações atualizadas:', newViews)
+            console.log('✅ Views atualizadas:', newViews)
         } catch (viewError) {
-            console.warn('⚠️ Não foi possível atualizar views:', viewError)
+            console.warn('⚠️ Erro ao atualizar views:', viewError)
         }
         
         renderPost(post)
@@ -410,82 +407,6 @@ function renderPost(post) {
 }
 
 // ============================================
-// ADMIN - SALVAR POST
-// ============================================
-async function savePost(event) {
-    event.preventDefault()
-    
-    const id = document.getElementById('postId') ? document.getElementById('postId').value : null
-    const title = document.getElementById('postTitle').value.trim()
-    const content = document.getElementById('postContent').value.trim()
-    const excerpt = document.getElementById('postExcerpt').value.trim()
-    const category = document.getElementById('postCategory').value.trim() || 'Geral'
-    const featured_image = document.getElementById('postImage').value.trim()
-    const is_published = document.getElementById('postPublished').value === 'true'
-    
-    if (!title || !content) {
-        ToastBlog.warning('Campos obrigatórios', 'Preencha o título e o conteúdo.')
-        return
-    }
-    
-    const slug = title
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-    
-    try {
-        // Verificar se é admin
-        const sessionResult = await supabaseBlog.auth.getSession()
-        if (!sessionResult.data.session) {
-            ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
-            return
-        }
-        
-        const user = sessionResult.data.session.user
-        const adminResult = await supabaseBlog.from('admins').select('id').eq('id', user.id).maybeSingle()
-        
-        if (!adminResult.data) {
-            ToastBlog.error('Acesso negado', 'Apenas administradores podem publicar.')
-            return
-        }
-        
-        const postData = {
-            title: title,
-            slug: slug,
-            content: content,
-            excerpt: excerpt || content.substring(0, 160),
-            category: category,
-            featured_image: featured_image,
-            is_published: is_published,
-            author_id: user.id,
-            author_name: user.user_metadata ? user.user_metadata.full_name || 'Admin' : 'Admin',
-            updated_at: new Date().toISOString()
-        }
-        
-        let result
-        if (id) {
-            result = await supabaseBlog.from('posts').update(postData).eq('id', id)
-        } else {
-            postData.published_at = new Date().toISOString()
-            result = await supabaseBlog.from('posts').insert(postData)
-        }
-        
-        if (result.error) throw result.error
-        
-        ToastBlog.success(id ? 'Publicação atualizada!' : 'Publicação criada!', 'O artigo foi salvo com sucesso.')
-        setTimeout(function() {
-            window.location.href = '/Edu-Mais/post.html?slug=' + slug
-        }, 1000)
-        
-    } catch (error) {
-        console.error('Erro ao salvar:', error)
-        ToastBlog.error('Erro', 'Não foi possível salvar a publicação: ' + error.message)
-    }
-}
-
-// ============================================
 // ADMIN - EXCLUIR POST
 // ============================================
 async function deletePost(postId) {
@@ -495,7 +416,6 @@ async function deletePost(postId) {
         ToastBlog.success('Publicação excluída!', 'O artigo foi removido.')
         window.location.href = '/Edu-Mais/blog.html'
     } catch (error) {
-        console.error('Erro ao excluir:', error)
         ToastBlog.error('Erro', 'Não foi possível excluir.')
     }
 }
@@ -522,16 +442,94 @@ async function loadPostForEdit() {
         document.getElementById('formTitle').textContent = '✏️ Editar Publicação'
         document.getElementById('submitBtn').textContent = 'Atualizar Publicação'
         
-        console.log('✅ Post carregado para edição:', post.title)
+        console.log('✅ Post carregado para edição')
         
     } catch (error) {
-        console.error('Erro ao carregar post para edição:', error)
+        console.error('Erro ao carregar post:', error)
         ToastBlog.error('Erro', 'Não foi possível carregar a publicação.')
     }
 }
 
 // ============================================
-// EXPOR FUNÇÕES GLOBAIS
+// ADMIN - SALVAR POST
+// ============================================
+async function savePost(event) {
+    event.preventDefault()
+    
+    const id = document.getElementById('postId')?.value || null
+    const title = document.getElementById('postTitle').value.trim()
+    const content = document.getElementById('postContent').value.trim()
+    const excerpt = document.getElementById('postExcerpt').value.trim()
+    const category = document.getElementById('postCategory').value.trim() || 'Geral'
+    const featured_image = document.getElementById('postImage').value.trim()
+    const is_published = document.getElementById('postPublished').value === 'true'
+    
+    if (!title || !content) {
+        ToastBlog.warning('Campos obrigatórios', 'Preencha o título e o conteúdo.')
+        return
+    }
+    
+    const slug = title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+    
+    try {
+        const { data: { session } } = await supabaseBlog.auth.getSession()
+        if (!session) {
+            ToastBlog.error('Acesso negado', 'Você precisa estar logado.')
+            return
+        }
+        
+        const { data: adminCheck } = await supabaseBlog
+            .from('admins')
+            .select('id')
+            .eq('id', session.user.id)
+            .maybeSingle()
+        
+        if (!adminCheck) {
+            ToastBlog.error('Acesso negado', 'Apenas administradores podem publicar.')
+            return
+        }
+        
+        const postData = {
+            title: title,
+            slug: slug,
+            content: content,
+            excerpt: excerpt || content.substring(0, 160),
+            category: category,
+            featured_image: featured_image,
+            is_published: is_published,
+            author_id: session.user.id,
+            author_name: session.user.user_metadata?.full_name || 'Admin',
+            updated_at: new Date().toISOString()
+        }
+        
+        let result
+        if (id) {
+            result = await supabaseBlog.from('posts').update(postData).eq('id', id)
+        } else {
+            postData.published_at = new Date().toISOString()
+            result = await supabaseBlog.from('posts').insert(postData)
+        }
+        
+        if (result.error) throw result.error
+        
+        ToastBlog.success(id ? 'Publicação atualizada!' : 'Publicação criada!', 'O artigo foi salvo com sucesso.')
+        setTimeout(function() {
+            window.location.href = '/Edu-Mais/post.html?slug=' + slug
+        }, 1000)
+        
+    } catch (error) {
+        console.error('Erro ao salvar:', error)
+        ToastBlog.error('Erro', 'Não foi possível salvar a publicação.')
+    }
+}
+
+// ============================================
+// EXPOR FUNÇÕES
 // ============================================
 window.loadPosts = loadPosts
 window.loadPost = loadPost
@@ -541,5 +539,3 @@ window.savePost = savePost
 window.deletePost = deletePost
 window.loadPostForEdit = loadPostForEdit
 window.checkBlogSession = checkBlogSession
-
-console.log('✅ Blog.js carregado com sucesso!')
